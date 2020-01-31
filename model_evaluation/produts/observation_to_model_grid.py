@@ -12,6 +12,16 @@ import numpy as np
 import netCDF4
 
 
-def generate_data2modelgrid(cnet_data, model_data):
+def generate_data2modelgrid(cnet_data, model_data, quantity=None):
+    """
+
+    Args:
+        cnet_data (str):
+        model_data:
+        quantity:
+
+    Returns:
+
+    """
     print("lol")
     "Tähän perus gridauksen prosessointi"
