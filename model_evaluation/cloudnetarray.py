@@ -45,18 +45,6 @@ class CloudnetArray:
             return 'f4'
         return 'i4'
 
-    def lin2db(self):
-        """Converts linear units to log."""
-        if 'db' not in self.units.lower():
-            self.data = utils.lin2db(self.data)
-            self.units = 'dB'
-
-    def db2lin(self):
-        """Converts log units to linear."""
-        if 'db' in self.units.lower():
-            self.data = utils.db2lin(self.data)
-            self.units = ''
-
     def mask_indices(self, ind):
         """Masks data from given indices.
 

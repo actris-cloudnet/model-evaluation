@@ -1,6 +1,6 @@
 """
 This file will be used for reading and writing .nc files
-DataSource class will be inside this for reading and geting data out from files
+DataSource class will be inside this for reading and getting data out from files
 
 Other part of file will be similar to Output.py of CloudnetPy,
 Methods, which create file, add new data to it and overwrites attributes if
@@ -13,6 +13,7 @@ import os
 import netCDF4
 from model_evaluation import utils, version
 from model_evaluation.cloudnetarray import CloudnetArray
+from model_evaluation.metadata import MODEL_ATTRIBUTES, CYCLE_ATTRIBUTES
 
 
 def update_attributes(cloudnet_variables, attributes):
@@ -27,65 +28,34 @@ def update_attributes(cloudnet_variables, attributes):
 
     """
     for key in cloudnet_variables:
-        if key in attributes:
-            cloudnet_variables[key].set_attributes(attributes[key])
-        #if key in COMMON_ATTRIBUTES:
-        #    cloudnet_variables[key].set_attributes(COMMON_ATTRIBUTES[key])
+        if key in MODEL_ATTRIBUTES:
+            cloudnet_variables[key].set_attributes(MODEL_ATTRIBUTES[key])
+        if key.split('_', 1)[-1] in attributes:
+            cloudnet_variables[key].set_attributes(attributes[key.split('_', 1)[-1]])
+        if key.split('_', 1)[-1] in CYCLE_ATTRIBUTES:
+            cloudnet_variables[key].set_attributes(CYCLE_ATTRIBUTES[key.split('_', 1)[-1]])
 
 
-def save_product_file(short_id, obj, file_name, copy_from_file=()):
+def save_model_file(short_id, obj, file_name):
     """Saves a standard Cloudnet product file.
 
     Args:
-        short_id (str): Short file identifier, e.g. 'cv', 'lwc', 'iwc'.
+        short_id (str): Short file identifier, format "(model name)_product"
         obj (object): Instance containing product specific attributes: `time`,
             `dataset`, `data`.
         file_name (str): Name of the output file to be generated.
         copy_from_file (tuple, optional): Variables to be copied from the
             given L3 product file.
     """
-    identifier = _get_identifier(short_id)
     dimensions = {'time': len(obj.time),
-                  'height': len(obj.dataset.variables['height'])}
+                  'level': len(obj.dataset.variables['level'])}
     root_group = init_file(file_name, dimensions, obj.data)
     add_file_type(root_group, short_id)
-    vars_from_source = ('altitude', 'latitude', 'longitude', 'time', 'height') + copy_from_file
-    copy_variables(obj.dataset, root_group, vars_from_source)
-    root_group.title = f"Model data of {identifier.capitalize()} from {obj.dataset.location}"
-    root_group.source = f"Categorize file: {utils.get_source(obj)}"
+    root_group.title = f"Model data of {short_id.capitalize()} from {obj.dataset.location}"
+    root_group.source = f"{obj.model} file: {utils.get_source(obj)}"
     copy_global(obj.dataset, root_group, ('location', 'day', 'month', 'year'))
-    merge_history(root_group, identifier, obj)
+    merge_history(root_group, short_id, obj)
     root_group.close()
-
-
-def _get_identifier(short_id):
-    valid_ids = ('Cv', 'lwc', 'iwc')
-    if short_id not in valid_ids:
-        raise ValueError('Invalid product id.')
-    if short_id == 'iwc':
-        return 'ice water content'
-    if short_id == 'lwc':
-        return 'liquid water content'
-    if short_id == 'cv':
-        return 'cloud fraction'
-    return short_id
-
-
-def merge_history(root_group, file_type, *sources):
-    """Merges history fields from one or several files and creates a new record.
-
-    Args:
-        root_group (netCDF Dataset): The netCDF Dataset instance.
-        file_type (str): Long description of the file.
-        *sources (obj): Objects that were used to generate this product. Their
-            `history` attribute will be copied to the new product.
-
-    """
-    new_record = f"{utils.get_time()} - {file_type} file created"
-    old_history = ''
-    for source in sources:
-        old_history += f"\n{source.dataset.history}"
-    root_group.history = f"{new_record}{old_history}"
 
 
 def init_file(file_name, dimensions, obs):
@@ -137,22 +107,15 @@ def _add_standard_global_attributes(root_group):
     root_group.file_uuid = utils.get_uuid()
 
 
-def copy_variables(source, target, var_list):
-    """Copies variables (and their attributes) from one file to another.
+def add_file_type(root_group, file_type):
+    """Adds cloudnet_file_type global attribute.
 
     Args:
-        source (object): Source object.
-        target (object): Target object.
-        var_list (list): List of variables to be copied.
+        root_group (object): netCDF Dataset instance.
+        file_type (str): Name of the Cloudnet file type.
 
     """
-    for var_name, variable in source.variables.items():
-        if var_name in var_list:
-            var_out = target.createVariable(var_name, variable.datatype,
-                                            variable.dimensions)
-            var_out.setncatts({k: variable.getncattr(k)
-                               for k in variable.ncattrs()})
-            var_out[:] = variable[:]
+    root_group.cloudnet_file_type = file_type
 
 
 def copy_global(source, target, attr_list):
@@ -169,15 +132,21 @@ def copy_global(source, target, attr_list):
             setattr(target, attr_name, source.getncattr(attr_name))
 
 
-def add_file_type(root_group, file_type):
-    """Adds cloudnet_file_type global attribute.
+def merge_history(root_group, file_type, *sources):
+    """Merges history fields from one or several files and creates a new record.
 
     Args:
-        root_group (object): netCDF Dataset instance.
-        file_type (str): Name of the Cloudnet file type.
+        root_group (netCDF Dataset): The netCDF Dataset instance.
+        file_type (str): Long description of the file.
+        *sources (obj): Objects that were used to generate this product. Their
+            `history` attribute will be copied to the new product.
 
     """
-    root_group.cloudnet_file_type = file_type
+    new_record = f"{utils.get_time()} - {file_type} file created"
+    old_history = ''
+    for source in sources:
+        old_history += f"\n{source.dataset.history}"
+    root_group.history = f"{new_record}{old_history}"
 
 
 class DataSource:
@@ -202,7 +171,6 @@ class DataSource:
         self.dataset = netCDF4.Dataset(filename)
         self.source = getattr(self.dataset, 'source', '')
         self.time = self._init_time()
-        self.altitude = self._init_altitude()
         self.data = {}
         self._array_type = CloudnetArray
 
@@ -245,61 +213,8 @@ class DataSource:
         """Closes the open file."""
         self.dataset.close()
 
-    @staticmethod
-    def km2m(var):
-        """Converts km to m."""
-        alt = var[:]
-        if var.units == 'km':
-            alt *= 1000
-        return alt
-
-    @staticmethod
-    def m2km(var):
-        """Converts m to km."""
-        alt = var[:]
-        if var.units == 'm':
-            alt /= 1000
-        return alt
-
     def _init_time(self):
         time = self.getvar('time')
         if max(time) > 25:
             time = utils.seconds2hours(time)
         return time
-
-    def _init_altitude(self):
-        """Returns altitude of the instrument (m)."""
-        if 'altitude' in self.dataset.variables:
-            altitude_above_sea = self.km2m(self.dataset.variables['altitude'])
-            return float(altitude_above_sea)
-        return None
-
-    def _netcdf_to_cloudnet(self, fields):
-        """Transforms netCDF4-variables into CloudnetArrays.
-
-        Args:
-            fields (tuple): netCDF4-variables to be converted. The results are
-                saved in *self.data* dictionary with *fields* strings as keys.
-
-        Notes:
-            The attributes of the variables are not copied. Just the data.
-
-        """
-        for key in fields:
-            self.append_data(self.dataset.variables[key], key)
-
-    def _unknown_to_cloudnet(self, possible_names, key, units=None):
-        """Transforms single netCDF4 variable into CloudnetArray.
-
-        Args:
-            possible_names(tuple): Tuple of strings containing the possible
-                names of the variable in the input NetCDF file.
-
-            key(str): Key for self.data dictionary and name-attribute for
-                the saved CloudnetArray object.
-
-            units(str, optional): Units-attribute for the CloudnetArray object.
-
-        """
-        array = self.getvar(*possible_names)
-        self.append_data(array, key, units=units)
