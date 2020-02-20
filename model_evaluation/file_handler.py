@@ -58,6 +58,11 @@ def save_model_file(short_id, obj, file_name):
     root_group.close()
 
 
+def add_var2file():
+    print("lol")
+    "Jos halutaan vain lisätä suure jo olemassa olevaan filuun."
+
+
 def init_file(file_name, dimensions, obs):
     """Initializes a Cloudnet file for writing.
 

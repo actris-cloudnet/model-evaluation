@@ -34,6 +34,9 @@ def generate_model_data(model, model_file, output_file, product=None):
     """
     model_data = ModelDataHandler(model_file, model, product)
     update_attributes(model_data.data, L3_ATTRIBUTES)
+    # Voisi olettaa, että jos tuotteet erikeen mainittu, lisätään olemassa olevaan
+    # filuun. Jos ei, luodaan filu.
+
     save_model_file(f"{model}_products", model_data, output_file)
 
 
@@ -50,16 +53,20 @@ class ModelDataHandler(DataSource):
         self.add_variables()
 
     def generate_products(self):
-        module = importlib.import_module(__name__)
-        print(module)
+        cls = getattr(importlib.import_module(__name__), 'ModelDataHandler')
+        f_products = [i for i in dir(cls) if i.startswith('_get_')]
         if not self.product:
-            # Ehkä tässä voisi samalla tyylillä hakea kaikki get tyyppiset funktiot?
-            self._get_cloud_fraction()
-            #self._get_iwc()
-            #self._get_lwc()
+            for func in f_products:
+                getattr(cls, func)(self)
+        elif type(self.product) is list:
+            for p in self.product:
+                try:
+                    getattr(cls, f"_get_{p}")(self)
+                except RuntimeError as error:
+                    print(error)
         else:
             try:
-                getattr(module, f"_get_{self.product}")
+                getattr(cls, f"_get_{self.product}")(self)
             except RuntimeError as error:
                 print(error)
 
@@ -80,32 +87,41 @@ class ModelDataHandler(DataSource):
         add_common_variables()
         add_cycle_variables()
 
+    # TODO: Should these _get_productX be connected into one?
     def _get_cloud_fraction(self):
         """Collect cloud fraction straight from model file."""
-        cv_name = CONF[self.model]['cv']
-        cv = self.getvar(cv_name)
+        cv_name = self._read_config('cv')
+        cv = self._set_variables(cv_name)
         self.append_data(cv, f'{self.model}_cv')
 
     def _get_iwc(self):
-        p_name, T_name, iwc_name = self._read_common_quantities('iwc')
-        p, T, qi = self.getvar(p_name, T_name, iwc_name)
+        p_name, T_name, iwc_name = self._read_config('p', 'T', 'iwc')
+        p, T, qi = self._set_variables(p_name, T_name, iwc_name)
         iwc = qi * p / (287 * T)
         self.append_data(iwc, f'{self.model}_iwc')
 
     def _get_lwc(self):
-        p_name, T_name, lwc_name = self._read_common_quantities('lwc')
-        p, T, ql = self.getvar(p_name, T_name, lwc_name)
+        p_name, T_name, lwc_name = self._read_config('p', 'T', 'lwc')
+        p, T, ql = self._set_variables(p_name, T_name, lwc_name)
         lwc = ql * p / (287 * T)
-        self.append_data(lwc, f'{self.model}_iwc')
+        self.append_data(lwc, f'{self.model}_lwc')
+        
+    def _read_config(self, *args):
+        var = []
+        for arg in args:
+            try:
+                name = CONF[self.model][arg]
+            except KeyError:
+                name = CONF['general'][arg]
+            var.append(name)
+        if len(var) == 1:
+            return var[0]
+        return var
 
-    def _read_common_quantities(self, var):
-        try:
-            p_name = CONF[self.model]['p']
-        except KeyError:
-            p_name = CONF['general']['p']
-        try:
-            T_name = CONF[self.model]['T']
-        except KeyError:
-            T_name = CONF['general']['T']
-        var_name = CONF[self.model][var]
-        return p_name, T_name, var_name
+    def _set_variables(self, *args):
+        var = []
+        for arg in args:
+            var.append(self.getvar(arg))
+        if len(var) == 1:
+            return var[0]
+        return var
