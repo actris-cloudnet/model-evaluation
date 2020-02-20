@@ -36,11 +36,11 @@ def update_attributes(cloudnet_variables, attributes):
             cloudnet_variables[key].set_attributes(CYCLE_ATTRIBUTES[key.split('_', 1)[-1]])
 
 
-def save_model_file(short_id, obj, file_name):
+def save_model_file(id_mark, obj, file_name):
     """Saves a standard Cloudnet product file.
 
     Args:
-        short_id (str): Short file identifier, format "(model name)_product"
+        id_mark (str): File identifier, format "(model name)_product"
         obj (object): Instance containing product specific attributes: `time`,
             `dataset`, `data`.
         file_name (str): Name of the output file to be generated.
@@ -49,21 +49,28 @@ def save_model_file(short_id, obj, file_name):
     """
     dimensions = {'time': len(obj.time),
                   'level': len(obj.dataset.variables['level'])}
-    root_group = init_file(file_name, dimensions, obj.data)
-    add_file_type(root_group, short_id)
-    root_group.title = f"Model data of {short_id.capitalize()} from {obj.dataset.location}"
+    root_group = _init_file(file_name, dimensions, obj.data)
+    _add_file_type(root_group, id_mark)
+    root_group.title = f"Model data of {id_mark.capitalize()} from {obj.dataset.location}"
     root_group.source = f"{obj.model} file: {utils.get_source(obj)}"
-    copy_global(obj.dataset, root_group, ('location', 'day', 'month', 'year'))
-    merge_history(root_group, short_id, obj)
+    _copy_global(obj.dataset, root_group, ('location', 'day', 'month', 'year'))
+    _merge_history(root_group, id_mark, obj)
     root_group.close()
+    
+
+def add_var2ncfile(obj, file_name):
+    nc_file = netCDF4.Dataset(file_name, 'r+', format='NETCDF4_CLASSIC')
+    try:
+        _write_vars2nc(nc_file, obj.data)
+    except RuntimeError:
+        for key in obj.data:
+            nc_file.variables[key][:] = obj.data[key][:]
+            for attr in obj.data[key].fetch_attributes():
+                setattr(nc_file.variables[key], attr, getattr(obj.data[key], attr))
+    nc_file.close()
 
 
-def add_var2file():
-    print("lol")
-    "Jos halutaan vain lisätä suure jo olemassa olevaan filuun."
-
-
-def init_file(file_name, dimensions, obs):
+def _init_file(file_name, dimensions, obs):
     """Initializes a Cloudnet file for writing.
 
     Args:
@@ -82,7 +89,6 @@ def init_file(file_name, dimensions, obs):
 
 def _write_vars2nc(rootgrp, cloudnet_variables):
     """Iterates over Cloudnet instances and write to given rootgrp."""
-
     def _get_dimensions(array):
         """Finds correct dimensions for a variable."""
         if utils.isscalar(array):
@@ -112,7 +118,7 @@ def _add_standard_global_attributes(root_group):
     root_group.file_uuid = utils.get_uuid()
 
 
-def add_file_type(root_group, file_type):
+def _add_file_type(root_group, file_type):
     """Adds cloudnet_file_type global attribute.
 
     Args:
@@ -123,7 +129,7 @@ def add_file_type(root_group, file_type):
     root_group.cloudnet_file_type = file_type
 
 
-def copy_global(source, target, attr_list):
+def _copy_global(source, target, attr_list):
     """Copies global attributes from one file to another.
 
     Args:
@@ -137,7 +143,7 @@ def copy_global(source, target, attr_list):
             setattr(target, attr_name, source.getncattr(attr_name))
 
 
-def merge_history(root_group, file_type, *sources):
+def _merge_history(root_group, file_type, *sources):
     """Merges history fields from one or several files and creates a new record.
 
     Args:

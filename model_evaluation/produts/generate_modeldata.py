@@ -10,7 +10,7 @@ Creates or adds data to .nc file
 import os
 import configparser
 import importlib
-from model_evaluation.file_handler import DataSource, update_attributes, save_model_file
+from model_evaluation.file_handler import DataSource, update_attributes, save_model_file, add_var2ncfile
 from model_evaluation.metadata import L3_ATTRIBUTES
 
 PATH = os.path.dirname(os.path.abspath(__file__))
@@ -30,14 +30,13 @@ def generate_model_data(model, model_file, output_file, product=None):
         model_file (str): file path of model to be generated
         product (str, option): Name of product to generate for model and add to file.
         If none, gets list of all product to be generated and added to file.
-        # Mitä tehdään, jos useampi tuote halutaan generoida kerralla?
     """
     model_data = ModelDataHandler(model_file, model, product)
     update_attributes(model_data.data, L3_ATTRIBUTES)
-    # Voisi olettaa, että jos tuotteet erikeen mainittu, lisätään olemassa olevaan
-    # filuun. Jos ei, luodaan filu.
-
-    save_model_file(f"{model}_products", model_data, output_file)
+    if not product:
+        save_model_file(f"{model}_products", model_data, output_file)
+    else:
+        add_var2ncfile(model_data, output_file)
 
 
 class ModelDataHandler(DataSource):
@@ -50,12 +49,13 @@ class ModelDataHandler(DataSource):
         self.model = model
         self.product = product
         self.generate_products()
-        self.add_variables()
+        if not self.product:
+            self.add_variables()
 
     def generate_products(self):
         cls = getattr(importlib.import_module(__name__), 'ModelDataHandler')
-        f_products = [i for i in dir(cls) if i.startswith('_get_')]
         if not self.product:
+            f_products = [i for i in dir(cls) if i.startswith('_get_')]
             for func in f_products:
                 getattr(cls, func)(self)
         elif type(self.product) is list:
@@ -84,11 +84,12 @@ class ModelDataHandler(DataSource):
                 if var in self.dataset.variables:
                     self.append_data(self.dataset.variables[var][:], f"{var}")
 
+        # TODO: Check if file exist. If not, add all, otherwise no common but cycle
         add_common_variables()
         add_cycle_variables()
 
     # TODO: Should these _get_productX be connected into one?
-    def _get_cloud_fraction(self):
+    def _get_cv(self):
         """Collect cloud fraction straight from model file."""
         cv_name = self._read_config('cv')
         cv = self._set_variables(cv_name)
