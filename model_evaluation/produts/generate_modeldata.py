@@ -20,23 +20,29 @@ CONF.optionxform = str
 CONF.read(os.path.join(PATH, 'level3.ini'))
 
 
-def generate_model_data(model, model_file, output_file, product=None):
+def generate_model_data(model, model_files, output_file, product=None):
     """Gathers model information for site from config.ini.
     Generates all products in one model file. Creates file if not existing
 
     Args:
-        site (str): Name of site
         model (str): name of model
-        model_file (str): file path of model to be generated
+        model_files (list): List of files from model to be generated
+        output_file (str): name of model output file
         product (str, option): Name of product to generate for model and add to file.
         If none, gets list of all product to be generated and added to file.
     """
-    model_data = ModelDataHandler(model_file, model, product)
-    update_attributes(model_data.data, L3_ATTRIBUTES)
-    if not product:
-        save_model_file(f"{model}_products", model_data, output_file)
-    else:
-        add_var2ncfile(model_data, output_file)
+    is_file = False
+    if os.path.isfile(output_file):
+        is_file = True
+
+    for m_file in model_files:
+        model_data = ModelDataHandler(m_file, model, is_file, product)
+        update_attributes(model_data.data, L3_ATTRIBUTES)
+
+        if is_file is False:
+            save_model_file(f"{model}_products", model_data, output_file)
+        else:
+            add_var2ncfile(model_data, output_file)
 
 
 class ModelDataHandler(DataSource):
@@ -44,13 +50,13 @@ class ModelDataHandler(DataSource):
         File includes all L3 products calculated per model data.
         File includes also all necessary data for model cycles.
     """
-    def __init__(self, model_file, model, product=None):
+    def __init__(self, model_file, model, is_file, product=None):
         super().__init__(model_file)
         self.model = model
         self.product = product
+        self.is_file = is_file
         self.generate_products()
-        if not self.product:
-            self.add_variables()
+        self.add_variables()
 
     def generate_products(self):
         cls = getattr(importlib.import_module(__name__), 'ModelDataHandler')
@@ -69,24 +75,6 @@ class ModelDataHandler(DataSource):
                 getattr(cls, f"_get_{self.product}")(self)
             except RuntimeError as error:
                 print(error)
-
-    def add_variables(self):
-        """Add variables connect to model and cycle"""
-        def add_cycle_variables():
-            wanted_vars = CONF['model_wanted_vars']['cycle']
-            for var in wanted_vars.split(', '):
-                if var in self.dataset.variables:
-                    self.append_data(self.dataset.variables[var][:], f"{self.model}_{var}")
-
-        def add_common_variables():
-            wanted_vars = CONF['model_wanted_vars']['common']
-            for var in wanted_vars.split(', '):
-                if var in self.dataset.variables:
-                    self.append_data(self.dataset.variables[var][:], f"{var}")
-
-        # TODO: Check if file exist. If not, add all, otherwise no common but cycle
-        add_common_variables()
-        add_cycle_variables()
 
     # TODO: Should these _get_productX be connected into one?
     def _get_cv(self):
@@ -126,3 +114,22 @@ class ModelDataHandler(DataSource):
         if len(var) == 1:
             return var[0]
         return var
+
+    def add_variables(self):
+        """Add basic variables off model and cycle"""
+        def add_cycle_variables():
+            wanted_vars = CONF['model_wanted_vars']['cycle']
+            for var in wanted_vars.split(', '):
+                if var in self.dataset.variables:
+                    self.append_data(self.dataset.variables[var][:], f"{self.model}_{var}")
+
+        def add_common_variables():
+            wanted_vars = CONF['model_wanted_vars']['common']
+            for var in wanted_vars.split(', '):
+                if var in self.dataset.variables:
+                    self.append_data(self.dataset.variables[var][:], f"{var}")
+
+        if self.is_file is False:
+            add_common_variables()
+        if not self.product:
+            add_cycle_variables()
