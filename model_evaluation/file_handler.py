@@ -28,12 +28,13 @@ def update_attributes(cloudnet_variables, attributes):
 
     """
     for key in cloudnet_variables:
+        x = len(key.split('_')) - 1
         if key in MODEL_ATTRIBUTES:
             cloudnet_variables[key].set_attributes(MODEL_ATTRIBUTES[key])
-        if key.split('_', 1)[-1] in attributes:
-            cloudnet_variables[key].set_attributes(attributes[key.split('_', 1)[-1]])
-        if key.split('_', 1)[-1] in CYCLE_ATTRIBUTES:
-            cloudnet_variables[key].set_attributes(CYCLE_ATTRIBUTES[key.split('_', 1)[-1]])
+        if key.split('_', x)[1] in attributes:
+            cloudnet_variables[key].set_attributes(attributes[key.split('_', x)[1]])
+        if key.split('_', x)[1] in CYCLE_ATTRIBUTES:
+            cloudnet_variables[key].set_attributes(CYCLE_ATTRIBUTES[key.split('_', x)[1]])
 
 
 def save_model_file(id_mark, obj, file_name):

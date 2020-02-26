@@ -1,5 +1,5 @@
 """
-TODO: better file name
+TODO: Modify names of quantities from cycle files
 
 This file will gather and connect model data from  all the model from select
 level3 quantity.
@@ -31,16 +31,14 @@ def generate_model_data(model, model_files, output_file, product=None):
         product (str, option): Name of product to generate for model and add to file.
         If none, gets list of all product to be generated and added to file.
     """
-    is_file = False
-    if os.path.isfile(output_file):
-        is_file = True
-
+    is_file = os.path.isfile(output_file)
     for m_file in model_files:
         model_data = ModelDataHandler(m_file, model, is_file, product)
         update_attributes(model_data.data, L3_ATTRIBUTES)
 
-        if is_file is False:
+        if os.path.isfile(output_file) is False:
             save_model_file(f"{model}_products", model_data, output_file)
+            is_file = os.path.isfile(output_file)
         else:
             add_var2ncfile(model_data, output_file)
 
@@ -55,8 +53,17 @@ class ModelDataHandler(DataSource):
         self.model = model
         self.product = product
         self.is_file = is_file
+        self.cycle = self._read_cycle_name(model_file)
         self.generate_products()
         self.add_variables()
+
+    def _read_cycle_name(self, model_file):
+        """Get cycle name from config for savin variable name"""
+        cycles = CONF[self.model]['cycle']
+        for cycle in cycles.split(', '):
+            if cycle in model_file:
+                return f"_{cycle}"
+        return ""
 
     def generate_products(self):
         cls = getattr(importlib.import_module(__name__), 'ModelDataHandler')
@@ -81,27 +88,28 @@ class ModelDataHandler(DataSource):
         """Collect cloud fraction straight from model file."""
         cv_name = self._read_config('cv')
         cv = self._set_variables(cv_name)
-        self.append_data(cv, f'{self.model}_cv')
+        self.append_data(cv, f'{self.model}_cv{self.cycle}')
 
     def _get_iwc(self):
         p_name, T_name, iwc_name = self._read_config('p', 'T', 'iwc')
         p, T, qi = self._set_variables(p_name, T_name, iwc_name)
         iwc = qi * p / (287 * T)
-        self.append_data(iwc, f'{self.model}_iwc')
+        self.append_data(iwc, f'{self.model}_iwc{self.cycle}')
 
     def _get_lwc(self):
         p_name, T_name, lwc_name = self._read_config('p', 'T', 'lwc')
         p, T, ql = self._set_variables(p_name, T_name, lwc_name)
         lwc = ql * p / (287 * T)
-        self.append_data(lwc, f'{self.model}_lwc')
-        
-    def _read_config(self, *args):
+        self.append_data(lwc, f'{self.model}_lwc{self.cycle}')
+
+    @staticmethod
+    def _read_config(*args):
         var = []
         for arg in args:
             try:
-                name = CONF[self.model][arg]
+                name = CONF['model_quantity'][arg]
             except KeyError:
-                name = CONF['general'][arg]
+                print(f"Wrong name: {KeyError}")
             var.append(name)
         if len(var) == 1:
             return var[0]
@@ -121,7 +129,7 @@ class ModelDataHandler(DataSource):
             wanted_vars = CONF['model_wanted_vars']['cycle']
             for var in wanted_vars.split(', '):
                 if var in self.dataset.variables:
-                    self.append_data(self.dataset.variables[var][:], f"{self.model}_{var}")
+                    self.append_data(self.dataset.variables[var][:], f"{self.model}_{var}{self.cycle}")
 
         def add_common_variables():
             wanted_vars = CONF['model_wanted_vars']['common']
