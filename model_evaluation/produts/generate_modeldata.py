@@ -1,12 +1,3 @@
-"""
-TODO: Modify names of quantities from cycle files
-
-This file will gather and connect model data from  all the model from select
-level3 quantity.
-
-gets: L3 product name, L3 obs. file
-Creates or adds data to .nc file
-"""
 import os
 import configparser
 import importlib
@@ -21,8 +12,7 @@ CONF.read(os.path.join(PATH, 'level3.ini'))
 
 
 def generate_model_data(model, model_files, output_file, product=None):
-    """Gathers model information for site from config.ini.
-    Generates all products in one model file. Creates file if not existing
+    """Generates all products in one model file including all model cycles.
 
     Args:
         model (str): name of model
@@ -44,18 +34,22 @@ def generate_model_data(model, model_files, output_file, product=None):
 
 
 class ModelDataHandler(DataSource):
-    """Creates and modifies L2b files for model.
-        File includes all L3 products calculated per model data.
-        File includes also all necessary data for model cycles.
+    """ Generates model data to L2b products.
+
+    Args:
+        model_file (DataSource): The :class:'DataSource' instance.
+        model (str): Name of model
+        is_file (bool): Boolean of output file existing
+        product (str/list, option): List of product to generate
     """
     def __init__(self, model_file, model, is_file, product=None):
         super().__init__(model_file)
-        self.model = model
-        self.product = product
-        self.is_file = is_file
-        self.cycle = self._read_cycle_name(model_file)
-        self.generate_products()
-        self.add_variables()
+        self._model = model
+        self._product = product
+        self._is_file = is_file
+        self._cycle = self._read_cycle_name(model_file)
+        self._add_variables()
+        self._generate_products()
 
     def _read_cycle_name(self, model_file):
         """Get cycle name from config for savin variable name"""
@@ -65,7 +59,7 @@ class ModelDataHandler(DataSource):
                 return f"_{cycle}"
         return ""
 
-    def generate_products(self):
+    def _generate_products(self):
         cls = getattr(importlib.import_module(__name__), 'ModelDataHandler')
         if not self.product:
             f_products = [i for i in dir(cls) if i.startswith('_get_')]
@@ -93,24 +87,20 @@ class ModelDataHandler(DataSource):
     def _get_iwc(self):
         p_name, T_name, iwc_name = self._read_config('p', 'T', 'iwc')
         p, T, qi = self._set_variables(p_name, T_name, iwc_name)
-        iwc = qi * p / (287 * T)
+        iwc = self._calc_water_content(qi, p, T)
         self.append_data(iwc, f'{self.model}_iwc{self.cycle}')
 
     def _get_lwc(self):
         p_name, T_name, lwc_name = self._read_config('p', 'T', 'lwc')
         p, T, ql = self._set_variables(p_name, T_name, lwc_name)
-        lwc = ql * p / (287 * T)
+        lwc = self._calc_water_content(ql, p, T)
         self.append_data(lwc, f'{self.model}_lwc{self.cycle}')
 
     @staticmethod
     def _read_config(*args):
         var = []
         for arg in args:
-            try:
-                name = CONF['model_quantity'][arg]
-            except KeyError:
-                print(f"Wrong name: {KeyError}")
-            var.append(name)
+            var.append(CONF['model_quantity'][arg])
         if len(var) == 1:
             return var[0]
         return var
@@ -123,21 +113,24 @@ class ModelDataHandler(DataSource):
             return var[0]
         return var
 
-    def add_variables(self):
-        """Add basic variables off model and cycle"""
-        def add_cycle_variables():
-            wanted_vars = CONF['model_wanted_vars']['cycle']
-            for var in wanted_vars.split(', '):
-                if var in self.dataset.variables:
-                    self.append_data(self.dataset.variables[var][:], f"{self.model}_{var}{self.cycle}")
+    @staticmethod
+    def _calc_water_content(q, p, T):
+        return q * p / (287 * T)
 
-        def add_common_variables():
+    def _add_variables(self):
+        """Add basic variables off model and cycle"""
+        def _add_common_variables():
             wanted_vars = CONF['model_wanted_vars']['common']
             for var in wanted_vars.split(', '):
                 if var in self.dataset.variables:
                     self.append_data(self.dataset.variables[var][:], f"{var}")
 
+        def _add_cycle_variables():
+            wanted_vars = CONF['model_wanted_vars']['cycle']
+            for var in wanted_vars.split(', '):
+                if var in self.dataset.variables:
+                    self.append_data(self.dataset.variables[var][:], f"{self.model}_{var}{self.cycle}")
         if self.is_file is False:
-            add_common_variables()
+            _add_common_variables()
         if not self.product:
-            add_cycle_variables()
+            _add_cycle_variables()
