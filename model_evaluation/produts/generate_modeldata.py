@@ -1,7 +1,8 @@
 import os
 import configparser
 import importlib
-from model_evaluation.file_handler import DataSource, update_attributes, save_model_file, add_var2ncfile
+from cloudnetpy.categorize.datasource import DataSource
+from model_evaluation.file_handler import update_attributes, save_model_file, add_var2ncfile
 from model_evaluation.metadata import L3_ATTRIBUTES
 
 PATH = os.path.dirname(os.path.abspath(__file__))
@@ -53,7 +54,7 @@ class ModelDataHandler(DataSource):
 
     def _read_cycle_name(self, model_file):
         """Get cycle name from config for savin variable name"""
-        cycles = CONF[self.model]['cycle']
+        cycles = CONF[self._model]['cycle']
         for cycle in cycles.split(', '):
             if cycle in model_file:
                 return f"_{cycle}"
@@ -61,19 +62,19 @@ class ModelDataHandler(DataSource):
 
     def _generate_products(self):
         cls = getattr(importlib.import_module(__name__), 'ModelDataHandler')
-        if not self.product:
+        if not self._product:
             f_products = [i for i in dir(cls) if i.startswith('_get_')]
             for func in f_products:
                 getattr(cls, func)(self)
-        elif type(self.product) is list:
-            for p in self.product:
+        elif type(self._product) is list:
+            for p in self._product:
                 try:
                     getattr(cls, f"_get_{p}")(self)
                 except RuntimeError as error:
                     print(error)
         else:
             try:
-                getattr(cls, f"_get_{self.product}")(self)
+                getattr(cls, f"_get_{self._product}")(self)
             except RuntimeError as error:
                 print(error)
 
@@ -82,19 +83,19 @@ class ModelDataHandler(DataSource):
         """Collect cloud fraction straight from model file."""
         cv_name = self._read_config('cv')
         cv = self._set_variables(cv_name)
-        self.append_data(cv, f'{self.model}_cv{self.cycle}')
+        self.append_data(cv, f'{self._model}_cv{self._cycle}')
 
     def _get_iwc(self):
         p_name, T_name, iwc_name = self._read_config('p', 'T', 'iwc')
         p, T, qi = self._set_variables(p_name, T_name, iwc_name)
         iwc = self._calc_water_content(qi, p, T)
-        self.append_data(iwc, f'{self.model}_iwc{self.cycle}')
+        self.append_data(iwc, f'{self._model}_iwc{self._cycle}')
 
     def _get_lwc(self):
         p_name, T_name, lwc_name = self._read_config('p', 'T', 'lwc')
         p, T, ql = self._set_variables(p_name, T_name, lwc_name)
         lwc = self._calc_water_content(ql, p, T)
-        self.append_data(lwc, f'{self.model}_lwc{self.cycle}')
+        self.append_data(lwc, f'{self._model}_lwc{self._cycle}')
 
     @staticmethod
     def _read_config(*args):
@@ -129,8 +130,8 @@ class ModelDataHandler(DataSource):
             wanted_vars = CONF['model_wanted_vars']['cycle']
             for var in wanted_vars.split(', '):
                 if var in self.dataset.variables:
-                    self.append_data(self.dataset.variables[var][:], f"{self.model}_{var}{self.cycle}")
-        if self.is_file is False:
+                    self.append_data(self.dataset.variables[var][:], f"{self._model}_{var}{self._cycle}")
+        if self._is_file is False:
             _add_common_variables()
-        if not self.product:
+        if not self._product:
             _add_cycle_variables()
