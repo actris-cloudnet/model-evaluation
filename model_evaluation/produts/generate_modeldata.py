@@ -28,7 +28,7 @@ def generate_model_data(model, model_files, output_file, product=None):
         update_attributes(model_data.data, L3_ATTRIBUTES)
 
         if os.path.isfile(output_file) is False:
-            save_model_file(f"{model}_products", model_data, output_file)
+            save_model_file(f"{model}_products", model_data, model_files, output_file)
             is_file = os.path.isfile(output_file)
         else:
             add_var2ncfile(model_data, output_file)

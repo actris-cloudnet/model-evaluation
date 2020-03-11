@@ -26,7 +26,7 @@ def update_attributes(cloudnet_variables, attributes):
             cloudnet_variables[key].set_attributes(CYCLE_ATTRIBUTES[key.split('_', x)[1]])
 
 
-def save_model_file(id_mark, obj, file_name):
+def save_model_file(id_mark, obj, model_files, file_name):
     """Saves a standard Cloudnet product file.
 
     Args:
@@ -38,9 +38,11 @@ def save_model_file(id_mark, obj, file_name):
     dimensions = {'time': len(obj.time),
                   'level': len(obj.dataset.variables['level'])}
     root_group = output.init_file(file_name, dimensions, obj.data)
+    _add_standard_global_attributes(root_group)
     output.add_file_type(root_group, id_mark)
-    root_group.title = f"Model data of {id_mark.capitalize()} from {obj.dataset.location}"
-    root_group.source = f"{obj._model} file: {product_tools.get_source(obj)}"
+    root_group.title = f"Model data of {id_mark.capitalize().replace('_', ' ')} from {obj.dataset.location}"
+    #root_group.source = f"{obj._model} file: {product_tools.get_source(obj)}"
+    _add_source(root_group, obj, model_files)
     output.copy_global(obj.dataset, root_group, ('location', 'day', 'month', 'year'))
     output.merge_history(root_group, id_mark, obj)
     root_group.close()
@@ -56,23 +58,6 @@ def add_var2ncfile(obj, file_name):
             for attr in obj.data[key].fetch_attributes():
                 setattr(nc_file.variables[key], attr, getattr(obj.data[key], attr))
     nc_file.close()
-
-
-def _init_file(file_name, dimensions, obs):
-    """Initializes a Cloudnet file for writing.
-
-    Args:
-        file_name (str): File name to be generated.
-        dimensions (dict): Dictionary containing dimension for this file.
-        obs (dict): Dictionary containing :class:`CloudnetArray` instances.
-
-    """
-    root_group = netCDF4.Dataset(file_name, 'w', format='NETCDF4_CLASSIC')
-    for key, dimension in dimensions.items():
-        root_group.createDimension(key, dimension)
-    _write_vars2nc(root_group, obs)
-    _add_standard_global_attributes(root_group)
-    return root_group
 
 
 def _write_vars2nc(rootgrp, cloudnet_variables):
@@ -104,3 +89,13 @@ def _add_standard_global_attributes(root_group):
     root_group.Conventions = 'CF-1.7'
     root_group.model_evaluation_version = version.__version__
     root_group.file_uuid = utils.get_uuid()
+
+
+def _add_source(root_ground, obj, model_files):
+    """generates source multiple files is existing"""
+    source = f"{obj._model} file(s): "
+    for i, f in enumerate(model_files):
+        source += f"{f.split('/')[-1]}"
+        if i < len(model_files) - 1:
+            source += f"\n"
+    root_ground.source = source
