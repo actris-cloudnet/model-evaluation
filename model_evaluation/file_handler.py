@@ -1,3 +1,4 @@
+import os
 import netCDF4
 from cloudnetpy import utils, output
 from cloudnetpy.products import product_tools
@@ -95,7 +96,7 @@ def _add_source(root_ground, obj, model_files):
     """generates source multiple files is existing"""
     source = f"{obj._model} file(s): "
     for i, f in enumerate(model_files):
-        source += f"{f.split('/')[-1]}"
+        source += f"{os.path.basename(f)}"
         if i < len(model_files) - 1:
             source += f"\n"
     root_ground.source = source
