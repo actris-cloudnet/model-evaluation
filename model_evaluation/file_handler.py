@@ -1,7 +1,6 @@
 import os
 import netCDF4
 from cloudnetpy import utils, output
-from cloudnetpy.products import product_tools
 from model_evaluation import version
 from model_evaluation.metadata import MODEL_ATTRIBUTES, CYCLE_ATTRIBUTES
 
@@ -27,7 +26,7 @@ def update_attributes(cloudnet_variables, attributes):
             cloudnet_variables[key].set_attributes(CYCLE_ATTRIBUTES[key.split('_', x)[1]])
 
 
-def save_model_file(id_mark, obj, model_files, file_name):
+def save_modelfile(id_mark, obj, model_files, file_name):
     """Saves a standard Cloudnet product file.
 
     Args:
@@ -42,7 +41,6 @@ def save_model_file(id_mark, obj, model_files, file_name):
     _add_standard_global_attributes(root_group)
     output.add_file_type(root_group, id_mark)
     root_group.title = f"Model data of {id_mark.capitalize().replace('_', ' ')} from {obj.dataset.location}"
-    #root_group.source = f"{obj._model} file: {product_tools.get_source(obj)}"
     _add_source(root_group, obj, model_files)
     output.copy_global(obj.dataset, root_group, ('location', 'day', 'month', 'year'))
     output.merge_history(root_group, id_mark, obj)

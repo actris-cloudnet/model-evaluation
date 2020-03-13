@@ -2,7 +2,7 @@ import os
 import configparser
 import importlib
 from cloudnetpy.categorize.datasource import DataSource
-from model_evaluation.file_handler import update_attributes, save_model_file, add_var2ncfile
+from model_evaluation.file_handler import update_attributes, save_modelfile, add_var2ncfile
 from model_evaluation.metadata import L3_ATTRIBUTES
 
 PATH = os.path.dirname(os.path.abspath(__file__))
@@ -28,7 +28,7 @@ def generate_model_data(model, model_files, output_file, product=None):
         update_attributes(model_data.data, L3_ATTRIBUTES)
 
         if os.path.isfile(output_file) is False:
-            save_model_file(f"{model}_products", model_data, model_files, output_file)
+            save_modelfile(f"{model}_products", model_data, model_files, output_file)
             is_file = os.path.isfile(output_file)
         else:
             add_var2ncfile(model_data, output_file)
