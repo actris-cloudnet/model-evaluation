@@ -4,13 +4,6 @@ Model evaluation is application to regenerating CloudnetPy results to statistica
 
 Repository for CloudnetPy level3 products.
 
-Installation
-------------
-
-CloudnetPy can be installed from the Python Package Index, PyPI, using pip:
-```
-$ pip3 install cloudnetpy
-```
 
 Contributing
 ------------
