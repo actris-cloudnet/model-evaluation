@@ -2,8 +2,6 @@ import os
 import configparser
 import importlib
 from cloudnetpy.categorize.datasource import DataSource
-from model_evaluation.file_handler import update_attributes, save_modelfile, add_var2ncfile
-from model_evaluation.metadata import L3_ATTRIBUTES
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 PATH = os.path.split(PATH)[0]
@@ -12,42 +10,20 @@ CONF.optionxform = str
 CONF.read(os.path.join(PATH, 'level3.ini'))
 
 
-def generate_model_data(model, model_files, output_file, product=None):
-    """Generates all products in one model file including all model cycles.
-
-    Args:
-        model (str): name of model
-        model_files (list): List of files from model to be generated
-        output_file (str): name of model output file
-        product (str, option): Name of product to generate for model and add to file.
-        If none, gets list of all product to be generated and added to file.
-    """
-    is_file = os.path.isfile(output_file)
-    for m_file in model_files:
-        model_data = ModelDataHandler(m_file, model, is_file, product)
-        update_attributes(model_data.data, L3_ATTRIBUTES)
-
-        if os.path.isfile(output_file) is False:
-            save_modelfile(f"{model}_products", model_data, model_files, output_file)
-            is_file = os.path.isfile(output_file)
-        else:
-            add_var2ncfile(model_data, output_file)
-
-
-class ModelDataHandler(DataSource):
+class ModelGrid(DataSource):
     """ Generates model data to L2b products.
 
     Args:
         model_file (DataSource): The :class:'DataSource' instance.
         model (str): Name of model
-        is_file (bool): Boolean of output file existing
-        product (str/list, option): List of product to generate
+        output_file (str): name of output file to save data
+        product (str): name of product to generate
     """
-    def __init__(self, model_file, model, is_file, product=None):
+    def __init__(self, model_file, model, output_file, product):
         super().__init__(model_file)
         self._model = model
         self._product = product
-        self._is_file = is_file
+        self._is_file = os.path.isfile(output_file)
         self._cycle = self._read_cycle_name(model_file)
         self._add_variables()
         self._generate_products()
@@ -61,24 +37,12 @@ class ModelDataHandler(DataSource):
         return ""
 
     def _generate_products(self):
-        cls = getattr(importlib.import_module(__name__), 'ModelDataHandler')
-        if not self._product:
-            f_products = [i for i in dir(cls) if i.startswith('_get_')]
-            for func in f_products:
-                getattr(cls, func)(self)
-        elif type(self._product) is list:
-            for p in self._product:
-                try:
-                    getattr(cls, f"_get_{p}")(self)
-                except RuntimeError as error:
-                    print(error)
-        else:
-            try:
-                getattr(cls, f"_get_{self._product}")(self)
-            except RuntimeError as error:
-                print(error)
+        cls = getattr(importlib.import_module(__name__), 'ModelGrid')
+        try:
+            getattr(cls, f"_get_{self._product}")(self)
+        except RuntimeError as error:
+            print(error)
 
-    # TODO: Should these _get_productX be connected into one?
     def _get_cv(self):
         """Collect cloud fraction straight from model file."""
         cv_name = self._read_config('cv')
@@ -133,5 +97,4 @@ class ModelDataHandler(DataSource):
                     self.append_data(self.dataset.variables[var][:], f"{self._model}_{var}{self._cycle}")
         if self._is_file is False:
             _add_common_variables()
-        if not self._product:
-            _add_cycle_variables()
+        _add_cycle_variables()

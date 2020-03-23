@@ -3,7 +3,7 @@ import numpy.testing as testing
 from datetime import date
 import pytest
 import netCDF4
-from model_evaluation.products.generate_modeldata import ModelDataHandler
+from model_evaluation.products.regrid_observation import ModelDataHandler
 
 MODEL = 'ecmwf'
 IS_FILE = True
