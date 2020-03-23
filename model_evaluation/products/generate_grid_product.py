@@ -10,7 +10,8 @@ import os
 import numpy as np
 import configparser
 import netCDF4
-from cloudnetpy.utils import rebin_1d, rebin_2d, interpolate_2d_masked
+from scipy import stats
+from cloudnetpy import utils
 from model_evaluation.products.regrid_observation import ModelGrid
 from model_evaluation.file_handler import update_attributes, save_modelfile, add_var2ncfile
 from model_evaluation.metadata import L3_ATTRIBUTES
@@ -50,14 +51,19 @@ def generate_regrid_products(model, obs, model_files, output_file):
 def rebin_data(data, time, time_new, height, height_new):
     """Rebins `data` in time and optionally interpolates in height.
     Args:
-        time (ndarray): 1D time array.
-        time_new (ndarray): 1D new time array.
-        height (ndarray, optional): 1D height array.
-        height_new (ndarray, optional): 1D new height array. Should be
-            given if also `height` is given.
+        data (ndarray): 2D data of thicker resolution array
+        time (ndarray): 1D time array ow thicker resolution.
+        time_new (ndarray): 1D time array wider resolution.
+        height (ndarray): 1D height array of thicker resolution.
+        height_new (ndarray): 2D height array wider resolution
     """
-    data = rebin_2d(time, data, time_new)
-    data = interpolate_2d_masked(data, (time_new, height),
-                                       (time_new, height_new))
+    time_steps = utils.binvec(time_new)
+    for i, t in enumerate(time_steps):
+        time_values = np.where(t <= time > t)
+        height_steps = utils.binvec(height_new[i])
+
+
+
+
     return data
 
