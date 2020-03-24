@@ -12,6 +12,7 @@ import configparser
 import netCDF4
 from scipy import stats
 from cloudnetpy import utils
+from cloudnetpy.categorize.datasource import DataSource
 from model_evaluation.products.regrid_observation import ModelGrid
 from model_evaluation.file_handler import update_attributes, save_modelfile, add_var2ncfile
 from model_evaluation.metadata import L3_ATTRIBUTES
@@ -59,11 +60,28 @@ def rebin_data(data, time, time_new, height, height_new):
     """
     time_steps = utils.binvec(time_new)
     for i, t in enumerate(time_steps):
-        time_values = np.where(t <= time > t)
+        time_index = np.where(t <= time > t)
         height_steps = utils.binvec(height_new[i])
 
+        for j, h in enumerate(height_steps):
+            height_index = np.where(h >= height > h)
+            data[i, j] = np.mean(data[time_index, height_index])
 
-
+    #TODO: Think if possible to do
+    #data = [[np.mean(data[np.where(t <= time > t), np.where(h >= height > h)])
+    #         for h in utils.binvec(height_new[i])]
+    #        for i, t in enumerate(utils.binvec(time_new))]
 
     return data
 
+
+class ObservationManager(DataSource):
+    """This class will read and generate observation to wanted format"""
+    def __init__(self, obs, obs_file):
+        super().__init__(obs_file)
+        self.obs = obs
+
+    def _generate_product(self):
+        if self.obs is 'cv':
+            print("")
+            # Generate needed information for calculating cloud fraction
