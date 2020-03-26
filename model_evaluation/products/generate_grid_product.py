@@ -16,6 +16,7 @@ from cloudnetpy.categorize.datasource import DataSource
 from model_evaluation.products.regrid_observation import ModelGrid
 from model_evaluation.file_handler import update_attributes, save_modelfile, add_var2ncfile
 from model_evaluation.metadata import L3_ATTRIBUTES
+from model_evaluation.products.cloud_fraction import generate_cv
 
 
 PATH = os.path.dirname(os.path.abspath(__file__))
@@ -36,11 +37,15 @@ def generate_regrid_products(model, obs, model_files, output_file):
             output_file (str): name of model output file
     """
     product_file = CONF['products'][obs]
-    # TODO: Get observation products in here
-    iwc_obs = netCDF4.Dataset(product_file).variables[obs][:]
+    product_ob = ObservationManager(obs, product_file)
+    print(product_ob.time.shape)
+    h = product_ob.data['time'][:]
+    print(h.shape)
     for m_file in model_files:
         data_obj = ModelGrid(m_file, model, output_file, obs)
-        #TODO: Regrid obs to model
+
+        data_obj = rebin_data(product_ob, data_obj, model, obs)
+
         update_attributes(data_obj.data, L3_ATTRIBUTES)
 
         if os.path.isfile(output_file) is False:
@@ -49,7 +54,11 @@ def generate_regrid_products(model, obs, model_files, output_file):
             add_var2ncfile(data_obj, output_file)
 
 
-def rebin_data(data, time, time_new, height, height_new):
+def keys_for_product(obs, data_obj, product_obj):
+    print("lol")
+
+
+def rebin_data(old_data, new_data, model, obs):
     """Rebins `data` in time and optionally interpolates in height.
     Args:
         data (ndarray): 2D data of thicker resolution array
@@ -58,21 +67,22 @@ def rebin_data(data, time, time_new, height, height_new):
         height (ndarray): 1D height array of thicker resolution.
         height_new (ndarray): 2D height array wider resolution
     """
-    time_steps = utils.binvec(time_new)
+    rebin_data = np.zeros(new_data.data[obs][:].shape)
+    time_steps = utils.binvec(new_data.time)
     for i, t in enumerate(time_steps):
-        time_index = np.where(t <= time > t)
-        height_steps = utils.binvec(height_new[i])
+        time_index = np.where(t <= old_data.time > t)
+        height_steps = utils.binvec(new_data.data[f"{model}_height"][:][i])
 
         for j, h in enumerate(height_steps):
-            height_index = np.where(h >= height > h)
-            data[i, j] = np.mean(data[time_index, height_index])
+            height_index = np.where(h >= old_data.data[f"{model}_height"][:][i] > h)
+            rebin_data[i, j] = np.mean(old_data[time_index, height_index])
 
     #TODO: Think if possible to do
     #data = [[np.mean(data[np.where(t <= time > t), np.where(h >= height > h)])
     #         for h in utils.binvec(height_new[i])]
     #        for i, t in enumerate(utils.binvec(time_new))]
 
-    return data
+    return new_data.append_data(rebin_data, f"{obs}_obs_{model}{new_data._cycle}")
 
 
 class ObservationManager(DataSource):
@@ -80,8 +90,16 @@ class ObservationManager(DataSource):
     def __init__(self, obs, obs_file):
         super().__init__(obs_file)
         self.obs = obs
+        self.file = obs_file
+        self._generate_product()
 
     def _generate_product(self):
         if self.obs is 'cv':
             print("")
             # Generate needed information for calculating cloud fraction
+            # Kutsutaan Cloud fraction luokkaa hoitamaan homma
+            # Palauttaa datan halutussa muodossa, jotta voidaan tehdä gridaaminen
+            self.data = generate_cv(self.data, self.file)
+        else:
+            self.append_data(self.getvar(self.obs), self.obs)
+        self.append_data(self.getvar('height'), 'height')
