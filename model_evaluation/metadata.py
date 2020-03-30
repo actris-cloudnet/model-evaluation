@@ -107,3 +107,22 @@ L3_ATTRIBUTES = {
         comment='Calculated using model liquid water mixing ration, pressure and temperature: ql*P/287*T'
     )
 }
+
+PRODUCT_ATTRIBUTES = {
+    'cv': MetaData(
+        long_name='Cloud fraction reshaped to model dimensions by averaging',
+        units='1',
+        comment="Calculated using categorize-file with produce CloudnetPy"
+    ),
+    'iwc': MetaData(
+        long_name='Ice water content reshaped to model dimensions by averaging',
+        units='kg m-3',
+        comment='Read from iwc-file  produce with CloudnetPy'
+
+    ),
+    'lwc': MetaData(
+        long_name='Liquid water content reshaped to model dimensions by averaging',
+        units='kg m-3',
+        comment='Read from lwc-file produce with CloudnetPy'
+    )
+}

@@ -11,12 +11,10 @@ import numpy as np
 import configparser
 import netCDF4
 from datetime import datetime, timedelta
-from scipy import stats
 from cloudnetpy import utils
 from cloudnetpy.categorize.datasource import DataSource
 from model_evaluation.products.regrid_observation import ModelGrid
 from model_evaluation.file_handler import update_attributes, save_modelfile, add_var2ncfile
-from model_evaluation.metadata import L3_ATTRIBUTES
 from model_evaluation.products.cloud_fraction import generate_cv
 
 
@@ -42,7 +40,7 @@ def generate_regrid_products(model, obs, model_files, output_file):
     for m_file in model_files:
         data_obj = ModelGrid(m_file, model, output_file, obs)
         data_obj = regrid_array(product_obj, data_obj, model, obs)
-        update_attributes(data_obj.data, L3_ATTRIBUTES)
+        update_attributes(data_obj.data)
 
         if os.path.isfile(output_file) is False:
             save_modelfile(f"{model}_products", data_obj, model_files, output_file)

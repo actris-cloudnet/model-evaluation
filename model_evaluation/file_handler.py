@@ -2,10 +2,10 @@ import os
 import netCDF4
 from cloudnetpy import utils, output
 from model_evaluation import version
-from model_evaluation.metadata import MODEL_ATTRIBUTES, CYCLE_ATTRIBUTES
+from model_evaluation.metadata import MODEL_ATTRIBUTES, CYCLE_ATTRIBUTES, L3_ATTRIBUTES, PRODUCT_ATTRIBUTES
 
 
-def update_attributes(cloudnet_variables, attributes):
+def update_attributes(cloudnet_variables):
     """Overrides existing CloudnetArray-attributes.
 
     Overrides existing attributes using hard-coded values.
@@ -20,8 +20,10 @@ def update_attributes(cloudnet_variables, attributes):
         x = len(key.split('_')) - 1
         if key in MODEL_ATTRIBUTES:
             cloudnet_variables[key].set_attributes(MODEL_ATTRIBUTES[key])
-        elif key.split('_', x)[1] in attributes:
-            cloudnet_variables[key].set_attributes(attributes[key.split('_', x)[1]])
+        elif key.split('_', x)[0] in PRODUCT_ATTRIBUTES:
+            cloudnet_variables[key].set_attributes(PRODUCT_ATTRIBUTES[key.split('_', x)[0]])
+        elif key.split('_', x)[1] in L3_ATTRIBUTES:
+            cloudnet_variables[key].set_attributes(L3_ATTRIBUTES[key.split('_', x)[1]])
         elif key.split('_', x)[1] in CYCLE_ATTRIBUTES:
             cloudnet_variables[key].set_attributes(CYCLE_ATTRIBUTES[key.split('_', x)[1]])
 
