@@ -10,6 +10,7 @@ import os
 import numpy as np
 import configparser
 import netCDF4
+from datetime import datetime, timedelta
 from scipy import stats
 from cloudnetpy import utils
 from cloudnetpy.categorize.datasource import DataSource
@@ -37,15 +38,10 @@ def generate_regrid_products(model, obs, model_files, output_file):
             output_file (str): name of model output file
     """
     product_file = CONF['products'][obs]
-    product_ob = ObservationManager(obs, product_file)
-    print(product_ob.time.shape)
-    h = product_ob.data['time'][:]
-    print(h.shape)
+    product_obj = ObservationManager(obs, product_file)
     for m_file in model_files:
         data_obj = ModelGrid(m_file, model, output_file, obs)
-
-        data_obj = rebin_data(product_ob, data_obj, model, obs)
-
+        data_obj = regrid_array(product_obj, data_obj, model, obs)
         update_attributes(data_obj.data, L3_ATTRIBUTES)
 
         if os.path.isfile(output_file) is False:
@@ -54,35 +50,35 @@ def generate_regrid_products(model, obs, model_files, output_file):
             add_var2ncfile(data_obj, output_file)
 
 
-def keys_for_product(obs, data_obj, product_obj):
-    print("lol")
-
-
-def rebin_data(old_data, new_data, model, obs):
+def regrid_array(old_obj, new_obj, model, obs):
     """Rebins `data` in time and optionally interpolates in height.
     Args:
-        data (ndarray): 2D data of thicker resolution array
-        time (ndarray): 1D time array ow thicker resolution.
-        time_new (ndarray): 1D time array wider resolution.
-        height (ndarray): 1D height array of thicker resolution.
-        height_new (ndarray): 2D height array wider resolution
+        old_obj (ObservationManager object): 2D data of thicker resolution Object
+        new_obj (ModelGrid object): 2D data of wider resolution Object
+        model (str): Name of used model
+        obs (str): Name of generating observation
     """
-    rebin_data = np.zeros(new_data.data[obs][:].shape)
-    time_steps = utils.binvec(new_data.time)
-    for i, t in enumerate(time_steps):
-        time_index = np.where(t <= old_data.time > t)
-        height_steps = utils.binvec(new_data.data[f"{model}_height"][:][i])
+    regrid_array = np.zeros(new_obj.data[new_obj.keys[obs]][:].shape)
 
-        for j, h in enumerate(height_steps):
-            height_index = np.where(h >= old_data.data[f"{model}_height"][:][i] > h)
-            rebin_data[i, j] = np.mean(old_data[time_index, height_index])
+    time_steps = utils.binvec(new_obj.time)
+    time_steps = time2datetime(time_steps, old_obj.date)
+    old_time = time2datetime(old_obj.time, old_obj.date)
 
-    #TODO: Think if possible to do
-    #data = [[np.mean(data[np.where(t <= time > t), np.where(h >= height > h)])
-    #         for h in utils.binvec(height_new[i])]
-    #        for i, t in enumerate(utils.binvec(time_new))]
+    for i in range(len(time_steps) - 1):
+        time_index = (old_time >= time_steps[i]) & (old_time < time_steps[i+1])
+        height_steps = utils.binvec(new_obj.data[new_obj.keys['height']][:][i])
 
-    return new_data.append_data(rebin_data, f"{obs}_obs_{model}{new_data._cycle}")
+        for j in range(len(height_steps)-1):
+            height_index = (old_obj.data['height'][:] >= height_steps[j]) & \
+                           (old_obj.data['height'][:] < height_steps[j+1])
+            index = np.outer(time_index, height_index)
+            regrid_array[i, j] = np.mean(old_obj.data[obs][:][index])
+    new_obj.append_data(regrid_array, f"{obs}_obs_{model}{new_obj._cycle}")
+    return new_obj
+
+
+def time2datetime(time_array, date):
+    return np.asarray([date + timedelta(hours=float(time)) for time in time_array])
 
 
 class ObservationManager(DataSource):
@@ -91,6 +87,7 @@ class ObservationManager(DataSource):
         super().__init__(obs_file)
         self.obs = obs
         self.file = obs_file
+        self.date = self._get_date()
         self._generate_product()
 
     def _generate_product(self):
@@ -103,3 +100,18 @@ class ObservationManager(DataSource):
         else:
             self.append_data(self.getvar(self.obs), self.obs)
         self.append_data(self.getvar('height'), 'height')
+
+    def _get_date(self):
+        """Returns measurement date string."""
+        nc = netCDF4.Dataset(self.file)
+        case_date = datetime(int(nc.year), int(nc.month), int(nc.day), 0, 0, 0)
+        nc.close()
+        return case_date
+
+
+
+
+#TODO: Think if possible to do
+#data = [[np.mean(data[np.where(t <= time > t), np.where(h >= height > h)])
+#         for h in utils.binvec(height_new[i])]
+#        for i, t in enumerate(utils.binvec(time_new))]

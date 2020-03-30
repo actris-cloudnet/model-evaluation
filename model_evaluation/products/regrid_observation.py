@@ -23,6 +23,7 @@ class ModelGrid(DataSource):
         super().__init__(model_file)
         self._model = model
         self._product = product
+        self.keys = {}
         self._is_file = os.path.isfile(output_file)
         self._cycle = self._read_cycle_name(model_file)
         self._add_variables()
@@ -48,18 +49,21 @@ class ModelGrid(DataSource):
         cv_name = self._read_config('cv')
         cv = self._set_variables(cv_name)
         self.append_data(cv, f'{self._model}_cv{self._cycle}')
+        self.keys[self._product] = f'{self._model}_cv{self._cycle}'
 
     def _get_iwc(self):
         p_name, T_name, iwc_name = self._read_config('p', 'T', 'iwc')
         p, T, qi = self._set_variables(p_name, T_name, iwc_name)
         iwc = self._calc_water_content(qi, p, T)
         self.append_data(iwc, f'{self._model}_iwc{self._cycle}')
+        self.keys[self._product] = f'{self._model}_iwc{self._cycle}'
 
     def _get_lwc(self):
         p_name, T_name, lwc_name = self._read_config('p', 'T', 'lwc')
         p, T, ql = self._set_variables(p_name, T_name, lwc_name)
         lwc = self._calc_water_content(ql, p, T)
         self.append_data(lwc, f'{self._model}_lwc{self._cycle}')
+        self.keys[self._product] = f'{self._model}_lwc{self._cycle}'
 
     @staticmethod
     def _read_config(*args):
@@ -95,6 +99,8 @@ class ModelGrid(DataSource):
             for var in wanted_vars.split(', '):
                 if var in self.dataset.variables:
                     self.append_data(self.dataset.variables[var][:], f"{self._model}_{var}{self._cycle}")
+                if var == 'height':
+                    self.keys['height'] = f"{self._model}_{var}{self._cycle}"
         if self._is_file is False:
             _add_common_variables()
         _add_cycle_variables()
