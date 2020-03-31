@@ -3,10 +3,11 @@ import numpy.testing as testing
 from datetime import date
 import pytest
 import netCDF4
-from model_evaluation.products.regrid_observation import ModelDataHandler
+from model_evaluation.products.model_products import ModelGrid
 
 MODEL = 'ecmwf'
-IS_FILE = True
+OUTPUT_FILE = '/home/korpinen/Documents/ACTRIS/model_evaluation/test_data_ecmwf.nc'
+PRODUCT = 'iwc'
 
 
 @pytest.fixture(scope='session')
@@ -66,25 +67,25 @@ def model_file(tmpdir_factory, file_metadata):
 @pytest.mark.parametrize("cycle, answer", [
     ('test_file_0-11', '_0-11'), ('test_file', '')])
 def test_read_cycle_name(cycle, answer, model_file):
-    obj = ModelDataHandler(str(model_file), MODEL, IS_FILE)
+    obj = ModelGrid(str(model_file), MODEL, OUTPUT_FILE, PRODUCT)
     x = obj._read_cycle_name(cycle)
     assert x == answer
 
 
 def test_get_cv(model_file):
-    obj = ModelDataHandler(str(model_file), MODEL, IS_FILE)
+    obj = ModelGrid(str(model_file), MODEL, OUTPUT_FILE, PRODUCT)
     obj._get_cv()
     assert f"{MODEL}_cv" in obj.data.keys()
 
 
 def test_get_iwc(model_file):
-    obj = ModelDataHandler(str(model_file), MODEL, IS_FILE)
+    obj = ModelGrid(str(model_file), MODEL, OUTPUT_FILE, PRODUCT)
     obj._get_cv()
     assert f"{MODEL}_iwc" in obj.data.keys()
 
 
 def test_get_lwc(model_file):
-    obj = ModelDataHandler(str(model_file), MODEL, IS_FILE)
+    obj = ModelGrid(str(model_file), MODEL, OUTPUT_FILE, 'lwc')
     obj._get_cv()
     assert f"{MODEL}_lwc" in obj.data.keys()
 
@@ -92,7 +93,7 @@ def test_get_lwc(model_file):
 @pytest.mark.parametrize("key", [
     'pressure', 'temperature'])
 def test_read_config(key, model_file):
-    obj = ModelDataHandler(str(model_file), MODEL, IS_FILE)
+    obj = ModelGrid(str(model_file), MODEL, OUTPUT_FILE, PRODUCT)
     var = obj._read_config('p', 'T')
     assert key in var
 
@@ -100,7 +101,7 @@ def test_read_config(key, model_file):
 @pytest.mark.parametrize("key", [
     'pressure', 'temperature'])
 def test_set_variables(key, model_file):
-    obj = ModelDataHandler(str(model_file), MODEL, IS_FILE)
+    obj = ModelGrid(str(model_file), MODEL, OUTPUT_FILE, PRODUCT)
     var = obj._set_variables(key)
     x = netCDF4.Dataset(model_file).variables[key]
     testing.assert_almost_equal(x, var)
@@ -111,7 +112,7 @@ def test_set_variables(key, model_file):
     (20, 40, 80),
     (0.3, 0.6, 0.9)])
 def test_calc_water_content(p, T, q, model_file):
-    obj = ModelDataHandler(str(model_file), MODEL, IS_FILE)
+    obj = ModelGrid(str(model_file), MODEL, OUTPUT_FILE, PRODUCT)
     x = q * p / (287 * T)
     testing.assert_almost_equal(x, obj._calc_water_content(q, p, T))
     assert True
@@ -120,7 +121,8 @@ def test_calc_water_content(p, T, q, model_file):
 @pytest.mark.parametrize("key", [
     'time', 'level', 'horizontal_resolution', 'latitude', 'longitude'])
 def test_add_common_variables_false(key, model_file):
-    obj = ModelDataHandler(str(model_file), MODEL, False)
+    obj = ModelGrid(str(model_file), MODEL, OUTPUT_FILE, PRODUCT)
+    obj._is_file = False
     obj._add_variables()
     assert key in obj.data.keys()
 
@@ -128,7 +130,8 @@ def test_add_common_variables_false(key, model_file):
 @pytest.mark.parametrize("key", [
     'time', 'level', 'horizontal_resolution', 'latitude', 'longitude'])
 def test_add_common_variables_true(key, model_file):
-    obj = ModelDataHandler(str(model_file), MODEL, True)
+    obj = ModelGrid(str(model_file), MODEL, OUTPUT_FILE, PRODUCT)
+    obj._is_file = True
     obj._add_variables()
     assert key not in obj.data.keys()
 
@@ -136,14 +139,7 @@ def test_add_common_variables_true(key, model_file):
 @pytest.mark.parametrize("key", [
     'height', 'forecast_time'])
 def test_add_cycle_variables_no_products(key, model_file):
-    obj = ModelDataHandler(str(model_file), MODEL, False)
+    obj = ModelGrid(str(model_file), MODEL, OUTPUT_FILE, PRODUCT)
+    obj._is_file = False
     obj._add_variables()
     assert f"{MODEL}_{key}" in obj.data.keys()
-
-
-@pytest.mark.parametrize("key", [
-    'height', 'forecast_time'])
-def test_add_cycle_variables_products(key, model_file):
-    obj = ModelDataHandler(str(model_file), MODEL, False, 'cv')
-    obj._add_variables()
-    assert f"{MODEL}_{key}" not in obj.data.keys()

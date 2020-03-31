@@ -13,7 +13,7 @@ import netCDF4
 from datetime import datetime, timedelta
 from cloudnetpy import utils
 from cloudnetpy.categorize.datasource import DataSource
-from model_evaluation.products.regrid_observation import ModelGrid
+from model_evaluation.products.model_products import ModelGrid
 from model_evaluation.file_handler import update_attributes, save_modelfile, add_var2ncfile
 from model_evaluation.products.cloud_fraction import generate_cv
 
@@ -105,11 +105,3 @@ class ObservationManager(DataSource):
         case_date = datetime(int(nc.year), int(nc.month), int(nc.day), 0, 0, 0)
         nc.close()
         return case_date
-
-
-
-
-#TODO: Think if possible to do
-#data = [[np.mean(data[np.where(t <= time > t), np.where(h >= height > h)])
-#         for h in utils.binvec(height_new[i])]
-#        for i, t in enumerate(utils.binvec(time_new))]
