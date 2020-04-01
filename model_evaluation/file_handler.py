@@ -79,11 +79,14 @@ def _write_vars2nc(rootgrp, cloudnet_variables):
     for key in cloudnet_variables:
         obj = cloudnet_variables[key]
         size = _get_dimensions(obj.data)
-        nc_variable = rootgrp.createVariable(obj.name, obj.data_type, size,
-                                             zlib=True)
-        nc_variable[:] = obj.data
-        for attr in obj.fetch_attributes():
-            setattr(nc_variable, attr, getattr(obj, attr))
+        try:
+            nc_variable = rootgrp.createVariable(obj.name, obj.data_type, size,
+                                                 zlib=True)
+            nc_variable[:] = obj.data
+            for attr in obj.fetch_attributes():
+                setattr(nc_variable, attr, getattr(obj, attr))
+        except RuntimeError:
+            continue
 
 
 def _add_standard_global_attributes(root_group):

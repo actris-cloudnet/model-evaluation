@@ -15,7 +15,7 @@ from cloudnetpy import utils
 from cloudnetpy.categorize.datasource import DataSource
 from model_evaluation.products.model_products import ModelGrid
 from model_evaluation.file_handler import update_attributes, save_modelfile, add_var2ncfile
-from model_evaluation.products.cloud_fraction import generate_cv
+from cloudnetpy.products.product_tools import CategorizeBits
 
 
 PATH = os.path.dirname(os.path.abspath(__file__))
@@ -41,7 +41,6 @@ def generate_regrid_products(model, obs, model_files, output_file):
         data_obj = ModelGrid(m_file, model, output_file, obs)
         data_obj = regrid_array(product_obj, data_obj, model, obs)
         update_attributes(data_obj.data)
-
         if os.path.isfile(output_file) is False:
             save_modelfile(f"{model}_products", data_obj, model_files, output_file)
         else:
@@ -88,20 +87,43 @@ class ObservationManager(DataSource):
         self.date = self._get_date()
         self._generate_product()
 
-    def _generate_product(self):
-        if self.obs is 'cv':
-            print("")
-            # Generate needed information for calculating cloud fraction
-            # Kutsutaan Cloud fraction luokkaa hoitamaan homma
-            # Palauttaa datan halutussa muodossa, jotta voidaan tehdä gridaaminen
-            self.data = generate_cv(self.data, self.file)
-        else:
-            self.append_data(self.getvar(self.obs), self.obs)
-        self.append_data(self.getvar('height'), 'height')
-
     def _get_date(self):
         """Returns measurement date string."""
         nc = netCDF4.Dataset(self.file)
         case_date = datetime(int(nc.year), int(nc.month), int(nc.day), 0, 0, 0)
         nc.close()
         return case_date
+
+    def _generate_product(self):
+        if self.obs is 'cv':
+            self.append_data(self._generate_cv(), 'cv')
+        else:
+            self.append_data(self.getvar(self.obs), self.obs)
+        self.append_data(self.getvar('height'), 'height')
+
+    def _generate_cv(self):
+        categorize_bits = CategorizeBits(self.file)
+        bits = categorize_bits.category_bits
+        cloud_mask = bits['droplet'] + bits['falling'] * 2
+        cloud_mask[bits['falling'] & bits['cold']] = cloud_mask[bits['falling'] & bits['cold']] + 2
+        cloud_mask[bits['aerosol']] = 6
+        cloud_mask[bits['insect']] = 7
+        cloud_mask[bits['aerosol'] & bits['insect']] = 8
+        for i in [1, 3, 4, 5]:
+            cloud_mask[cloud_mask == i] = 1
+        for i in [2, 6, 7, 8]:
+            cloud_mask[cloud_mask == i] = 0
+        #cloud_mask = cloud_mask[:, ~self._rain_index()]
+        return cloud_mask
+
+    def _get_rainrate_threshold(self):
+        wband = utils.get_wl_band(self.getvar('radar_frequency'))
+        rainrate_threshold = 8
+        if 90 > wband < 100:
+            rainrate_threshold = 2
+        return rainrate_threshold
+
+    def _rain_index(self):
+        rainrate = self.getvar('rainrate')
+        rainrate_threshold = self._get_rainrate_threshold()
+        return rainrate > rainrate_threshold
