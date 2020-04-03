@@ -1,11 +1,3 @@
-"""
-This file will process observated iwc to model grid and creates the model_iwc_grid.nv file
-
-The file will include all avaible cycles for model and regrided observation for each cycle.
-Also other needed information for cycle will be saved to file.
-
-TODO: How to get correct file path for obs?
-"""
 import os
 import numpy as np
 import configparser

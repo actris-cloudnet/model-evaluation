@@ -74,5 +74,22 @@ def obs_file(tmpdir_factory, file_metadata):
     var[:] = 1
     var = root_grp.createVariable('longitude', 'f8')
     var[:] = 1
+    var = root_grp.createVariable('altitude', 'f8')
+    var[:] = 1
+    var.unit = 'm'
+    var = root_grp.createVariable('radar_frequency', 'f8')
+    var[:] = 35.5
+    var = root_grp.createVariable('rainrate', 'i4', 'time')
+    var[:] = [10, 20, 30, 40]
+    var = root_grp.createVariable('category_bits', 'i4', 'time')
+    var[:] = [0, 1, 2]
+    var = root_grp.createVariable('quality_bits', 'i4', 'time')
+    var[:] = [8, 16, 32]
+    var = root_grp.createVariable('iwc', 'f8', ('time', 'height'))
+    var[:] = np.array([[0.01, 0.02, 0.06],
+                       [0.00, 0.03, 0.08]])
+    var = root_grp.createVariable('lwc', 'f8', ('time', 'height'))
+    var[:] = np.array([[0.08, 0.04, 0.01],
+                       [0.09, 0.07, 0.02]])
     root_grp.close()
     return file_name
