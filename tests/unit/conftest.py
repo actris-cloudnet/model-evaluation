@@ -6,7 +6,6 @@ from datetime import date
 
 @pytest.fixture(scope='session')
 def file_metadata():
-    """Some example global metadata to test file."""
     year, month, day = '2019', '05', '23'
     return {
         'year': year, 'month': month, 'day': day,
@@ -24,6 +23,7 @@ def model_file(tmpdir_factory, file_metadata):
     level = 2
     root_grp.createDimension('time', time)
     root_grp.createDimension('level', level)
+    _create_global_attributes(root_grp, file_metadata)
     var = root_grp.createVariable('time', 'f8', 'time')
     var[:] = time
     var = root_grp.createVariable('level', 'f8', 'level')
@@ -66,6 +66,7 @@ def obs_file(tmpdir_factory, file_metadata):
     height = 2
     root_grp.createDimension('time', time)
     root_grp.createDimension('height', height)
+    _create_global_attributes(root_grp, file_metadata)
     var = root_grp.createVariable('time', 'f8', 'time')
     var[:] = time
     var = root_grp.createVariable('height', 'f8', 'height')
@@ -76,11 +77,11 @@ def obs_file(tmpdir_factory, file_metadata):
     var[:] = 1
     var = root_grp.createVariable('altitude', 'f8')
     var[:] = 1
-    var.unit = 'm'
+    var.units = 'km'
     var = root_grp.createVariable('radar_frequency', 'f8')
     var[:] = 35.5
     var = root_grp.createVariable('rainrate', 'i4', 'time')
-    var[:] = [10, 20, 30, 40]
+    var[:] = [10, 20, 30]
     var = root_grp.createVariable('category_bits', 'i4', 'time')
     var[:] = [0, 1, 2]
     var = root_grp.createVariable('quality_bits', 'i4', 'time')
@@ -93,3 +94,8 @@ def obs_file(tmpdir_factory, file_metadata):
                        [0.09, 0.07, 0.02]])
     root_grp.close()
     return file_name
+
+
+def _create_global_attributes(root_grp, meta):
+    for key in ('year', 'month', 'day', 'location'):
+        setattr(root_grp, key, meta[key])

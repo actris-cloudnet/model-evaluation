@@ -37,7 +37,9 @@ class CategorizeBits:
                                                       [1, 1, 0, 0, 0, 0]], dtype=bool)}
 
 
-def test_regridded_array():
+def test_regridded_array(model_file, obs_file):
+    m_obj = ModelGrid(str(model_file), MODEL, OUTPUT_FILE, PRODUCT)
+    o_obj= ObservationManager(PRODUCT, str(obs_file))
     assert True
 
 
