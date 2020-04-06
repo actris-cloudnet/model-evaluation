@@ -1,4 +1,6 @@
 import numpy as np
+import numpy.testing as testing
+import pytest
 from model_evaluation.products.generate_grid_product import ObservationManager
 from model_evaluation.products.model_products import ModelGrid
 
@@ -38,9 +40,15 @@ class CategorizeBits:
 
 
 def test_regridded_array(model_file, obs_file):
+    from model_evaluation.products.generate_grid_product import regrid_array
     m_obj = ModelGrid(str(model_file), MODEL, OUTPUT_FILE, PRODUCT)
-    o_obj= ObservationManager(PRODUCT, str(obs_file))
-    assert True
+    m_obj.append_data(np.array([[1, 2], [3, 1], [2, 3]]), 'data')
+    m_obj.keys['data'] = 'data'
+    o_obj = ObservationManager('data', str(obs_file))
+    regrid_array(o_obj, m_obj, MODEL, 'data')
+    x = m_obj.data['data_obs_ecmwf'][:]
+    compare = np.array([[3.5, 6.25], [4.5, 2], [4.5, 4]])
+    testing.assert_array_almost_equal(compare, x)
 
 
 def test_time2datetime():

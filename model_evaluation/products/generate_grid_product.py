@@ -48,15 +48,12 @@ def regrid_array(old_obj, new_obj, model, obs):
         obs (str): Name of generating observation
     """
     regrid_array = np.zeros(new_obj.data[new_obj.keys[obs]][:].shape)
-
     time_steps = utils.binvec(new_obj.time)
     time_steps = time2datetime(time_steps, old_obj.date)
     old_time = time2datetime(old_obj.time, old_obj.date)
-
     for i in range(len(time_steps) - 1):
         time_index = (old_time >= time_steps[i]) & (old_time < time_steps[i+1])
         height_steps = utils.binvec(new_obj.data[new_obj.keys['height']][:][i])
-
         for j in range(len(height_steps)-1):
             height_index = (old_obj.data['height'][:] >= height_steps[j]) & \
                            (old_obj.data['height'][:] < height_steps[j+1])
