@@ -1,6 +1,7 @@
 import numpy as np
 import numpy.testing as testing
 import pytest
+from datetime import time, datetime, timedelta
 from model_evaluation.products.generate_grid_product import ObservationManager
 from model_evaluation.products.model_products import ModelGrid
 
@@ -52,18 +53,39 @@ def test_regridded_array(model_file, obs_file):
 
 
 def test_time2datetime():
-    assert True
+    from model_evaluation.products.generate_grid_product import time2datetime
+    time_list = [x for x in range(0, 10)]
+    d = datetime(2020, 4, 7, 0, 0, 0)
+    x = time2datetime(time_list, d)
+    compare = [datetime(2020, 4, 7, 0, 0, 0) + timedelta(hours=1 * x) for x in range(0, 10)]
+    assert all([a == b for a, b in zip(x, compare)])
 
 
-def test_get_date():
-    assert True
+def test_get_date(obs_file):
+    obj = ObservationManager(PRODUCT, str(obs_file))
+    date = datetime(2019, 5, 23, 0, 0, 0)
+    assert obj._get_date() == date
 
 
-def test_generate_product():
-    assert True
+@pytest.mark.parametrize("key",[
+    "iwc", "lwc", "cv"])
+def test_generate_product(key, obs_file):
+    obj = ObservationManager(key, str(obs_file))
+    obj._generate_product()
+    assert key in obj.data.keys()
+
+
+def test_add_height(obs_file):
+    obj = ObservationManager(PRODUCT, str(obs_file))
+    obj._generate_product()
+    assert 'height' in obj.data.keys()
 
 
 def test_generate_cv():
+    assert True
+
+
+def test_check_rainrate():
     assert True
 
 

@@ -102,8 +102,17 @@ class ObservationManager(DataSource):
             cloud_mask[cloud_mask == i] = 1
         for i in [2, 6, 7, 8]:
             cloud_mask[cloud_mask == i] = 0
-        #cloud_mask = cloud_mask[:, ~self._rain_index()]
+        if self._check_rainrate():
+            cloud_mask = cloud_mask[:, ~self._rain_index()]
         return cloud_mask
+
+    def _check_rainrate(self):
+        """Check if rainrate in file"""
+        try:
+            self.getvar('rainrate')
+            return True
+        except:
+            return False
 
     def _get_rainrate_threshold(self):
         wband = utils.get_wl_band(self.getvar('radar_frequency'))
