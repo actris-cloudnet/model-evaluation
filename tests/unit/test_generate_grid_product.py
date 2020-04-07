@@ -24,20 +24,7 @@ class CategorizeBits:
                               'aerosol': np.asarray([[1, 0, 1, 0, 0, 0],
                                                      [0, 0, 0, 0, 0, 0]], dtype=bool),
                               'insect': np.asarray([[1, 1, 0, 0, 0, 0],
-                                                    [0, 0, 1, 0, 0, 0]], dtype=bool),
-                              }
-        self.quality_bits = {'radar': np.asarray([[0, 0, 0, 1, 1, 1],
-                                                  [1, 0, 0, 1, 1, 1]], dtype=bool),
-                             'lidar': np.asarray([[1, 1, 1, 1, 0, 0],
-                                                  [1, 1, 0, 1, 1, 0]], dtype=bool),
-                             'clutter': np.asarray([[0, 0, 1, 1, 0, 0],
-                                                    [0, 0, 0, 0, 0, 0]], dtype=bool),
-                             'molecular': np.asarray([[1, 0, 0, 1, 0, 0],
-                                                      [0, 1, 0, 0, 0, 0]], dtype=bool),
-                             'attenuated': np.asarray([[1, 1, 1, 0, 0, 1],
-                                                       [0, 1, 1, 0, 0, 0]], dtype=bool),
-                             'corrected': np.asarray([[1, 0, 0, 0, 0, 0],
-                                                      [1, 1, 0, 0, 0, 0]], dtype=bool)}
+                                                    [0, 0, 1, 0, 0, 0]], dtype=bool)}
 
 
 def test_regridded_array(model_file, obs_file):
@@ -85,13 +72,28 @@ def test_generate_cv():
     assert True
 
 
-def test_check_rainrate():
+def test_basic_cloud_mask():
     assert True
 
 
-def test_get_rainrate_threshold():
+def test_mask_cloud_bits():
     assert True
 
 
-def test_rain_index():
-    assert True
+def test_check_rainrate(obs_file):
+    obj = ObservationManager('cv', str(obs_file))
+    x = obj._check_rainrate()
+    assert x is True
+
+
+def test_get_rainrate_threshold(obs_file):
+    obj = ObservationManager('cv', str(obs_file))
+    x = obj._get_rainrate_threshold()
+    assert x == 2
+
+
+def test_rain_index(obs_file):
+    obj = ObservationManager('cv', str(obs_file))
+    x = obj._rain_index()
+    compare = np.array([1, 0, 0, 1, 1, 1], dtype=bool)
+    testing.assert_array_almost_equal(x, compare)

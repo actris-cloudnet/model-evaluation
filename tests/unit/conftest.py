@@ -75,11 +75,15 @@ def obs_file(tmpdir_factory, file_metadata):
     var = root_grp.createVariable('radar_frequency', 'f8')
     var[:] = 35.5
     var = root_grp.createVariable('rainrate', 'i4', 'time')
-    var[:] = [10, 20, 30, 20, 25, 30]
-    var = root_grp.createVariable('category_bits', 'i4', 'time')
-    var[:] = [0, 1, 2, 4, 8, 16]
-    var = root_grp.createVariable('quality_bits', 'i4', 'time')
-    var[:] = [0, 1, 2, 4, 8, 16]
+    var[:] = np.array([10, 2, 0, 5, 15, 3])
+    var = root_grp.createVariable('category_bits', 'i4', ('time', 'height'))
+    var[:] = np.array([[0, 1, 0, 2], [2, 1, 4, 1],
+                       [1, 0, 2, 1], [2, 2, 2, 1],
+                       [8, 2, 32, 16], [1, 2, 2, 1]])
+    var = root_grp.createVariable('quality_bits', 'i4', ('time', 'height'))
+    var[:] = np.array([[0, 1, 2, 4], [8, 16, 32, 16],
+                       [8, 4, 2, 1], [0, 1, 2, 4],
+                       [8, 16, 32, 16], [8, 4, 2, 1]])
     var = root_grp.createVariable('iwc', 'f8', ('time', 'height'))
     var[:] = np.array([[0.01, 0.02, 0.06, 0.01], [0.02, 0.06,0.00, 0.03],
                        [0.08, 0.00, 0.03, 0.08], [0.01, 0.02, 0.06, 0.01],

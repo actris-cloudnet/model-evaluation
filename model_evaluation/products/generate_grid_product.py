@@ -92,18 +92,25 @@ class ObservationManager(DataSource):
 
     def _generate_cv(self):
         categorize_bits = CategorizeBits(self.file)
-        bits = categorize_bits.category_bits
+        cloud_mask = self._classify_basic_mask(categorize_bits.category_bits)
+        cloud_mask = self._mask_cloud_bits(cloud_mask)
+        if self._check_rainrate():
+            cloud_mask = cloud_mask[~self._rain_index(), :]
+        return cloud_mask
+
+    def _classify_basic_mask(self, bits):
         cloud_mask = bits['droplet'] + bits['falling'] * 2
         cloud_mask[bits['falling'] & bits['cold']] = cloud_mask[bits['falling'] & bits['cold']] + 2
         cloud_mask[bits['aerosol']] = 6
         cloud_mask[bits['insect']] = 7
         cloud_mask[bits['aerosol'] & bits['insect']] = 8
+        return cloud_mask
+
+    def _mask_cloud_bits(self, cloud_mask):
         for i in [1, 3, 4, 5]:
             cloud_mask[cloud_mask == i] = 1
         for i in [2, 6, 7, 8]:
             cloud_mask[cloud_mask == i] = 0
-        if self._check_rainrate():
-            cloud_mask = cloud_mask[:, ~self._rain_index()]
         return cloud_mask
 
     def _check_rainrate(self):
@@ -111,7 +118,7 @@ class ObservationManager(DataSource):
         try:
             self.getvar('rainrate')
             return True
-        except:
+        except RuntimeError:
             return False
 
     def _get_rainrate_threshold(self):
