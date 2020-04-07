@@ -81,8 +81,6 @@ def test_basic_cloud_mask(obs_file):
     cat = CategorizeBits(str(obs_file))
     obj = ObservationManager('cv', str(obs_file))
     compare = obj._classify_basic_mask(cat.category_bits)
-    print("testi")
-    print(compare)
     x = np.array([[0, 1, 2, 0], [2, 0, 0, 1],
                   [1, 0, 0, 0], [0, 0, 0, 1],
                   [0, 0, 6, 6], [7, 2, 0, 7]])
