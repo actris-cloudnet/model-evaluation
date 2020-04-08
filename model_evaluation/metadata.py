@@ -110,18 +110,18 @@ L3_ATTRIBUTES = {
 
 PRODUCT_ATTRIBUTES = {
     'cv': MetaData(
-        long_name='Cloud fraction reshaped to model dimensions by averaging',
+        long_name='Generated cloud fraction from observations reshaped to model dimensions by averaging',
         units='1',
         comment="Calculated using categorize-file with produce CloudnetPy"
     ),
     'iwc': MetaData(
-        long_name='Ice water content reshaped to model dimensions by averaging',
+        long_name='Observed ice water content reshaped to model dimensions by averaging',
         units='kg m-3',
         comment='Read from iwc-file  produce with CloudnetPy'
 
     ),
     'lwc': MetaData(
-        long_name='Liquid water content reshaped to model dimensions by averaging',
+        long_name='Observed liquid water content reshaped to model dimensions by averaging',
         units='kg m-3',
         comment='Read from lwc-file produce with CloudnetPy'
     )
