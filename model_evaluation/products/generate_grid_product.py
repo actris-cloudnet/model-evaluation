@@ -51,14 +51,17 @@ def regrid_array(old_obj, new_obj, model, obs):
     time_steps = utils.binvec(new_obj.time)
     time_steps = time2datetime(time_steps, old_obj.date)
     old_time = time2datetime(old_obj.time, old_obj.date)
+    old_height = old_obj.data['height'][:]
+    old_data = old_obj.data[obs][:]
+
     for i in range(len(time_steps) - 1):
         time_index = (old_time >= time_steps[i]) & (old_time < time_steps[i+1])
         height_steps = utils.binvec(new_obj.data[new_obj.keys['height']][:][i])
         for j in range(len(height_steps)-1):
-            height_index = (old_obj.data['height'][:] >= height_steps[j]) & \
-                           (old_obj.data['height'][:] < height_steps[j+1])
+            height_index = (old_height >= height_steps[j]) & \
+                           (old_height < height_steps[j+1])
             index = np.outer(time_index, height_index)
-            regrid_array[i, j] = np.mean(old_obj.data[obs][:][index])
+            regrid_array[i, j] = np.mean(old_data[index])
     new_obj.append_data(regrid_array, f"{obs}_obs_{model}{new_obj._cycle}")
     return new_obj
 
