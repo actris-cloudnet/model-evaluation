@@ -1,6 +1,7 @@
 import os
 import configparser
 import importlib
+from cloudnetpy.utils import isscalar
 from cloudnetpy.categorize.datasource import DataSource
 
 PATH = os.path.dirname(os.path.abspath(__file__))
@@ -48,6 +49,7 @@ class ModelGrid(DataSource):
         """Collect cloud fraction straight from model file."""
         cv_name = self._read_config('cv')
         cv = self._set_variables(cv_name)
+        cv = self.cut_off_extra_levels(cv)
         self.append_data(cv, f'{self._model}_cv{self._cycle}')
         self.keys[self._product] = f'{self._model}_cv{self._cycle}'
 
@@ -55,6 +57,7 @@ class ModelGrid(DataSource):
         p_name, T_name, iwc_name = self._read_config('p', 'T', 'iwc')
         p, T, qi = self._set_variables(p_name, T_name, iwc_name)
         iwc = self._calc_water_content(qi, p, T)
+        iwc = self.cut_off_extra_levels(iwc)
         self.append_data(iwc, f'{self._model}_iwc{self._cycle}')
         self.keys[self._product] = f'{self._model}_iwc{self._cycle}'
 
@@ -62,6 +65,7 @@ class ModelGrid(DataSource):
         p_name, T_name, lwc_name = self._read_config('p', 'T', 'lwc')
         p, T, ql = self._set_variables(p_name, T_name, lwc_name)
         lwc = self._calc_water_content(ql, p, T)
+        lwc = self.cut_off_extra_levels(lwc)
         self.append_data(lwc, f'{self._model}_lwc{self._cycle}')
         self.keys[self._product] = f'{self._model}_lwc{self._cycle}'
 
@@ -92,15 +96,30 @@ class ModelGrid(DataSource):
             wanted_vars = CONF['model_wanted_vars']['common']
             for var in wanted_vars.split(', '):
                 if var in self.dataset.variables:
-                    self.append_data(self.dataset.variables[var][:], f"{var}")
+                    data = self.dataset.variables[var][:]
+                    if isscalar(data) is False and len(data) > 25:
+                        data = self.cut_off_extra_levels(self.dataset.variables[var][:])
+                    self.append_data(data, f"{var}")
 
         def _add_cycle_variables():
             wanted_vars = CONF['model_wanted_vars']['cycle']
             for var in wanted_vars.split(', '):
                 if var in self.dataset.variables:
-                    self.append_data(self.dataset.variables[var][:], f"{self._model}_{var}{self._cycle}")
+                    data = self.dataset.variables[var][:]
+                    if data.ndim > 1 or len(data) > 25:
+                        data = self.cut_off_extra_levels(self.dataset.variables[var][:])
+                    self.append_data(data, f"{self._model}_{var}{self._cycle}")
                 if var == 'height':
                     self.keys['height'] = f"{self._model}_{var}{self._cycle}"
         if self._is_file is False:
             _add_common_variables()
         _add_cycle_variables()
+
+    def cut_off_extra_levels(self, data):
+        """ Remove unused levels from model data"""
+        level = int(CONF[self._model]['level'])
+        if data.ndim > 1:
+            data = data[:, :level]
+        else:
+            data = data[:level]
+        return data

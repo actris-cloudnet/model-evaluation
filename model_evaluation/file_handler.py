@@ -38,7 +38,7 @@ def save_modelfile(id_mark, obj, model_files, file_name):
         file_name (str): Name of the output file to be generated.
     """
     dimensions = {'time': len(obj.time),
-                  'level': len(obj.dataset.variables['level'])}
+                  'level': len(obj.data['level'][:])}
     root_group = output.init_file(file_name, dimensions, obj.data)
     _add_standard_global_attributes(root_group)
     output.add_file_type(root_group, id_mark)
