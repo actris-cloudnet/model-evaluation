@@ -44,3 +44,16 @@
 
 Model evaluation done
 """
+
+import os
+import configparser
+
+"""
+PATH = os.path.dirname(os.path.abspath(__file__))
+PATH = os.path.split(PATH)[0]
+CONF = configparser.ConfigParser()
+CONF.read(os.path.join(PATH, '/level3.ini'))
+
+
+models = CONF[site]['model']
+"""
