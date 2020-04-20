@@ -23,8 +23,8 @@ def generate_regrid_products(model, obs, model_files, output_file):
 
         Args:
             model (str): name of model
-            model_files (list): List of files from model to be generated
             obs (str): name of product to generate
+            model_files (list): List of files from model to be generated
             output_file (str): name of model output file
     """
     product_file = CONF['products'][obs]
@@ -58,8 +58,7 @@ def regrid_array(old_obj, new_obj, model, obs):
         time_index = (old_time >= time_steps[i]) & (old_time < time_steps[i+1])
         height_steps = utils.binvec(new_obj.data[new_obj.keys['height']][:][i])
         for j in range(len(height_steps)-1):
-            height_index = (old_height >= height_steps[j]) & \
-                           (old_height < height_steps[j+1])
+            height_index = (old_height >= height_steps[j]) & (old_height < height_steps[j+1])
             index = np.outer(time_index, height_index)
             regrid_array[i, j] = np.mean(old_data[index])
     new_obj.append_data(regrid_array, f"{obs}_obs_{model}{new_obj._cycle}")
