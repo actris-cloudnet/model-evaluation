@@ -32,7 +32,8 @@ class ModelGrid(DataSource):
     def _read_cycle_name(self, model_file):
         """Get cycle name from config for savin variable name"""
         cycles = CONF[self._model]['cycle']
-        for cycle in cycles.split(', '):
+        cycles = [x.strip() for x in cycles.split(',')]
+        for cycle in cycles:
             if cycle in model_file:
                 return f"_{cycle}"
         return ""
@@ -90,17 +91,19 @@ class ModelGrid(DataSource):
         """Add basic variables off model and cycle"""
         def _add_common_variables():
             wanted_vars = CONF['model_wanted_vars']['common']
-            for var in wanted_vars.split(', '):
+            wanted_vars = [x.strip() for x in wanted_vars.split(',')]
+            for var in wanted_vars:
                 if var in self.dataset.variables:
                     self.append_data(self.dataset.variables[var][:], f"{var}")
 
         def _add_cycle_variables():
             wanted_vars = CONF['model_wanted_vars']['cycle']
-            for var in wanted_vars.split(', '):
+            wanted_vars = [x.strip() for x in wanted_vars.split(',')]
+            for var in wanted_vars:
                 if var in self.dataset.variables:
                     self.append_data(self.dataset.variables[var][:], f"{self._model}_{var}{self._cycle}")
                 if var == 'height':
                     self.keys['height'] = f"{self._model}_{var}{self._cycle}"
-        if self._is_file is False:
+        if not self._is_file:
             _add_common_variables()
         _add_cycle_variables()

@@ -2,7 +2,7 @@ import numpy as np
 import numpy.testing as testing
 import pytest
 from datetime import time, datetime, timedelta
-from model_evaluation.products.generate_grid_product import ObservationManager
+from model_evaluation.products.grid_product import ObservationManager
 from model_evaluation.products.model_products import ModelGrid
 from cloudnetpy.products.product_tools import CategorizeBits
 
@@ -29,7 +29,7 @@ class CatBits:
 
 
 def test_regridded_array(model_file, obs_file):
-    from model_evaluation.products.generate_grid_product import regrid_array
+    from model_evaluation.products.grid_product import regrid_array
     m_obj = ModelGrid(str(model_file), MODEL, OUTPUT_FILE, PRODUCT)
     m_obj.append_data(np.array([[1, 2], [3, 1], [2, 3]]), 'data')
     m_obj.keys['data'] = 'data'
@@ -41,7 +41,7 @@ def test_regridded_array(model_file, obs_file):
 
 
 def test_time2datetime():
-    from model_evaluation.products.generate_grid_product import time2datetime
+    from model_evaluation.products.grid_product import time2datetime
     time_list = [x for x in range(0, 10)]
     d = datetime(2020, 4, 7, 0, 0, 0)
     x = time2datetime(time_list, d)
