@@ -10,8 +10,8 @@ def generate_quick_plot(nc_file, name, model, save_path=None, show=True):
     """Read files dimensions and generates simple plot from data"""
     # Luetaan halutut nimet filusta, koska defaultina siellä on useampia, mitä halutaan plotata
     names = parse_wanted_names(nc_file, name)
-    fig, ax = initialize_figure(len(names[0:2]))
-    for i, n in enumerate(names[0:2]):
+    fig, ax = initialize_figure(len(names[1:2]))
+    for i, n in enumerate(names[1:2]):
         data, x, y = read_data_characters(nc_file, n, model)
         plot_quick_look(ax[i], data, x, y)
     if show:
@@ -29,7 +29,7 @@ def plot_quick_look(ax, data, x, y):
     vmin = np.min(data)
     vmax = np.max(data)
     print(y[0, :65])
-    pl = ax.pcolormesh(x[:, :65], y[:, :65], data[:, :65])
+    pl = ax.pcolormesh(data[:, :35].T)
     plt.colorbar(pl, ax=ax)
 
 
