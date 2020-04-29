@@ -1,36 +1,49 @@
 # generate here all plotting functions needed
 import numpy as np
+import numpy.ma as ma
 import matplotlib.pyplot as plt
 import netCDF4
 
 
-def generate_quick_plot(nc_file, name, save_path=None, show=True):
+def generate_quick_plot(nc_file, name, model, save_path=None, show=True):
     """Read files dimensions and generates simple plot from data"""
     # Luetaan halutut nimet filusta, koska defaultina siellä on useampia, mitä halutaan plotata
-    data, x, y = read_data_characters(nc_file, name)
-    fig, ax = initialize_figure(1)
-    plot_quick_look(ax, data, (x, y))
+    names = parse_wanted_names(nc_file, name)
+    fig, ax = initialize_figure(len(names))
+    for i, n in enumerate(names):
+        data, x, y = read_data_characters(nc_file, n, model)
+        plot_quick_look(ax[i], data, x, y)
     if show:
         plt.show()
 
+
 def parse_wanted_names(nc_file, name):
-    # Listataan halutut nimet, kyseiselle tuotteelle oikeassa muodossa
-    print("")
+    names = netCDF4.Dataset(nc_file).variables.keys()
+    return [n for n in names if name in n]
 
 
-def plot_quick_look(ax, data, *axes):
+def plot_quick_look(ax, data, x, y):
+    data[data <= 0] = ma.masked
     vmin = np.min(data)
     vmax = np.max(data)
-    pl = ax.pcolorfast(*axes, data, vmin=vmin, vmax=vmax, cmap='viridis')
-    plt.colorbar(pl, fraction=1.0, ax=ax)
+    pl = ax.pcolormesh(x[:, :30], y[:, :30], data[:, :30])
+    plt.colorbar(pl, ax=ax)
 
 
-def read_data_characters(nc_file, name):
+def read_data_characters(nc_file, name, model):
     nc = netCDF4.Dataset(nc_file)
     data = nc.variables[name][:]
     x = nc.variables['time'][:]
-    y = nc.variables[f'{name}_height'][:]
+    x = reshape_1d2nd(x, data)
+    y = nc.variables[f'{model}_height'][:]
     return data, x, y
+
+
+def reshape_1d2nd(one_d, two_d):
+    new_arr = np.zeros(two_d.shape)
+    for i in range(len(two_d[0])):
+        new_arr[:, i] = one_d
+    return new_arr
 
 
 def initialize_figure(n_subplots):
