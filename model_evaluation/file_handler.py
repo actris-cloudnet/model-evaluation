@@ -66,7 +66,7 @@ def _write_vars2nc(rootgrp, cloudnet_variables):
         array_dims = array.shape
         for length in array_dims:
             dim = [key for key in file_dims.keys()
-                   if file_dims[key].size == length][0]
+               if file_dims[key].size == length][0]
             variable_size = variable_size + (dim,)
         return variable_size
 

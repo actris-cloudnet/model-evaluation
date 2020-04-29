@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import numpy.ma as ma
 import configparser
 import netCDF4
 from datetime import datetime, timedelta
@@ -55,10 +56,10 @@ def regrid_array(old_obj, new_obj, model, obs):
     old_data = old_obj.data[obs][:]
 
     for i in range(len(time_steps) - 1):
-        time_index = (old_time >= time_steps[i]) & (old_time < time_steps[i+1])
-        height_steps = utils.binvec(new_obj.data[new_obj.keys['height']][:][i])
+        time_index = (time_steps[i] <= old_time) & (old_time < time_steps[i+1])
+        height_steps = utils.binvec(new_obj.data[new_obj.keys['height']][i])
         for j in range(len(height_steps)-1):
-            height_index = (old_height >= height_steps[j]) & (old_height < height_steps[j+1])
+            height_index = (height_steps[j] <= old_height) & (old_height < height_steps[j+1])
             index = np.outer(time_index, height_index)
             regrid_array[i, j] = np.mean(old_data[index])
     new_obj.append_data(regrid_array, f"{obs}_obs_{model}{new_obj._cycle}")
