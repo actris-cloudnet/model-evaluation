@@ -19,8 +19,8 @@ test_f1 = f'{root}/test_files/20130909_mace-head_ecmwf-exp0001-0-11.nc'
 test_f2 = f'{root}/test_files/20130909_mace-head_ecmwf-exp0001-12-23.nc'
 
 # Run all product with all test_model files
-#for product, oname in zip(['iwc', 'lwc', 'cv'],[iwc_name, lwc_name, cv_name]):
-#    generate_regrid_products('ecmwf', product, [fname, test_f1, test_f2], oname)
+for product, oname in zip(['iwc', 'lwc', 'cv'],[iwc_name, lwc_name, cv_name]):
+    generate_regrid_products('ecmwf', product, [fname, test_f1, test_f2], oname)
 
 data1 = netCDF4.Dataset(iwc_name).variables['ecmwf_iwc'][:]
 data1[data1 <= 0] = ma.masked
