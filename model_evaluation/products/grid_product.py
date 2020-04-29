@@ -61,6 +61,7 @@ def regrid_array(old_obj, new_obj, model, obs):
         for j in range(len(height_steps)-1):
             height_index = (height_steps[j] <= old_height) & (old_height < height_steps[j+1])
             index = np.outer(time_index, height_index)
+            x = old_data[index]
             regrid_array[i, j] = np.mean(old_data[index])
     new_obj.append_data(regrid_array, f"{obs}_obs_{model}{new_obj._cycle}")
     return new_obj
