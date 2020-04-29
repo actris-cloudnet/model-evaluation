@@ -1,10 +1,16 @@
+import sys
+import os
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import numpy.testing as testing
 import pytest
 import netCDF4
 from model_evaluation.products.model_products import ModelGrid
 
+root = os.path.split(os.path.split(Path(__file__).parent)[0])[0]
+
 MODEL = 'ecmwf'
-OUTPUT_FILE = '/home/korpinen/Documents/ACTRIS/model_evaluation/test_data_ecmwf.nc'
+OUTPUT_FILE = f'{root}/test_files/test_data_ecmwf_iwc.nc'
 PRODUCT = 'iwc'
 
 

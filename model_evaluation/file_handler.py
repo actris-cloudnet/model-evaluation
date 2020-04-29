@@ -51,13 +51,7 @@ def save_modelfile(id_mark, obj, model_files, file_name):
 
 def add_var2ncfile(obj, file_name):
     nc_file = netCDF4.Dataset(file_name, 'r+', format='NETCDF4_CLASSIC')
-    try:
-        _write_vars2nc(nc_file, obj.data)
-    except RuntimeError:
-        for key in obj.data:
-            nc_file.variables[key][:] = obj.data[key][:]
-            for attr in obj.data[key].fetch_attributes():
-                setattr(nc_file.variables[key], attr, getattr(obj.data[key], attr))
+    _write_vars2nc(nc_file, obj.data)
     nc_file.close()
 
 

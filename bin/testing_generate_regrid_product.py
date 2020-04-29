@@ -4,7 +4,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import numpy.ma as ma
 import netCDF4
-from model_evaluation.products.generate_grid_product import generate_regrid_products
+from model_evaluation.products.grid_product import generate_regrid_products
 from cloudnetpy.plotting import plot_2d
 
 # Path to .../model_evaluation/
