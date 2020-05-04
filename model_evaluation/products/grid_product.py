@@ -52,15 +52,6 @@ def regrid_array(old_obj, new_obj, model, obs):
     time_steps = time2datetime(time_steps, old_obj.date)
     old_time = time2datetime(old_obj.time, old_obj.date)
     old_height = old_obj.data['height'][:]
-
-    print("\n")
-    print(old_height)
-    print("\n")
-    new_height = new_obj.data[new_obj.keys['height']][:]
-    print(new_height[0])
-    print("\n")
-    lol
-
     old_data = old_obj.data[obs][:]
 
     for i in range(len(time_steps) - 1):

@@ -6,7 +6,7 @@ import numpy.ma as ma
 import netCDF4
 from model_evaluation.products.grid_product import generate_regrid_products
 from cloudnetpy.plotting import plot_2d
-from model_evaluation.plotting.plotting import generate_quick_plot
+from model_evaluation.plotting.plotting import generate_quick_plot, generate_single_plot
 from cloudnetpy.plotting import generate_figure
 
 # Path to .../model_evaluation/
@@ -25,8 +25,10 @@ iwc_file = f'{root}/test_files/iwc.nc'
 
 # Run all product with all test_model files
 for product, oname in zip(['iwc', 'lwc', 'cv'],[iwc_name, lwc_name, cv_name]):
-    #generate_regrid_products('ecmwf', product, [fname, test_f1, test_f2], oname)
-    generate_quick_plot(oname, product, 'ecmwf', save_path=save_path)
+    generate_regrid_products('ecmwf', product, [fname, test_f1, test_f2], oname)
+    lol
+    #generate_quick_plot(oname, product, 'ecmwf', save_path=save_path)
+    generate_single_plot(oname, product, f'{product}_obs_ecmwf', 'ecmwf')
     lol
 
 generate_figure(iwc_file, ['iwc'], save_path=save_path)

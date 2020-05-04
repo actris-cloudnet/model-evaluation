@@ -5,10 +5,8 @@ import matplotlib.pyplot as plt
 import netCDF4
 
 
-
 def generate_quick_plot(nc_file, name, model, save_path=None, show=True):
     """Read files dimensions and generates simple plot from data"""
-    # Luetaan halutut nimet filusta, koska defaultina siellä on useampia, mitä halutaan plotata
     names = parse_wanted_names(nc_file, name)
     fig, ax = initialize_figure(len(names[1:2]))
     for i, n in enumerate(names[1:2]):
@@ -17,6 +15,17 @@ def generate_quick_plot(nc_file, name, model, save_path=None, show=True):
     if show:
         plt.show()
     plt.savefig(f"{save_path}testi_kuva_iwc.png")
+
+
+def generate_single_plot(nc_file, product, name, model):
+    names = parse_wanted_names(nc_file, product)
+    fig, ax = initialize_figure(1)
+    for n in names:
+        if n == name:
+            data, x, y = read_data_characters(nc_file, n, model)
+            # Tässä kohtaa pitää mahdollisesti fiksailla x-, ja y-akseleita riippuen datasta
+            plot_quick_look(ax[0], data, x, y)
+            plt.show()
 
 
 def parse_wanted_names(nc_file, name):
@@ -28,7 +37,8 @@ def plot_quick_look(ax, data, x, y):
     data[data <= 0] = ma.masked
     vmin = np.min(data)
     vmax = np.max(data)
-    print(y[0, :65])
+    print(data.shape)
+    print(y[0, :35])
     pl = ax.pcolormesh(data[:, :35].T)
     plt.colorbar(pl, ax=ax)
 
