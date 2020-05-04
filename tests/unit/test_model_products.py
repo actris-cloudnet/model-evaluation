@@ -2,6 +2,7 @@ import sys
 import os
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import numpy as np
 import numpy.testing as testing
 import pytest
 import netCDF4
@@ -93,3 +94,11 @@ def test_add_cycle_variables_no_products(key, model_file):
     obj._is_file = False
     obj._add_variables()
     assert f"{MODEL}_{key}" in obj.data.keys()
+
+
+def test_cut_off_extra_level(model_file):
+    obj = ModelGrid(str(model_file), MODEL, OUTPUT_FILE, PRODUCT)
+    data = np.array([np.arange(100), np.arange(100)])
+    compare = np.array([np.arange(88), np.arange(88)])
+    x = obj.cut_off_extra_levels(data)
+    testing.assert_array_almost_equal(x, compare)
