@@ -57,7 +57,7 @@ def regrid_array(old_obj, new_obj, model, obs):
 
     for i in range(len(time_steps) - 1):
         time_index = (time_steps[i] <= old_time) & (old_time < time_steps[i+1])
-        height_steps = utils.binvec(new_obj.data[new_obj.keys['height']][i])
+        height_steps = rebin_random_order_array(new_obj.data[new_obj.keys['height']][i])
         for j in range(len(height_steps)-1):
             height_index = (height_steps[j] <= old_height) & (old_height < height_steps[j+1])
             index = np.outer(time_index, height_index)
@@ -68,6 +68,16 @@ def regrid_array(old_obj, new_obj, model, obs):
 
 def time2datetime(time_array, date):
     return np.asarray([date + timedelta(hours=float(time)) for time in time_array])
+
+
+def rebin_random_order_array(arr):
+    """creates array by moving bins in middle of old array bins"""
+    new_arr = np.zeros(len(arr) + 1)
+    for i in range(len(arr) - 1):
+        new_arr[i+1] = (arr[i] + arr[i+1])/2
+    new_arr[0] = arr[0] - ((arr[0] + arr[1])/2)
+    new_arr[-1] = arr[-1] + arr[-1] - arr[-2]
+    return new_arr
 
 
 class ObservationManager(DataSource):
