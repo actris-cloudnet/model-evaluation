@@ -72,12 +72,10 @@ def time2datetime(time_array, date):
 
 def rebin_random_order_array(arr):
     """creates array by moving bins in middle of old array bins"""
-    new_arr = np.zeros(len(arr) + 1)
-    for i in range(len(arr) - 1):
-        new_arr[i+1] = (arr[i] + arr[i+1])/2
-    new_arr[0] = arr[0] - ((arr[0] + arr[1])/2)
-    new_arr[-1] = arr[-1] + arr[-1] - arr[-2]
-    return new_arr
+    new_arr = [(arr[i] + arr[i+1])/2 for i in range(len(arr)-1)]
+    new_arr.insert(0, arr[0] - ((arr[0] + arr[1])/2))
+    new_arr.insert(len(new_arr), arr[-1] + (arr[-1] - arr[-2]))
+    return np.array(new_arr)
 
 
 class ObservationManager(DataSource):
