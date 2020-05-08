@@ -3,28 +3,40 @@ import numpy as np
 import numpy.ma as ma
 import matplotlib.pyplot as plt
 import netCDF4
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
 def generate_quick_plot(nc_file, name, model, save_path=None, show=True):
     """Read files dimensions and generates simple plot from data"""
     names = parse_wanted_names(nc_file, name)
-    fig, ax = initialize_figure(len(names[1:2]))
-    for i, n in enumerate(names[1:2]):
+    fig, ax = initialize_figure(len(names[0:2]))
+    for i, n in enumerate(names[0:2]):
         data, x, y = read_data_characters(nc_file, n, model)
-        plot_quick_look(ax[i], data, x, y)
+        plot_data_quick_look(ax[i], data, x, y)
     if show:
         plt.show()
     plt.savefig(f"{save_path}testi_kuva_iwc.png")
 
 
 def generate_single_plot(nc_file, product, name, model):
+    """
+    TODO: Things plotting shoud do:
+        - Määritetään kuva
+        - Asetetaan ax:lle otsikko ja labelit
+        - Editoidaan dataa tarvittaessa, maskaus
+        - plotataan
+        - Muokataan Fig:n labelit
+        - Lisätään Fig:in otsikko, jos tarve
+        - Talletetaan kuva
+    """
     names = parse_wanted_names(nc_file, product)
     fig, ax = initialize_figure(1)
     for n in names:
         if n == name:
             data, x, y = read_data_characters(nc_file, n, model)
+            data[data < 0] = ma.masked
             # Tässä kohtaa pitää mahdollisesti fiksailla x-, ja y-akseleita riippuen datasta
-            plot_quick_look(ax[0], data, x, y)
+            plot_data_quick_look(ax[0], data, x, y)
             plt.show()
 
 
@@ -33,14 +45,25 @@ def parse_wanted_names(nc_file, name):
     return [n for n in names if name in n]
 
 
-def plot_quick_look(ax, data, x, y):
-    data[data <= 0] = ma.masked
-    vmin = np.min(data)
-    vmax = np.max(data)
-    print(data.shape)
-    print(y[0, :35])
-    pl = ax.pcolormesh(data[:, :35].T)
-    plt.colorbar(pl, ax=ax)
+def plot_data_quick_look(ax, data, *axes):
+    """
+    TODO: Things plotting shoud do:
+        - Asetetaan colorbarille tarvittaessa tickien paikat
+    """
+    # variable_info = ATTRIBUTE[product]
+    # plot_info = PLOT_TYPE[type]
+    #vmin, vmax = variable_info.plot_range
+    #cmap = plt.get_cmap(variable_info.cmap, 22)
+    cmap = plt.get_cmap('Blues', 22)
+    vmin = 0.0
+    vmax = 1.7e-5
+    print(round(vmax, 5))
+    pl = ax.pcolormesh(axes[0][:, :25], axes[-1][:, :25], data[:, :25], vmin=vmin, vmax=vmax, cmap=cmap)
+    colorbar = _init_colorbar(pl, ax)
+    #TODO: Uudelleen formatoidaan tick labelit siistimmiksi
+    #colorbar.set_ticks(np.arange(vmin, vmax))
+    #colorbar.set_label(variables.clabel, fontsize=13)
+    colorbar.set_label('kg m$^{-3}$', fontsize=13)
 
 
 def read_data_characters(nc_file, name, model):
@@ -71,3 +94,9 @@ def initialize_figure(n_subplots):
 
 def set_labels():
     print("")
+
+
+def _init_colorbar(plot, axis):
+    divider = make_axes_locatable(axis)
+    cax = divider.append_axes("right", size="1%", pad=0.25)
+    return plt.colorbar(plot, fraction=1.0, ax=axis, cax=cax)

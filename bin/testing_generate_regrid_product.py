@@ -25,8 +25,7 @@ iwc_file = f'{root}/test_files/iwc.nc'
 
 # Run all product with all test_model files
 for product, oname in zip(['iwc', 'lwc', 'cv'],[iwc_name, lwc_name, cv_name]):
-    generate_regrid_products('ecmwf', product, [fname, test_f1, test_f2], oname)
-    lol
+    #generate_regrid_products('ecmwf', product, [fname, test_f1, test_f2], oname)
     #generate_quick_plot(oname, product, 'ecmwf', save_path=save_path)
     generate_single_plot(oname, product, f'{product}_obs_ecmwf', 'ecmwf')
     lol
