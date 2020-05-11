@@ -4,10 +4,21 @@ import numpy.ma as ma
 import matplotlib.pyplot as plt
 import netCDF4
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+from cloudnetpy.plotting.plotting import _set_ax, _set_labels
 
 
 def generate_quick_plot(nc_file, name, model, save_path=None, show=True):
     """Read files dimensions and generates simple plot from data"""
+    """
+    TODO: Things plotting shoud do:
+        - Määritetään kuva (luodaan fig) x
+        - Asetetaan ax:lle otsikko ja labelit x
+        - Editoidaan dataa tarvittaessa, maskaus. Jo datan talletuksessa
+        - plotataan x 
+        - Muokataan Fig:n labelit
+        - Lisätään Fig:in otsikko, jos tarve
+        - Talletetaan kuva
+    """
     names = parse_wanted_names(nc_file, name)
     fig, ax = initialize_figure(len(names[0:2]))
     for i, n in enumerate(names[0:2]):
@@ -19,20 +30,12 @@ def generate_quick_plot(nc_file, name, model, save_path=None, show=True):
 
 
 def generate_single_plot(nc_file, product, name, model):
-    """
-    TODO: Things plotting shoud do:
-        - Määritetään kuva
-        - Asetetaan ax:lle otsikko ja labelit
-        - Editoidaan dataa tarvittaessa, maskaus
-        - plotataan
-        - Muokataan Fig:n labelit
-        - Lisätään Fig:in otsikko, jos tarve
-        - Talletetaan kuva
-    """
     names = parse_wanted_names(nc_file, product)
     fig, ax = initialize_figure(1)
     for n in names:
         if n == name:
+            _set_ax(ax[0], 12)
+            _set_title(ax[0], n, f' from {model}')
             data, x, y = read_data_characters(nc_file, n, model)
             data[data < 0] = ma.masked
             # Tässä kohtaa pitää mahdollisesti fiksailla x-, ja y-akseleita riippuen datasta
@@ -46,10 +49,6 @@ def parse_wanted_names(nc_file, name):
 
 
 def plot_data_quick_look(ax, data, *axes):
-    """
-    TODO: Things plotting shoud do:
-        - Asetetaan colorbarille tarvittaessa tickien paikat
-    """
     # variable_info = ATTRIBUTE[product]
     # plot_info = PLOT_TYPE[type]
     #vmin, vmax = variable_info.plot_range
@@ -57,13 +56,16 @@ def plot_data_quick_look(ax, data, *axes):
     cmap = plt.get_cmap('Blues', 22)
     vmin = 0.0
     vmax = 1.7e-5
-    print(round(vmax, 5))
     pl = ax.pcolormesh(axes[0][:, :25], axes[-1][:, :25], data[:, :25], vmin=vmin, vmax=vmax, cmap=cmap)
     colorbar = _init_colorbar(pl, ax)
     #TODO: Uudelleen formatoidaan tick labelit siistimmiksi
     #colorbar.set_ticks(np.arange(vmin, vmax))
     #colorbar.set_label(variables.clabel, fontsize=13)
     colorbar.set_label('kg m$^{-3}$', fontsize=13)
+
+
+def _set_title(ax, field_name, identifier=" from CloudnetPy"):
+    ax.set_title(f"{field_name}{identifier}", fontsize=14)
 
 
 def read_data_characters(nc_file, name, model):
