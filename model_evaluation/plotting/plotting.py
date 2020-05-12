@@ -34,8 +34,8 @@ def generate_single_plot(nc_file, product, name, model):
     fig, ax = initialize_figure(1)
     for n in names:
         if n == name:
-            _set_ax(ax[0], 12)
-            _set_title(ax[0], n, f' from {model}')
+            _set_ax(ax[0], 12000)
+            #_set_title(ax[0], n, f' from {model}')
             data, x, y = read_data_characters(nc_file, n, model)
             data[data < 0] = ma.masked
             # Tässä kohtaa pitää mahdollisesti fiksailla x-, ja y-akseleita riippuen datasta
@@ -56,7 +56,7 @@ def plot_data_quick_look(ax, data, *axes):
     cmap = plt.get_cmap('Blues', 22)
     vmin = 0.0
     vmax = 1.7e-5
-    pl = ax.pcolormesh(axes[0][:, :25], axes[-1][:, :25], data[:, :25], vmin=vmin, vmax=vmax, cmap=cmap)
+    pl = ax.pcolormesh(*axes, data, vmin=vmin, vmax=vmax, cmap=cmap)
     colorbar = _init_colorbar(pl, ax)
     #TODO: Uudelleen formatoidaan tick labelit siistimmiksi
     #colorbar.set_ticks(np.arange(vmin, vmax))
