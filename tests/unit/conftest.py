@@ -75,7 +75,7 @@ def obs_file(tmpdir_factory, file_metadata):
     var = root_grp.createVariable('radar_frequency', 'f8')
     var[:] = 35.5
     var = root_grp.createVariable('rainrate', 'i4', 'time')
-    var[:] = np.array([1, 2, 0, 1, 5, 3])
+    var[:] = np.array([1, 2, 0, 10, 5, 13])
     var = root_grp.createVariable('category_bits', 'i4', ('time', 'height'))
     var[:] = np.array([[0, 1, 2, 0], [2, 8, 4, 1],
                        [1, 4, 0, 8], [4, 4, 0, 1],

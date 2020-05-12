@@ -49,6 +49,14 @@ def test_time2datetime():
     assert all([a == b for a, b in zip(x, compare)])
 
 
+def test_rebin_random_order_array():
+    from model_evaluation.products.grid_product import rebin_random_order_array
+    data = np.array([1, 3, 6, 10, 15, 21, 28])
+    compare = np.array([-1, 2, 4.5, 8, 12.5, 18, 24.5, 35])
+    x = rebin_random_order_array(data)
+    testing.assert_array_almost_equal(x, compare)
+
+
 def test_get_date(obs_file):
     obj = ObservationManager(PRODUCT, str(obs_file))
     date = datetime(2019, 5, 23, 0, 0, 0)
@@ -72,8 +80,9 @@ def test_add_height(obs_file):
 def test_generate_cv(obs_file):
     obj = ObservationManager('cv', str(obs_file))
     compare = obj._generate_cv()
+    print(compare)
     x = np.array([[0, 1, 0, 0], [0, 0, 0, 1],
-                  [1, 0, 0, 0], [0, 0, 0, 1]])
+                  [1, 0, 0, 0], [0, 0, 0, 0]])
     testing.assert_array_almost_equal(compare, x)
 
 
@@ -126,11 +135,11 @@ def test_check_rainrate(obs_file):
 def test_get_rainrate_threshold(obs_file):
     obj = ObservationManager('cv', str(obs_file))
     x = obj._get_rainrate_threshold()
-    assert x == 2
+    assert x == 8
 
 
 def test_rain_index(obs_file):
     obj = ObservationManager('cv', str(obs_file))
     x = obj._rain_index()
-    compare = np.array([0, 0, 0, 0, 1, 1], dtype=bool)
+    compare = np.array([0, 0, 0, 1, 0, 1], dtype=bool)
     testing.assert_array_almost_equal(x, compare)
