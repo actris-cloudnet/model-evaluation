@@ -99,7 +99,7 @@ class ModelGrid(DataSource):
             for var in wanted_vars:
                 if var in self.dataset.variables:
                     data = self.dataset.variables[var][:]
-                    if isscalar(data) is False and len(data) > 25:
+                    if not isscalar(data) and len(data) > 25:
                         data = self.cut_off_extra_levels(self.dataset.variables[var][:])
                     self.append_data(data, f"{var}")
 

@@ -57,7 +57,7 @@ def regrid_array(old_obj, new_obj, model, obs):
 
     for i in range(len(time_steps) - 1):
         time_index = (time_steps[i] <= old_time) & (old_time < time_steps[i+1])
-        height_steps = rebin_random_order_array(new_obj.data[new_obj.keys['height']][i])
+        height_steps = rebin_edges(new_obj.data[new_obj.keys['height']][i])
         for j in range(len(height_steps)-1):
             height_index = (height_steps[j] <= old_height) & (old_height < height_steps[j+1])
             index = np.outer(time_index, height_index)
@@ -70,8 +70,8 @@ def time2datetime(time_array, date):
     return np.asarray([date + timedelta(hours=float(time)) for time in time_array])
 
 
-def rebin_random_order_array(arr):
-    """creates array by moving bins in middle of old array bins"""
+def rebin_edges(arr):
+    """Rebins array bins by half and adds boundaries."""
     new_arr = [(arr[i] + arr[i+1])/2 for i in range(len(arr)-1)]
     new_arr.insert(0, arr[0] - ((arr[0] + arr[1])/2))
     new_arr.insert(len(new_arr), arr[-1] + (arr[-1] - arr[-2]))
