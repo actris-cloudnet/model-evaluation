@@ -56,7 +56,7 @@ ATTRIBUTES = {
         plot_range=(223.15, 323.15),
         plot_type='model'
     ),
-    'cloud_fraction': PlotMeta(
+    'cv': PlotMeta(
         name='Cloud fraction',
         cbar='Blues',
         clabel='',
@@ -100,16 +100,16 @@ ATTRIBUTES = {
     ),
     'iwc': PlotMeta(
         name='Ice water content',
-        cbar='viridis',
+        cbar='Blues',
         clabel=_KGM3,
-        plot_range=(1e-7, 1e-3),
+        plot_range=(1e-7, 1e-5),
         plot_type='mesh'
     ),
     'lwc': PlotMeta(
         name='Liquid water content',
         cbar='Blues',
         clabel=_KGM3,
-        plot_range=(1e-5, 1e-2),
+        plot_range=(1e-5, 1e-3),
         plot_type='mesh'
     )
 }

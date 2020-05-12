@@ -3,6 +3,7 @@ import numpy as np
 import numpy.ma as ma
 import matplotlib.pyplot as plt
 import netCDF4
+from ..plotting.plot_meta import ATTRIBUTES
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from cloudnetpy.plotting.plotting import _set_ax, _set_labels
 
@@ -33,13 +34,15 @@ def generate_single_plot(nc_file, product, name, model):
     names = parse_wanted_names(nc_file, product)
     fig, ax = initialize_figure(1)
     for n in names:
+        print(n)
         if n == name:
+            print(name)
             _set_ax(ax[0], 12000)
-            #_set_title(ax[0], n, f' from {model}')
+            _set_title(ax[0], product, f' from {model}')
             data, x, y = read_data_characters(nc_file, n, model)
             data[data < 0] = ma.masked
             # Tässä kohtaa pitää mahdollisesti fiksailla x-, ja y-akseleita riippuen datasta
-            plot_data_quick_look(ax[0], data, x, y)
+            plot_data_quick_look(ax[0], data, (x, y), product)
             plt.show()
 
 
@@ -48,14 +51,11 @@ def parse_wanted_names(nc_file, name):
     return [n for n in names if name in n]
 
 
-def plot_data_quick_look(ax, data, *axes):
-    # variable_info = ATTRIBUTE[product]
-    # plot_info = PLOT_TYPE[type]
-    #vmin, vmax = variable_info.plot_range
-    #cmap = plt.get_cmap(variable_info.cmap, 22)
-    cmap = plt.get_cmap('Blues', 22)
-    vmin = 0.0
-    vmax = 1.7e-5
+def plot_data_quick_look(ax, data, axes, product):
+    variable_info = ATTRIBUTES[product]
+    #plot_info = PLOT_TYPE[type]
+    vmin, vmax = variable_info.plot_range
+    cmap = plt.get_cmap(variable_info.cbar, 22)
     pl = ax.pcolormesh(*axes, data, vmin=vmin, vmax=vmax, cmap=cmap)
     colorbar = _init_colorbar(pl, ax)
     #TODO: Uudelleen formatoidaan tick labelit siistimmiksi

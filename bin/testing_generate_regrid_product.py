@@ -22,15 +22,25 @@ test_f2 = f'{root}/test_files/20130909_mace-head_ecmwf-exp0001-12-23.nc'
 
 save_path = f'{root}/plots/'
 iwc_file = f'{root}/test_files/iwc.nc'
+lwc_file = f'{root}/test_files/lwc.nc'
 
 # Run all product with all test_model files
-for product, oname in zip(['iwc', 'lwc', 'cv'],[iwc_name, lwc_name, cv_name]):
+for product, oname in zip(['lwc', 'cv'], [lwc_name, cv_name]):
     #generate_regrid_products('ecmwf', product, [fname, test_f1, test_f2], oname)
     #generate_quick_plot(oname, product, 'ecmwf', save_path=save_path)
     generate_single_plot(oname, product, f'{product}_obs_ecmwf', 'ecmwf')
     lol
 
-generate_figure(iwc_file, ['iwc'], save_path=save_path)
+generate_figure(lwc_file, ['lwc'], save_path=save_path)
+
+"""
+# Run all product with all test_model files
+for product, oname in zip(['iwc', 'lwc', 'cv'],[iwc_name, lwc_name, cv_name]):
+    #generate_regrid_products('ecmwf', product, [fname, test_f1, test_f2], oname)
+    #generate_quick_plot(oname, product, 'ecmwf', save_path=save_path)
+    generate_single_plot(oname, product, f'{product}_obs_ecmwf', 'ecmwf')
+"""
+
 """
 data1 = netCDF4.Dataset(lwc_name).variables['ecmwf_lwc'][:]
 data1[data1 <= 0] = ma.masked
