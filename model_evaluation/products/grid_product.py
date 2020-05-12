@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import numpy.ma as ma
 import configparser
 import netCDF4
 from datetime import datetime, timedelta
@@ -55,10 +56,10 @@ def regrid_array(old_obj, new_obj, model, obs):
     old_data = old_obj.data[obs][:]
 
     for i in range(len(time_steps) - 1):
-        time_index = (old_time >= time_steps[i]) & (old_time < time_steps[i+1])
-        height_steps = utils.binvec(new_obj.data[new_obj.keys['height']][:][i])
+        time_index = (time_steps[i] <= old_time) & (old_time < time_steps[i+1])
+        height_steps = rebin_edges(new_obj.data[new_obj.keys['height']][i])
         for j in range(len(height_steps)-1):
-            height_index = (old_height >= height_steps[j]) & (old_height < height_steps[j+1])
+            height_index = (height_steps[j] <= old_height) & (old_height < height_steps[j+1])
             index = np.outer(time_index, height_index)
             regrid_array[i, j] = np.mean(old_data[index])
     new_obj.append_data(regrid_array, f"{obs}_obs_{model}{new_obj._cycle}")
@@ -67,6 +68,14 @@ def regrid_array(old_obj, new_obj, model, obs):
 
 def time2datetime(time_array, date):
     return np.asarray([date + timedelta(hours=float(time)) for time in time_array])
+
+
+def rebin_edges(arr):
+    """Rebins array bins by half and adds boundaries."""
+    new_arr = [(arr[i] + arr[i+1])/2 for i in range(len(arr)-1)]
+    new_arr.insert(0, arr[0] - ((arr[0] + arr[1])/2))
+    new_arr.insert(len(new_arr), arr[-1] + (arr[-1] - arr[-2]))
+    return np.array(new_arr)
 
 
 class ObservationManager(DataSource):
