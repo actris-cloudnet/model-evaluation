@@ -2,7 +2,7 @@ import os
 import netCDF4
 from cloudnetpy import utils, output
 from model_evaluation import version
-from model_evaluation.metadata import MODEL_ATTRIBUTES, CYCLE_ATTRIBUTES, L3_ATTRIBUTES, PRODUCT_ATTRIBUTES
+from model_evaluation.metadata import MODEL_ATTRIBUTES, CYCLE_ATTRIBUTES, MODEL_L3_ATTRIBUTES, REGRID_PRODUCT_ATTRIBUTES
 
 
 def update_attributes(cloudnet_variables):
@@ -18,14 +18,15 @@ def update_attributes(cloudnet_variables):
     """
     for key in cloudnet_variables:
         x = len(key.split('_')) - 1
+        key_parts = key.split('_', x)
         if key in MODEL_ATTRIBUTES:
             cloudnet_variables[key].set_attributes(MODEL_ATTRIBUTES[key])
-        elif key.split('_', x)[0] in PRODUCT_ATTRIBUTES:
-            cloudnet_variables[key].set_attributes(PRODUCT_ATTRIBUTES[key.split('_', x)[0]])
-        elif key.split('_', x)[1] in L3_ATTRIBUTES:
-            cloudnet_variables[key].set_attributes(L3_ATTRIBUTES[key.split('_', x)[1]])
-        elif key.split('_', x)[1] in CYCLE_ATTRIBUTES:
-            cloudnet_variables[key].set_attributes(CYCLE_ATTRIBUTES[key.split('_', x)[1]])
+        elif key_parts[0] in REGRID_PRODUCT_ATTRIBUTES:
+            cloudnet_variables[key].set_attributes(REGRID_PRODUCT_ATTRIBUTES[key_parts[0]])
+        elif key_parts[1] in MODEL_L3_ATTRIBUTES:
+            cloudnet_variables[key].set_attributes(MODEL_L3_ATTRIBUTES[key_parts[1]])
+        elif key_parts[1] in CYCLE_ATTRIBUTES:
+            cloudnet_variables[key].set_attributes(CYCLE_ATTRIBUTES[key_parts[1]])
 
 
 def save_modelfile(id_mark, obj, model_files, file_name):

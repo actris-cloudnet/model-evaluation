@@ -1,4 +1,4 @@
-# generate here all plotting functions needed
+import os
 import numpy as np
 import numpy.ma as ma
 import matplotlib.pyplot as plt
@@ -49,6 +49,10 @@ def generate_single_plot(nc_file, product, name, model):
 def parse_wanted_names(nc_file, name):
     names = netCDF4.Dataset(nc_file).variables.keys()
     return [n for n in names if name in n]
+
+
+def parse_title_names(name):
+    parts = name.split('_')
 
 
 def plot_data_quick_look(ax, data, axes, product):
