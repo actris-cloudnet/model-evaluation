@@ -9,10 +9,6 @@ from cloudnetpy.plotting.plotting import _set_ax, _set_labels, _handle_saving
 
 def generate_quick_plot(nc_file, name, model, save_path=None, show=True):
     """Read files dimensions and generates simple plot from data"""
-    """
-    TODO: Things plotting shoud do:
-        - Talletetaan kuva
-    """
     names = parse_wanted_names(nc_file, name)
     fig, ax = initialize_figure(len(names[0:2]))
     for i, n in enumerate(names[0:2]):
@@ -20,7 +16,6 @@ def generate_quick_plot(nc_file, name, model, save_path=None, show=True):
         _set_ax(ax[i], 12)
         _set_title(ax[i], n, variable_info)
         data, x, y = read_data_characters(nc_file, n, model)
-        data[data < 0] = ma.masked
         plot_data_quick_look(ax[i], data, (x, y), variable_info)
     casedate = _set_labels(fig, ax[i], nc_file)
     _handle_saving(None, save_path, show, 200, casedate, [name, model])
@@ -35,7 +30,6 @@ def generate_single_plot(nc_file, product, name, model, save_path=None, show=Tru
             _set_ax(ax[0], 12)
             _set_title(ax[0], n, variable_info)
             data, x, y = read_data_characters(nc_file, n, model)
-            data[data < 0] = ma.masked
             plot_data_quick_look(ax[0], data, (x, y), variable_info)
     casedate = _set_labels(fig, ax[0], nc_file)
     _handle_saving(None, save_path, show, 200, casedate, n)
@@ -102,21 +96,3 @@ def _init_colorbar(plot, axis):
     divider = make_axes_locatable(axis)
     cax = divider.append_axes("right", size="1%", pad=0.25)
     return plt.colorbar(plot, fraction=1.0, ax=axis, cax=cax)
-
-"""
-def _handle_saving(image_name, save_path, show, dpi, case_date, field_names,
-                   fix=""):
-    if image_name:
-        plt.savefig(image_name, bbox_inches='tight', dpi=dpi)
-    elif save_path:
-        file_name = _create_save_name(save_path, case_date, field_names, fix)
-        plt.savefig(file_name, bbox_inches='tight', dpi=dpi)
-    if show:
-        plt.show()
-    plt.close()
-    
-
-def _create_save_name(save_path, case_date, field_names, fix=''):
-    date_string = case_date.strftime("%Y%m%d")
-    return f"{save_path}{date_string}_{'_'.join(field_names)}{fix}.png"
-"""
