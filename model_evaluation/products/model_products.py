@@ -29,6 +29,7 @@ class ModelGrid(DataSource):
         self._cycle = self._read_cycle_name(model_file)
         self._add_variables()
         self._generate_products()
+        self.date = []
 
     def _read_cycle_name(self, model_file):
         """Get cycle name from config for savin variable name"""

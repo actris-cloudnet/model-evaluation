@@ -46,6 +46,10 @@ def save_modelfile(id_mark, obj, model_files, file_name):
     root_group.title = f"Model data of {id_mark.capitalize().replace('_', ' ')} from {obj.dataset.location}"
     _add_source(root_group, obj, model_files)
     output.copy_global(obj.dataset, root_group, ('location', 'day', 'month', 'year'))
+    try:
+        obj.dataset.day
+    except AttributeError:
+        root_group.year, root_group.month, root_group.day = obj.date
     output.merge_history(root_group, id_mark, obj)
     root_group.close()
     

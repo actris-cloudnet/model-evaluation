@@ -23,8 +23,14 @@ def generate_quick_plot(nc_file, name, model, save_path=None, show=True):
     names = parse_wanted_names(nc_file, name)
     fig, ax = initialize_figure(len(names[0:2]))
     for i, n in enumerate(names[0:2]):
+        print(n)
+        variable_info = ATTRIBUTES[name]
+        _set_ax(ax[i], 12000)
+        _set_title(ax[i], n, variable_info)
         data, x, y = read_data_characters(nc_file, n, model)
-        plot_data_quick_look(ax[i], data, x, y)
+        data[data < 0] = ma.masked
+        plot_data_quick_look(ax[i], data, (x, y), variable_info)
+    _set_labels(fig, ax[i], nc_file)
     if show:
         plt.show()
     plt.savefig(f"{save_path}testi_kuva_iwc.png")
@@ -34,15 +40,14 @@ def generate_single_plot(nc_file, product, name, model):
     names = parse_wanted_names(nc_file, product)
     fig, ax = initialize_figure(1)
     for n in names:
-        print(n)
         if n == name:
-            print(name)
+            variable_info = ATTRIBUTES[product]
             _set_ax(ax[0], 12000)
-            _set_title(ax[0], product, f' from {model}')
+            _set_title(ax[0], n, variable_info)
             data, x, y = read_data_characters(nc_file, n, model)
             data[data < 0] = ma.masked
             # Tässä kohtaa pitää mahdollisesti fiksailla x-, ja y-akseleita riippuen datasta
-            plot_data_quick_look(ax[0], data, (x, y), product)
+            plot_data_quick_look(ax[0], data, (x, y), variable_info)
             plt.show()
 
 
@@ -51,25 +56,30 @@ def parse_wanted_names(nc_file, name):
     return [n for n in names if name in n]
 
 
-def parse_title_names(name):
-    parts = name.split('_')
-
-
-def plot_data_quick_look(ax, data, axes, product):
-    variable_info = ATTRIBUTES[product]
-    #plot_info = PLOT_TYPE[type]
+def plot_data_quick_look(ax, data, axes, variable_info):
     vmin, vmax = variable_info.plot_range
     cmap = plt.get_cmap(variable_info.cbar, 22)
     pl = ax.pcolormesh(*axes, data, vmin=vmin, vmax=vmax, cmap=cmap)
     colorbar = _init_colorbar(pl, ax)
     #TODO: Uudelleen formatoidaan tick labelit siistimmiksi
     #colorbar.set_ticks(np.arange(vmin, vmax))
-    #colorbar.set_label(variables.clabel, fontsize=13)
-    colorbar.set_label('kg m$^{-3}$', fontsize=13)
+    colorbar.set_label(variable_info.clabel, fontsize=13)
 
 
-def _set_title(ax, field_name, identifier=" from CloudnetPy"):
-    ax.set_title(f"{field_name}{identifier}", fontsize=14)
+def _set_title(ax, field_name, variable_info):
+    parts = field_name.split('_')
+    if parts[1] == 'obs':
+        name = variable_info.name
+        model = parts[-1]
+        if len(parts) == 4:
+            model = f"{parts[-2]} cycle {parts[-1]}"
+        ax.set_title(f"Observed {name} regrid to {model}", fontsize=14)
+    else:
+        name = variable_info.name
+        model = parts[0]
+        if len(parts) == 3:
+            model = f"{parts[-2]} cycle {parts[-1]}"
+        ax.set_title(f"Simulated {name} from {model}", fontsize=14)
 
 
 def read_data_characters(nc_file, name, model):
@@ -96,10 +106,6 @@ def initialize_figure(n_subplots):
     if n_subplots == 1:
         axes = [axes]
     return fig, axes
-
-
-def set_labels():
-    print("")
 
 
 def _init_colorbar(plot, axis):
