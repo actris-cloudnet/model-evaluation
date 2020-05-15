@@ -10,8 +10,8 @@ from cloudnetpy.plotting.plotting import _set_ax, _set_labels, _handle_saving
 def generate_quick_plot(nc_file, name, model, save_path=None, show=True):
     """Read files dimensions and generates simple plot from data"""
     names = parse_wanted_names(nc_file, name)
-    fig, ax = initialize_figure(len(names[0:2]))
-    for i, n in enumerate(names[0:2]):
+    fig, ax = initialize_figure(len(names))
+    for i, n in enumerate(names):
         variable_info = ATTRIBUTES[name]
         _set_ax(ax[i], 12)
         _set_title(ax[i], n, variable_info)
@@ -61,7 +61,7 @@ def _set_title(ax, field_name, variable_info):
         name = variable_info.name
         model = parts[0]
         if len(parts) == 3:
-            model = f"{parts[-2]} cycle {parts[-1]}"
+            model = f"{parts[0]} cycle {parts[-1]}"
         ax.set_title(f"Simulated {name} from {model}", fontsize=14)
 
 
