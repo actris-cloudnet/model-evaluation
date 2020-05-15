@@ -1,54 +1,44 @@
-import os
 import numpy as np
 import numpy.ma as ma
 import matplotlib.pyplot as plt
 import netCDF4
 from ..plotting.plot_meta import ATTRIBUTES
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from cloudnetpy.plotting.plotting import _set_ax, _set_labels
+from cloudnetpy.plotting.plotting import _set_ax, _set_labels, _handle_saving
 
 
 def generate_quick_plot(nc_file, name, model, save_path=None, show=True):
     """Read files dimensions and generates simple plot from data"""
     """
     TODO: Things plotting shoud do:
-        - Määritetään kuva (luodaan fig) x
-        - Asetetaan ax:lle otsikko ja labelit x
-        - Editoidaan dataa tarvittaessa, maskaus. Jo datan talletuksessa
-        - plotataan x 
-        - Muokataan Fig:n labelit
-        - Lisätään Fig:in otsikko, jos tarve
         - Talletetaan kuva
     """
     names = parse_wanted_names(nc_file, name)
     fig, ax = initialize_figure(len(names[0:2]))
     for i, n in enumerate(names[0:2]):
-        print(n)
         variable_info = ATTRIBUTES[name]
-        _set_ax(ax[i], 12000)
+        _set_ax(ax[i], 12)
         _set_title(ax[i], n, variable_info)
         data, x, y = read_data_characters(nc_file, n, model)
         data[data < 0] = ma.masked
         plot_data_quick_look(ax[i], data, (x, y), variable_info)
-    _set_labels(fig, ax[i], nc_file)
-    if show:
-        plt.show()
-    plt.savefig(f"{save_path}testi_kuva_iwc.png")
+    casedate = _set_labels(fig, ax[i], nc_file)
+    _handle_saving(None, save_path, show, 200, casedate, [name, model])
 
 
-def generate_single_plot(nc_file, product, name, model):
+def generate_single_plot(nc_file, product, name, model, save_path=None, show=True):
     names = parse_wanted_names(nc_file, product)
     fig, ax = initialize_figure(1)
     for n in names:
         if n == name:
             variable_info = ATTRIBUTES[product]
-            _set_ax(ax[0], 12000)
+            _set_ax(ax[0], 12)
             _set_title(ax[0], n, variable_info)
             data, x, y = read_data_characters(nc_file, n, model)
             data[data < 0] = ma.masked
-            # Tässä kohtaa pitää mahdollisesti fiksailla x-, ja y-akseleita riippuen datasta
             plot_data_quick_look(ax[0], data, (x, y), variable_info)
-            plt.show()
+    casedate = _set_labels(fig, ax[0], nc_file)
+    _handle_saving(None, save_path, show, 200, casedate, n)
 
 
 def parse_wanted_names(nc_file, name):
@@ -62,7 +52,6 @@ def plot_data_quick_look(ax, data, axes, variable_info):
     pl = ax.pcolormesh(*axes, data, vmin=vmin, vmax=vmax, cmap=cmap)
     colorbar = _init_colorbar(pl, ax)
     #TODO: Uudelleen formatoidaan tick labelit siistimmiksi
-    #colorbar.set_ticks(np.arange(vmin, vmax))
     colorbar.set_label(variable_info.clabel, fontsize=13)
 
 
@@ -88,6 +77,7 @@ def read_data_characters(nc_file, name, model):
     x = nc.variables['time'][:]
     x = reshape_1d2nd(x, data)
     y = nc.variables[f'{model}_height'][:]
+    y = y / 1000
     return data, x, y
 
 
@@ -112,3 +102,21 @@ def _init_colorbar(plot, axis):
     divider = make_axes_locatable(axis)
     cax = divider.append_axes("right", size="1%", pad=0.25)
     return plt.colorbar(plot, fraction=1.0, ax=axis, cax=cax)
+
+"""
+def _handle_saving(image_name, save_path, show, dpi, case_date, field_names,
+                   fix=""):
+    if image_name:
+        plt.savefig(image_name, bbox_inches='tight', dpi=dpi)
+    elif save_path:
+        file_name = _create_save_name(save_path, case_date, field_names, fix)
+        plt.savefig(file_name, bbox_inches='tight', dpi=dpi)
+    if show:
+        plt.show()
+    plt.close()
+    
+
+def _create_save_name(save_path, case_date, field_names, fix=''):
+    date_string = case_date.strftime("%Y%m%d")
+    return f"{save_path}{date_string}_{'_'.join(field_names)}{fix}.png"
+"""
