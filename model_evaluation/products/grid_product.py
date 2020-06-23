@@ -35,7 +35,7 @@ def generate_regrid_products(model, obs, model_files, output_file):
         data_obj = regrid_array(product_obj, data_obj, model, obs)
         update_attributes(data_obj.data)
         if os.path.isfile(output_file) is False:
-            add_date_and_location(data_obj, product_obj)
+            add_date(data_obj, product_obj)
             save_modelfile(f"{model}_products", data_obj, model_files, output_file)
         else:
             add_var2ncfile(data_obj, output_file)
@@ -79,9 +79,10 @@ def rebin_edges(arr):
     return np.array(new_arr)
 
 
-def add_date_and_location(new_obj, old_obj):
+def add_date(new_obj, old_obj):
     for a in ('year', 'month', 'day'):
         new_obj.date.append(getattr(old_obj.dataset, a))
+
 
 class ObservationManager(DataSource):
     """This class will read and generate observation to wanted format"""
