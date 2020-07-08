@@ -68,8 +68,6 @@ files_2019.sort()
 save_path1 = '/home/korpinen/Documents/ACTRIS/test_data_files/regrid_2018_juelich/'
 save_path2 = '/home/korpinen/Documents/ACTRIS/test_data_files/regrid_2019_juelich/'
 
-#TODO: Generoi jotenkin looppiin filun talletus nimi polku
-
 for set, save_path in zip([files_2018, files_2019], [save_path1, save_path2]):
     model_files = [f for f in set if model in f]
     cat_files = [f for f in set if 'categorize' in f]
