@@ -68,6 +68,7 @@ def _set_title(ax, field_name, variable_info):
 def read_data_characters(nc_file, name, model):
     nc = netCDF4.Dataset(nc_file)
     data = nc.variables[name][:]
+    data[data <= 0] = ma.masked
     x = nc.variables['time'][:]
     x = reshape_1d2nd(x, data)
     y = nc.variables[f'{model}_height'][:]
