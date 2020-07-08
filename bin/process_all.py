@@ -46,14 +46,39 @@ Model evaluation done
 """
 
 import os
+from pathlib import Path
 import configparser
+from model_evaluation.products.grid_product import generate_regrid_products
 
-"""
-PATH = os.path.dirname(os.path.abspath(__file__))
-PATH = os.path.split(PATH)[0]
-CONF = configparser.ConfigParser()
-CONF.read(os.path.join(PATH, '/level3.ini'))
+root_path = os.path.split(Path(__file__).parent)[0]
+L3_CONF = configparser.ConfigParser()
+L3_CONF.read(os.path.join(root_path, 'model_evaluation/level3.ini'))
+PROCESS_CONF = configparser.ConfigParser()
+PROCESS_CONF.read(os.path.join(os.getcwd(), 'config.ini'))
 
+site = PROCESS_CONF['run']['site']
+model = L3_CONF[site]['model']
 
-models = CONF[site]['model']
-"""
+path1 = '/home/korpinen/Documents/ACTRIS/test_data_files/2018_juelich'
+path2 = '/home/korpinen/Documents/ACTRIS/test_data_files/2019_juelich'
+files_2018 = [os.path.join(path1, i) for i in os.listdir(path1)]
+files_2019 = [os.path.join(path2, i) for i in os.listdir(path2)]
+files_2018.sort()
+files_2019.sort()
+save_path1 = '/home/korpinen/Documents/ACTRIS/test_data_files/regrid_2018_juelich/'
+save_path2 = '/home/korpinen/Documents/ACTRIS/test_data_files/regrid_2019_juelich/'
+
+#TODO: Generoi jotenkin looppiin filun talletus nimi polku
+
+for set, save_path in zip([files_2018, files_2019], [save_path1, save_path2]):
+    model_files = [f for f in set if model in f]
+    cat_files = [f for f in set if 'categorize' in f]
+    iwc_files = [f for f in set if 'iwc' in f]
+    lwc_files = [f for f in set if 'lwc' in f]
+
+    for product, product_files in zip(['iwc', 'lwc', 'cv'], [iwc_files, lwc_files, cat_files]):
+        for i in range(len(model_files)):
+            f_name = product_files[i].split('/')[-1]
+            date = [a for a in f_name.split('_') if a.isdigit()]
+            save_name = os.path.join(save_path, f"{date[0]}_{model}_{product}_regrid.nc")
+            generate_regrid_products(model, product, [model_files[i]], product_files[i], save_name)

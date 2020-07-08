@@ -18,7 +18,7 @@ CONF.optionxform = str
 CONF.read(os.path.join(PATH, 'level3.ini'))
 
 
-def generate_regrid_products(model, obs, model_files, output_file):
+def generate_regrid_products(model, obs, model_files, product_files, output_file):
     """Read observation and regrids them to model grid.
         Creates and saves file also
 
@@ -26,10 +26,10 @@ def generate_regrid_products(model, obs, model_files, output_file):
             model (str): name of model
             obs (str): name of product to generate
             model_files (list): List of files from model to be generated
+            product_files (str): observation to be regrided
             output_file (str): name of model output file
     """
-    product_file = CONF['products'][obs]
-    product_obj = ObservationManager(obs, product_file)
+    product_obj = ObservationManager(obs, product_files)
     for m_file in model_files:
         data_obj = ModelGrid(m_file, model, output_file, obs)
         data_obj = regrid_array(product_obj, data_obj, model, obs)
