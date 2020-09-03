@@ -90,7 +90,7 @@ CYCLE_ATTRIBUTES = {
     )
 }
 
-L3_ATTRIBUTES = {
+MODEL_L3_ATTRIBUTES = {
     'cv': MetaData(
         long_name='Cloud fraction of model grid point',
         units='1'
@@ -108,11 +108,11 @@ L3_ATTRIBUTES = {
     )
 }
 
-PRODUCT_ATTRIBUTES = {
+REGRID_PRODUCT_ATTRIBUTES = {
     'cv': MetaData(
         long_name='Generated cloud fraction from observations reshaped to model dimensions by averaging',
         units='1',
-        comment="Calculated using categorize-file with produce CloudnetPy"
+        comment="Calculated using categorize-file produce with CloudnetPy"
     ),
     'iwc': MetaData(
         long_name='Observed ice water content reshaped to model dimensions by averaging',

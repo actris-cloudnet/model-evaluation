@@ -1,6 +1,7 @@
 import os
 import configparser
 import importlib
+import numpy.ma as ma
 from cloudnetpy.utils import isscalar
 from cloudnetpy.categorize.datasource import DataSource
 
@@ -29,6 +30,7 @@ class ModelGrid(DataSource):
         self._cycle = self._read_cycle_name(model_file)
         self._add_variables()
         self._generate_products()
+        self.date = []
 
     def _read_cycle_name(self, model_file):
         """Get cycle name from config for savin variable name"""
@@ -51,6 +53,7 @@ class ModelGrid(DataSource):
         cv_name = self._read_config('cv')
         cv = self._set_variables(cv_name)
         cv = self.cut_off_extra_levels(cv)
+        cv[cv < 0] = ma.masked
         self.append_data(cv, f'{self._model}_cv{self._cycle}')
         self.keys[self._product] = f'{self._model}_cv{self._cycle}'
 
@@ -59,6 +62,7 @@ class ModelGrid(DataSource):
         p, T, qi = self._set_variables(p_name, T_name, iwc_name)
         iwc = self._calc_water_content(qi, p, T)
         iwc = self.cut_off_extra_levels(iwc)
+        iwc[iwc < 0] = ma.masked
         self.append_data(iwc, f'{self._model}_iwc{self._cycle}')
         self.keys[self._product] = f'{self._model}_iwc{self._cycle}'
 
@@ -67,6 +71,7 @@ class ModelGrid(DataSource):
         p, T, ql = self._set_variables(p_name, T_name, lwc_name)
         lwc = self._calc_water_content(ql, p, T)
         lwc = self.cut_off_extra_levels(lwc)
+        lwc[lwc < 0] = ma.masked
         self.append_data(lwc, f'{self._model}_lwc{self._cycle}')
         self.keys[self._product] = f'{self._model}_lwc{self._cycle}'
 

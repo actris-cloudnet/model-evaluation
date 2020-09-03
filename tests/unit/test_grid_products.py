@@ -49,12 +49,18 @@ def test_time2datetime():
     assert all([a == b for a, b in zip(x, compare)])
 
 
-def test_rebin_random_order_array():
-    from model_evaluation.products.grid_product import rebin_random_order_array
+def test_rebin_edges():
+    from model_evaluation.products.grid_product import rebin_edges
     data = np.array([1, 3, 6, 10, 15, 21, 28])
     compare = np.array([-1, 2, 4.5, 8, 12.5, 18, 24.5, 35])
-    x = rebin_random_order_array(data)
+    x = rebin_edges(data)
     testing.assert_array_almost_equal(x, compare)
+
+
+# TODO: Think how to test
+def test_add_date():
+    from model_evaluation.products.grid_product import add_date
+    assert True
 
 
 def test_get_date(obs_file):

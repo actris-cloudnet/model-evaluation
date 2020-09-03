@@ -100,6 +100,39 @@ def obs_file(tmpdir_factory, file_metadata):
     return file_name
 
 
+@pytest.fixture(scope='session')
+def regrid_file(tmpdir_factory, file_metadata):
+    file_name = tmpdir_factory.mktemp("data").join("file.nc")
+    root_grp = netCDF4.Dataset(file_name, "w", format="NETCDF4_CLASSIC")
+    time = 3
+    level = 2
+    root_grp.createDimension('time', time)
+    root_grp.createDimension('level', level)
+    _create_global_attributes(root_grp, file_metadata)
+    var = root_grp.createVariable('time', 'f8', 'time')
+    var[:] = np.array([2, 6, 10])
+    var = root_grp.createVariable('level', 'f8', 'level')
+    var[:] = level
+    var = root_grp.createVariable('latitude', 'f8')
+    var[:] = 1
+    var = root_grp.createVariable('longitude', 'f8')
+    var[:] = 1
+    var = root_grp.createVariable('horizontal_resolution', 'f8')
+    var[:] = 9
+    var = root_grp.createVariable('ecmwf_height', 'f8', ('time', 'level'))
+    var[:] = np.array([[10, 14], [8, 14], [9, 15]])
+    var = root_grp.createVariable('ecmwf_forecast_time', 'f8', 'time')
+    var[:] = np.array([1, 5, 10])
+    var = root_grp.createVariable('ecmwf_cv', 'f8', ('time', 'level'))
+    var[:] = np.array([[0, 2], [3, 6], [5, 8]])
+    var = root_grp.createVariable('temperature', 'f8', ('time', 'level'))
+    var[:] = np.array([[300, 301], [302, 299], [305, 298]])
+    var = root_grp.createVariable('pressure', 'f8', ('time', 'level'))
+    var[:] = np.array([[1000, 1001], [1010, 1003], [1020, 1005]])
+    root_grp.close()
+    return file_name
+
+
 def _create_global_attributes(root_grp, meta):
     for key in ('year', 'month', 'day', 'location'):
         setattr(root_grp, key, meta[key])
