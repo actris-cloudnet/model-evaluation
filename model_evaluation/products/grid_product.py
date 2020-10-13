@@ -1,14 +1,13 @@
 import os
-import numpy as np
 import numpy.ma as ma
 import configparser
-import netCDF4
-from datetime import datetime, timedelta
+from datetime import datetime
 from cloudnetpy import utils
 from cloudnetpy.categorize.datasource import DataSource
+from cloudnetpy.products.product_tools import CategorizeBits
 from model_evaluation.products.model_products import ModelGrid
 from model_evaluation.file_handler import update_attributes, save_modelfile, add_var2ncfile
-from cloudnetpy.products.product_tools import CategorizeBits
+from model_evaluation.products.grid_methods import CfGrid, IwcGrid, LwcGrid
 
 
 PATH = os.path.dirname(os.path.abspath(__file__))
@@ -18,7 +17,7 @@ CONF.optionxform = str
 CONF.read(os.path.join(PATH, 'level3.ini'))
 
 
-def generate_regrid_products(model, obs, model_files, product_files, output_file):
+def generate_regrid_products(model, obs, model_files, product_file, output_file):
     """Read observation and regrids them to model grid.
         Creates and saves file also
 
@@ -29,59 +28,26 @@ def generate_regrid_products(model, obs, model_files, product_files, output_file
             product_files (str): observation to be regrided
             output_file (str): name of model output file
     """
-    product_obj = ObservationManager(obs, product_files)
+    product_obj = ObservationManager(obs, product_file)
     for m_file in model_files:
-        data_obj = ModelGrid(m_file, model, output_file, obs)
-        data_obj = regrid_array(product_obj, data_obj, model, obs)
-        update_attributes(data_obj.data)
+        model_obj = ModelGrid(m_file, model, output_file, obs)
+        if obs is 'cf':
+            CfGrid(model_obj, product_obj, model, obs)
+        if obs is 'iwc':
+            IwcGrid(model_obj, product_obj, model, obs)
+        if obs is 'lwc':
+            LwcGrid(model_obj, product_obj, model, obs)
+        update_attributes(model_obj.data)
         if os.path.isfile(output_file) is False:
-            add_date(data_obj, product_obj)
-            save_modelfile(f"{model}_products", data_obj, model_files, output_file)
+            add_date(model_obj, product_obj)
+            save_modelfile(f"{model}_products", model_obj, model_files, output_file)
         else:
-            add_var2ncfile(data_obj, output_file)
+            add_var2ncfile(model_obj, output_file)
 
 
-def regrid_array(old_obj, new_obj, model, obs):
-    """Rebins `data` in time and optionally interpolates in height.
-    Args:
-        old_obj (ObservationManager object): 2D data of thicker resolution Object
-        new_obj (ModelGrid object): 2D data of wider resolution Object
-        model (str): Name of used model
-        obs (str): Name of generating observation
-    """
-    regrid_array = np.zeros(new_obj.data[new_obj.keys[obs]][:].shape)
-    time_steps = utils.binvec(new_obj.time)
-    time_steps = time2datetime(time_steps, old_obj.date)
-    old_time = time2datetime(old_obj.time, old_obj.date)
-    old_height = old_obj.data['height'][:]
-    old_data = old_obj.data[obs][:]
-
-    for i in range(len(time_steps) - 1):
-        time_index = (time_steps[i] <= old_time) & (old_time < time_steps[i+1])
-        height_steps = rebin_edges(new_obj.data[new_obj.keys['height']][i])
-        for j in range(len(height_steps)-1):
-            height_index = (height_steps[j] <= old_height) & (old_height < height_steps[j+1])
-            index = np.outer(time_index, height_index)
-            regrid_array[i, j] = np.mean(old_data[index])
-    new_obj.append_data(regrid_array, f"{obs}_obs_{model}{new_obj._cycle}")
-    return new_obj
-
-
-def time2datetime(time_array, date):
-    return np.asarray([date + timedelta(hours=float(time)) for time in time_array])
-
-
-def rebin_edges(arr):
-    """Rebins array bins by half and adds boundaries."""
-    new_arr = [(arr[i] + arr[i+1])/2 for i in range(len(arr)-1)]
-    new_arr.insert(0, arr[0] - ((arr[0] + arr[1])/2))
-    new_arr.insert(len(new_arr), arr[-1] + (arr[-1] - arr[-2]))
-    return np.array(new_arr)
-
-
-def add_date(new_obj, old_obj):
+def add_date(model_obj, obs_obj):
     for a in ('year', 'month', 'day'):
-        new_obj.date.append(getattr(old_obj.dataset, a))
+        model_obj.date.append(getattr(obs_obj.dataset, a))
 
 
 class ObservationManager(DataSource):
@@ -100,12 +66,14 @@ class ObservationManager(DataSource):
 
     def _generate_product(self):
         if self.obs is 'cv':
-            self.append_data(self._generate_cv(), 'cv')
+            self.append_data(self._generate_cf(), 'cf')
         else:
             self.append_data(self.getvar(self.obs), self.obs)
+            if self.obs is 'iwc':
+                self._generate_iwc_masks()
         self.append_data(self.getvar('height'), 'height')
 
-    def _generate_cv(self):
+    def _generate_cf(self):
         categorize_bits = CategorizeBits(self.file)
         cloud_mask = self._classify_basic_mask(categorize_bits.category_bits)
         cloud_mask = self._mask_cloud_bits(cloud_mask)
@@ -147,3 +115,17 @@ class ObservationManager(DataSource):
         rainrate = self.getvar('rainrate')
         rainrate_threshold = self._get_rainrate_threshold()
         return rainrate > rainrate_threshold
+
+    def _generate_iwc_masks(self):
+        iwc = self.getvar(self.obs)
+        iwc_status = self.getvar('iwc_retrieval_status')
+        self._mask_iwc_inc(iwc, iwc_status)
+        self._get_rain_iwc(iwc, iwc_status)
+
+    def _mask_iwc_inc(self, iwc, iwc_status):
+        iwc[iwc_status > 3] = ma.masked()
+        self.append_data(iwc, 'iwc_inc_att')
+
+    def _get_rain_iwc(self, iwc, iwc_status):
+        iwc_rain = iwc[iwc_status == 5]
+        self.append_data(iwc_rain, 'iwc_rain')

@@ -10,6 +10,7 @@ from cloudnetpy.plotting import generate_figure
 root = os.path.split(Path(__file__).parent)[0]
 
 # test files
+"""
 fname = f'{os.path.split(root)[0]}/test_data_files/2018_juelich/20181231_juelich_ecmwf.nc'
 iwc_data = f'{os.path.split(root)[0]}/test_data_files/2018_juelich/20181231_juelich_iwc-Z-T-method.nc'
 lwc_data = f'{os.path.split(root)[0]}/test_data_files/2018_juelich/20181231_juelich_lwc-scaled-adiabatic.nc'
@@ -17,15 +18,20 @@ cv_data = f'{os.path.split(root)[0]}/test_data_files/2018_juelich/20181231_jueli
 iwc_name = f'{root}/test_files/test_data_ecmwf_iwc.nc'
 lwc_name = f'{root}/test_files/test_data_ecmwf_lwc.nc'
 cv_name = f'{root}/test_files/test_data_ecmwf_cv.nc'
+"""
+
+fname = f'{root}/test_files/20190517_mace-head_ecmwf.nc'
+cf_data = f'{root}/test_files/categorize.nc'
+cf_name = f'{root}/test_files/test_data_ecmwf_cv.nc'
 
 save_path = f'{root}/plots/'
 iwc_file = f'{root}/test_files/iwc.nc'
 lwc_file = f'{root}/test_files/lwc.nc'
 
 # Run all product with all test_model files
-for product, product_file, oname in zip(['iwc', 'lwc', 'cv'], [iwc_data, lwc_data, cv_data], [iwc_name, lwc_name, cv_name]):
-    #generate_regrid_products('ecmwf', product, [fname], product_file, oname)
-    generate_quick_plot(oname, product, 'ecmwf', save_path=save_path, show=False)
+for product, product_file, oname in zip(['cf'], [cf_data], [cf_name]):
+    generate_regrid_products('ecmwf', product, [fname], product_file, oname)
+    #generate_quick_plot(oname, product, 'ecmwf', save_path=save_path)
     #generate_single_plot(oname, product, f'{product}_obs_ecmwf', 'ecmwf')
 
 """

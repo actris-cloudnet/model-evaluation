@@ -1,6 +1,7 @@
 import os
 import configparser
 import importlib
+import numpy as np
 import numpy.ma as ma
 from cloudnetpy.utils import isscalar
 from cloudnetpy.categorize.datasource import DataSource
@@ -31,6 +32,8 @@ class ModelGrid(DataSource):
         self._add_variables()
         self._generate_products()
         self.date = []
+        self.wind = self._calculate_wind_speed()
+        self.resolution_h = self._set_variables('horizontal_resolution')
 
     def _read_cycle_name(self, model_file):
         """Get cycle name from config for savin variable name"""
@@ -131,3 +134,10 @@ class ModelGrid(DataSource):
         else:
             data = data[:level]
         return data
+
+    def _calculate_wind_speed(self):
+        u = self._set_variables('uwind')
+        v = self._set_variables('vwind')
+        u = self.cut_off_extra_levels(u)
+        v = self.cut_off_extra_levels(v)
+        return np.sqrt(u**2 + v**2)
