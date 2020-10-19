@@ -51,14 +51,14 @@ class ModelGrid(DataSource):
         except RuntimeError as error:
             print(error)
 
-    def _get_cv(self):
+    def _get_cf(self):
         """Collect cloud fraction straight from model file."""
-        cv_name = self._read_config('cv')
-        cv = self._set_variables(cv_name)
-        cv = self.cut_off_extra_levels(cv)
-        cv[cv < 0] = ma.masked
-        self.append_data(cv, f'{self._model}_cv{self._cycle}')
-        self.keys[self._product] = f'{self._model}_cv{self._cycle}'
+        cf_name = self._read_config('cf')
+        cf = self._set_variables(cf_name)
+        cf = self.cut_off_extra_levels(cf)
+        cf[cf < 0] = ma.masked
+        self.append_data(cf, f'{self._model}_cf{self._cycle}')
+        self.keys[self._product] = f'{self._model}_cf{self._cycle}'
 
     def _get_iwc(self):
         p_name, T_name, iwc_name = self._read_config('p', 'T', 'iwc')
@@ -140,4 +140,4 @@ class ModelGrid(DataSource):
         v = self._set_variables('vwind')
         u = self.cut_off_extra_levels(u)
         v = self.cut_off_extra_levels(v)
-        return np.sqrt(u**2 + v**2)
+        return np.sqrt(u.data**2 + v.data**2)
