@@ -118,29 +118,29 @@ class IwcGrid:
         """
         array_iwc = np.zeros(self.model_height.shape)
         array_iwc_mask = np.zeros(self.model_height.shape)
-        array_iwc_inc = np.zeros(self.model_height.shape)
+        array_iwc_att = np.zeros(self.model_height.shape)
         array_iwc_rain = np.zeros(self.model_height.shape)
 
-        inc_att = self.obs_obj.data['iwc_inc_att'][:]
+        iwc_att = self.obs_obj.data['iwc_att'][:]
         iwc_mask = self.obs_obj.data['iwc_mask'][:]
         for i in range(len(self.time_steps) - 1):
             x_ind = tl.get_1d_indices(i, self.time_steps, self.obs_time)
             x_ind_rain = tl.get_1d_indices(i, self.time_steps, self.obs_time,
                                            mask=~self.obs_obj.data['iwc_rain'][:])
-            # TODO: korjaa maanantaina, raining ei tod toimi
+            # TODO: raining ei tod toimi
             y_steps = tl.rebin_edges(self.model_height[i])
             for j in range(len(y_steps)-1):
                 y_ind = tl.get_1d_indices(j, y_steps, self.obs_height)
                 iwc_ind = np.outer(x_ind, y_ind)
                 iwc_rain_ind = np.outer(x_ind_rain, y_ind)
-                array_iwc[i, j] = np.mean(self.obs_data[iwc_ind])
-                array_iwc_inc[i, j] = np.mean(inc_att[iwc_ind])
-                array_iwc_rain[i, j] = np.mean(self.obs_data[iwc_rain_ind])
-                array_iwc_mask[i, j] = np.mean(iwc_mask[iwc_ind])
+                array_iwc[i, j] = np.mean(self.obs_data[iwc_rain_ind])
+                array_iwc_att[i, j] = np.mean(iwc_att[iwc_rain_ind])
+                array_iwc_rain[i, j] = np.mean(self.obs_data[iwc_ind])
+                array_iwc_mask[i, j] = np.mean(iwc_mask[iwc_rain_ind])
 
         self.model_obj.append_data(array_iwc, f"{self.obs}_{self.model}{self.model_obj._cycle}")
         self.model_obj.append_data(array_iwc_mask, f"{self.obs}_mask_{self.model}{self.model_obj._cycle}")
-        self.model_obj.append_data(array_iwc_inc, f"{self.obs}_inc_{self.model}{self.model_obj._cycle}")
+        self.model_obj.append_data(array_iwc_att, f"{self.obs}_att_{self.model}{self.model_obj._cycle}")
         self.model_obj.append_data(array_iwc_rain, f"{self.obs}_rain_{self.model}{self.model_obj._cycle}")
 
     def _regrid_iwc_advection(self):
@@ -149,9 +149,9 @@ class IwcGrid:
         """
         array_iwc = np.zeros(self.model_height.shape)
         array_iwc_mask = np.zeros(self.model_height.shape)
-        array_iwc_inc = np.zeros(self.model_height.shape)
+        array_iwc_att = np.zeros(self.model_height.shape)
         array_iwc_rain = np.zeros(self.model_height.shape)
-        inc_att = self.obs_obj.data['iwc_inc_att'][:]
+        iwc_att = self.obs_obj.data['iwc_att'][:]
         iwc_mask = self.obs_obj.data['iwc_mask'][:]
         model_t = tl.time2datetime(self.model_time, self.date)
         for i in range(len(self.time_steps) - 1):
@@ -163,14 +163,14 @@ class IwcGrid:
                 y_ind = (y_steps[j] <= self.obs_height) & (self.obs_height < y_steps[j+1])
                 iwc_ind = np.outer(x_ind, y_ind)
                 iwc_rain_ind = np.outer(x_ind_rain, y_ind)
-                array_iwc[i, j] = np.mean(self.obs_data[iwc_ind])
-                array_iwc_inc[i, j] = np.mean(inc_att[iwc_ind])
-                array_iwc_rain[i, j] = np.mean(self.obs_data[iwc_rain_ind])
-                array_iwc_mask[i, j] = np.mean(iwc_mask[iwc_ind])
+                array_iwc[i, j] = np.mean(self.obs_data[iwc_rain_ind])
+                array_iwc_att[i, j] = np.mean(iwc_att[iwc_rain_ind])
+                array_iwc_rain[i, j] = np.mean(self.obs_data[iwc_ind])
+                array_iwc_mask[i, j] = np.mean(iwc_mask[iwc_rain_ind])
 
         self.model_obj.append_data(array_iwc, f"{self.obs}_adv_{self.model}{self.model_obj._cycle}")
         self.model_obj.append_data(array_iwc_mask, f"{self.obs}_mask_adv{self.model}{self.model_obj._cycle}")
-        self.model_obj.append_data(array_iwc_inc, f"{self.obs}_inc_adv_{self.model}{self.model_obj._cycle}")
+        self.model_obj.append_data(array_iwc_att, f"{self.obs}_att_adv_{self.model}{self.model_obj._cycle}")
         self.model_obj.append_data(array_iwc_rain, f"{self.obs}_rain_adv_{self.model}{self.model_obj._cycle}")
 
 

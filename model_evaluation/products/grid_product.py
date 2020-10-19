@@ -130,7 +130,7 @@ class ObservationManager(DataSource):
 
     def _mask_iwc_inc(self, iwc, iwc_status):
         iwc[iwc_status > 3] = ma.masked
-        self.append_data(iwc, 'iwc_inc_att')
+        self.append_data(iwc, 'iwc_att')
 
     def _get_rain_iwc(self, iwc_status):
         iwc_rain = np.zeros(iwc_status.shape, dtype=bool)
