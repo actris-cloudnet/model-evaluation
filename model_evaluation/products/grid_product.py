@@ -1,4 +1,5 @@
 import os
+import numpy as np
 import numpy.ma as ma
 import configparser
 from datetime import datetime
@@ -65,7 +66,7 @@ class ObservationManager(DataSource):
                         int(self.dataset.day), 0, 0, 0)
 
     def _generate_product(self):
-        if self.obs is 'cv':
+        if self.obs is 'cf':
             self.append_data(self._generate_cf(), 'cf')
         else:
             self.append_data(self.getvar(self.obs), self.obs)
@@ -119,13 +120,20 @@ class ObservationManager(DataSource):
     def _generate_iwc_masks(self):
         iwc = self.getvar(self.obs)
         iwc_status = self.getvar('iwc_retrieval_status')
+        self._mask_iwc(iwc, iwc_status)
         self._mask_iwc_inc(iwc, iwc_status)
-        self._get_rain_iwc(iwc, iwc_status)
+        self._get_rain_iwc(iwc_status.data)
+
+    def _mask_iwc(self, iwc, iwc_status):
+        iwc[iwc_status != [1, 3]] = ma.masked
+        self.append_data(iwc, 'iwc_mask')
 
     def _mask_iwc_inc(self, iwc, iwc_status):
-        iwc[iwc_status > 3] = ma.masked()
+        iwc[iwc_status > 3] = ma.masked
         self.append_data(iwc, 'iwc_inc_att')
 
-    def _get_rain_iwc(self, iwc, iwc_status):
-        iwc_rain = iwc[iwc_status == 5]
+    def _get_rain_iwc(self, iwc_status):
+        iwc_rain = np.zeros(iwc_status.shape, dtype=bool)
+        iwc_rain[iwc_status == 5] = 1
+        iwc_rain = np.any(iwc_rain, axis=1)
         self.append_data(iwc_rain, 'iwc_rain')
