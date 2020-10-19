@@ -15,5 +15,26 @@ def rebin_edges(arr):
 
 
 def calculate_advection_time(resolution, wind):
-    return ((resolution * 1000) / wind) / 60 ** 2
+    t_adv = ((resolution.data * 1000) / wind) / 60 ** 2
+    return np.asarray([[timedelta(seconds=float(t)) for t in time] for time in t_adv])
 
+
+def get_1d_indices(ind, x_window, data, mask=False):
+    if mask is True: # TODO: Miksi toimii näin, muttei if mask?
+        data = data[mask]
+    x_indices = (x_window[ind] <= data) & (data < x_window[ind + 1])
+    return x_indices
+
+
+def get_adv_indices(i, j, model_t, adv_t, data, mask=False):
+    if mask is True: #TODO: ei pelitä vielä kunnolla
+        data = data[mask]
+    adv_indices = ((model_t[i] + adv_t[i, j]/2) <= data) & \
+                  (data < (model_t[i] - adv_t[i, j]/2))
+    return adv_indices
+
+
+def get_obs_window_size(ind_x, ind_y):
+    x = np.where(ind_x == True)[0]
+    y = np.where(ind_y == True)[0]
+    return x[-1] - x[0] + 1, y[-1] - y[0] + 1

@@ -9,7 +9,7 @@ class CfGrid:
         self.obs_obj = obs_obj
         self.obs = obs
         self.date = obs_obj.date
-        self.obs_time = obs_obj.time
+        self.obs_time = tl.time2datetime(obs_obj.time, self.date)
         self.obs_height = obs_obj.data['height'][:]
         self.obs_data = obs_obj.data[obs][:]
         self.model_obj = model_obj
@@ -40,15 +40,19 @@ class CfGrid:
         array_A = np.zeros(self.model_height.shape)
 
         for i in range(len(self.time_steps) - 1):
-            x_ind = (self.time_steps[i] <= self.obs_time) &\
-                    (self.obs_time < self.time_steps[i+1])
+            x_ind = tl.get_1d_indices(i, self.time_steps, self.obs_time)
             y_steps = tl.rebin_edges(self.model_height[i])
             for j in range(len(y_steps)-1):
-                y_ind = (y_steps[j] <= self.obs_height) & (self.obs_height < y_steps[j+1])
+                y_ind = tl.get_1d_indices(j, y_steps, self.obs_height)
                 ind = np.outer(x_ind, y_ind)
-                array_V[i, j] = np.mean(self.obs_data[ind])
-                array_A[i, j] = np.mean(np.sum(self.obs_data[ind], 1) > 0)
-
+                if not self.obs_data[ind].any(): #TODO: parempi metodi tähän
+                    array_V[i, j] = np.nan
+                    array_A[i, j] = np.nan
+                    continue
+                window_size = tl.get_obs_window_size(x_ind, y_ind)
+                data = self.obs_data[ind].reshape(window_size)
+                array_V[i, j] = np.mean(data)
+                array_A[i, j] = np.mean(np.sum(data, 1) > 0)
         self.model_obj.append_data(array_V, f"{self.obs}_V_{self.model}{self.model_obj._cycle}")
         self.model_obj.append_data(array_A, f"{self.obs}_A_{self.model}{self.model_obj._cycle}")
 
@@ -58,16 +62,22 @@ class CfGrid:
         """
         array_V = np.zeros(self.model_height.shape)
         array_A = np.zeros(self.model_height.shape)
-
+        model_t = tl.time2datetime(self.model_time, self.date)
         for i in range(len(self.time_steps) - 1):
             y_steps = tl.rebin_edges(self.model_height[i])
             for j in range(len(y_steps)-1):
-                x_ind = ((self.model_time[i] - self.time_adv[i, j] / 2) <= self.obs_time) & \
-                        (self.obs_time < (self.model_time[i+1] - self.time_adv[i+1, j] / 2))
-                y_ind = (y_steps[j] <= self.obs_height) & (self.obs_height < y_steps[j+1])
+                x_ind = tl.get_adv_indices(i, j, model_t, self.time_adv, self.obs_time)
+                y_ind = tl.get_1d_indices(j, y_steps, self.obs_height)
                 ind = np.outer(x_ind, y_ind)
-                array_V[i, j] = np.mean(self.obs_data[ind])
-                array_A[i, j] = np.mean(np.sum(self.obs_data[ind], 1) > 0)
+                if not self.obs_data[ind].any(): #TODO: parempi metodi tähän
+                    array_V[i, j] = np.nan
+                    array_A[i, j] = np.nan
+                    continue
+                window_size = tl.get_obs_window_size(x_ind, y_ind)
+                data = self.obs_data[ind].reshape(window_size)
+
+                array_V[i, j] = np.mean(data)
+                array_A[i, j] = np.mean(np.sum(data, 1) > 0)
 
         self.model_obj.append_data(array_V, f"{self.obs}_V_adv_{self.model}{self.model_obj._cycle}")
         self.model_obj.append_data(array_A, f"{self.obs}_A_adv_{self.model}{self.model_obj._cycle}")
@@ -79,7 +89,7 @@ class IwcGrid:
         self.obs_obj = obs_obj
         self.obs = obs
         self.date = obs_obj.date
-        self.obs_time = obs_obj.time
+        self.obs_time = tl.time2datetime(obs_obj.time, self.date)
         self.obs_height = obs_obj.data['height'][:]
         self.obs_data = obs_obj.data[obs][:]
         self.model_obj = model_obj
@@ -99,64 +109,67 @@ class IwcGrid:
         """
         time_steps = utils.binvec(self.model_time)
         self.time_steps = tl.time2datetime(time_steps, self.date)
-        self._regrid_data()
-        self._regrid_data_advection()
+        self._regrid_iwc()
+        self._regrid_iwc_advection()
 
-    def _regrid_data(self):
+    def _regrid_iwc(self):
         """
         Regrid thicker array to thinner one
         """
         array_iwc = np.zeros(self.model_height.shape)
+        array_iwc_mask = np.zeros(self.model_height.shape)
         array_iwc_inc = np.zeros(self.model_height.shape)
         array_iwc_rain = np.zeros(self.model_height.shape)
+
+        inc_att = self.obs_obj.data['iwc_inc_att'][:]
+        iwc_mask = self.obs_obj.data['iwc_mask'][:]
         for i in range(len(self.time_steps) - 1):
-            x_ind_iwc = (self.time_steps[i] <= self.obs_time) &\
-                    (self.obs_time < self.time_steps[i+1])
-            x_ind_inc = (self.time_steps[i] <= self.obs_time) &\
-                    (self.obs_time < self.time_steps[i+1] & ~self.obs_obj['iwc_inc_att'][:])
-            x_ind_rain = (self.time_steps[i] <= self.obs_time) &\
-                    (self.obs_time < self.time_steps[i+1] & ~self.obs_obj['iwc_rain'][:])
+            x_ind = tl.get_1d_indices(i, self.time_steps, self.obs_time)
+            x_ind_rain = tl.get_1d_indices(i, self.time_steps, self.obs_time,
+                                           mask=~self.obs_obj.data['iwc_rain'][:])
+            # TODO: korjaa maanantaina, raining ei tod toimi
             y_steps = tl.rebin_edges(self.model_height[i])
             for j in range(len(y_steps)-1):
-                y_ind = (y_steps[j] <= self.obs_height) & (self.obs_height < y_steps[j+1])
-                iwc_ind = np.outer(x_ind_iwc, y_ind)
-                iwc_inc = np.outer(x_ind_inc, y_ind)
-                iwc_rain = np.outer(x_ind_rain, y_ind)
+                y_ind = tl.get_1d_indices(j, y_steps, self.obs_height)
+                iwc_ind = np.outer(x_ind, y_ind)
+                iwc_rain_ind = np.outer(x_ind_rain, y_ind)
                 array_iwc[i, j] = np.mean(self.obs_data[iwc_ind])
-                array_iwc_inc[i, j] = np.mean(self.obs_data[iwc_inc])
-                array_iwc_rain[i, j] = np.mean(self.obs_data[iwc_rain])
+                array_iwc_inc[i, j] = np.mean(inc_att[iwc_ind])
+                array_iwc_rain[i, j] = np.mean(self.obs_data[iwc_rain_ind])
+                array_iwc_mask[i, j] = np.mean(iwc_mask[iwc_ind])
 
         self.model_obj.append_data(array_iwc, f"{self.obs}_{self.model}{self.model_obj._cycle}")
+        self.model_obj.append_data(array_iwc_mask, f"{self.obs}_mask_{self.model}{self.model_obj._cycle}")
         self.model_obj.append_data(array_iwc_inc, f"{self.obs}_inc_{self.model}{self.model_obj._cycle}")
         self.model_obj.append_data(array_iwc_rain, f"{self.obs}_rain_{self.model}{self.model_obj._cycle}")
 
-    def _regrid_data_advection(self):
+    def _regrid_iwc_advection(self):
         """
         Regrid thicker array to thinner one
         """
         array_iwc = np.zeros(self.model_height.shape)
+        array_iwc_mask = np.zeros(self.model_height.shape)
         array_iwc_inc = np.zeros(self.model_height.shape)
         array_iwc_rain = np.zeros(self.model_height.shape)
+        inc_att = self.obs_obj.data['iwc_inc_att'][:]
+        iwc_mask = self.obs_obj.data['iwc_mask'][:]
+        model_t = tl.time2datetime(self.model_time, self.date)
         for i in range(len(self.time_steps) - 1):
             y_steps = tl.rebin_edges(self.model_height[i])
             for j in range(len(y_steps)-1):
-                x_ind_iwc = ((self.model_time[i] - self.time_adv[i, j] / 2) <= self.obs_time) & \
-                        (self.obs_time < (self.model_time[i+1] - self.time_adv[i+1, j] / 2))
-                x_ind_inc = ((self.model_time[i] - self.time_adv[i, j] / 2) <= self.obs_time) & \
-                            (self.obs_time < (self.model_time[i + 1] - self.time_adv[i + 1, j] / 2) &
-                            ~self.obs_obj['iwc_inc_att'][:])
-                x_ind_rain = ((self.model_time[i] - self.time_adv[i, j] / 2) <= self.obs_time) & \
-                            (self.obs_time < (self.model_time[i + 1] - self.time_adv[i + 1, j] / 2) &
-                            ~self.obs_obj['iwc_rain'][:])
+                x_ind = tl.get_adv_indices(i, j, model_t, self.time_adv, self.obs_time)
+                x_ind_rain = tl.get_adv_indices(i, j, model_t, self.time_adv,
+                                                self.obs_time, mask=~self.obs_obj.data['iwc_rain'][:])
                 y_ind = (y_steps[j] <= self.obs_height) & (self.obs_height < y_steps[j+1])
-                iwc_ind = np.outer(x_ind_iwc, y_ind)
-                iwc_inc = np.outer(x_ind_inc, y_ind)
-                iwc_rain = np.outer(x_ind_rain, y_ind)
+                iwc_ind = np.outer(x_ind, y_ind)
+                iwc_rain_ind = np.outer(x_ind_rain, y_ind)
                 array_iwc[i, j] = np.mean(self.obs_data[iwc_ind])
-                array_iwc_inc[i, j] = np.mean(self.obs_data[iwc_inc])
-                array_iwc_rain[i, j] = np.mean(self.obs_data[iwc_rain])
+                array_iwc_inc[i, j] = np.mean(inc_att[iwc_ind])
+                array_iwc_rain[i, j] = np.mean(self.obs_data[iwc_rain_ind])
+                array_iwc_mask[i, j] = np.mean(iwc_mask[iwc_ind])
 
         self.model_obj.append_data(array_iwc, f"{self.obs}_adv_{self.model}{self.model_obj._cycle}")
+        self.model_obj.append_data(array_iwc_mask, f"{self.obs}_mask_adv{self.model}{self.model_obj._cycle}")
         self.model_obj.append_data(array_iwc_inc, f"{self.obs}_inc_adv_{self.model}{self.model_obj._cycle}")
         self.model_obj.append_data(array_iwc_rain, f"{self.obs}_rain_adv_{self.model}{self.model_obj._cycle}")
 
@@ -167,7 +180,7 @@ class LwcGrid:
         self.obs_obj = obs_obj
         self.obs = obs
         self.date = obs_obj.date
-        self.obs_time = obs_obj.time
+        self.obs_time = tl.time2datetime(obs_obj.time, self.date)
         self.obs_height = obs_obj.data['height'][:]
         self.obs_data = obs_obj.data[obs][:]
         self.model_obj = model_obj
@@ -187,35 +200,34 @@ class LwcGrid:
         """
         time_steps = utils.binvec(self.model_time)
         self.time_steps = tl.time2datetime(time_steps, self.date)
-        self._regrid_data()
-        self._regrid_data_advection()
+        self._regrid_lwc()
+        self._regrid_lwc_advection()
 
-    def _regrid_data(self):
+    def _regrid_lwc(self):
         """
         Regrid thicker array to thinner one
         """
         array_V = np.zeros(self.model_height.shape)
         for i in range(len(self.time_steps) - 1):
-            x_ind = (self.time_steps[i] <= self.obs_time) &\
-                    (self.obs_time < self.time_steps[i+1])
+            x_ind = tl.get_1d_indices(i, self.time_steps, self.obs_time)
             y_steps = tl.rebin_edges(self.model_height[i])
             for j in range(len(y_steps)-1):
-                y_ind = (y_steps[j] <= self.obs_height) & (self.obs_height < y_steps[j+1])
+                y_ind = tl.get_1d_indices(j, y_steps, self.obs_height)
                 ind = np.outer(x_ind, y_ind)
                 array_V[i, j] = np.mean(self.obs_data[ind])
         self.model_obj.append_data(array_V, f"{self.obs}_{self.model}{self.model_obj._cycle}")
 
-    def _regrid_data_advection(self):
+    def _regrid_lwc_advection(self):
         """
         Regrid thicker array to thinner one
         """
         array_V = np.zeros(self.model_height.shape)
+        model_t = tl.time2datetime(self.model_time, self.date)
         for i in range(len(self.time_steps) - 1):
             y_steps = tl.rebin_edges(self.model_height[i])
             for j in range(len(y_steps)-1):
-                x_ind = ((self.model_time[i] - self.time_adv[i, j] / 2) <= self.obs_time) & \
-                        (self.obs_time < (self.model_time[i+1] - self.time_adv[i+1, j] / 2))
-                y_ind = (y_steps[j] <= self.obs_height) & (self.obs_height < y_steps[j+1])
+                x_ind = tl.get_adv_indices(i, j, model_t, self.time_adv, self.obs_time)
+                y_ind = tl.get_1d_indices(j, y_steps, self.obs_height)
                 ind = np.outer(x_ind, y_ind)
                 array_V[i, j] = np.mean(self.obs_data[ind])
         self.model_obj.append_data(array_V, f"{self.obs}_adv_{self.model}{self.model_obj._cycle}")
