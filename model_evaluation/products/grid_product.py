@@ -8,7 +8,7 @@ from cloudnetpy.categorize.datasource import DataSource
 from cloudnetpy.products.product_tools import CategorizeBits
 from model_evaluation.products.model_products import ModelGrid
 from model_evaluation.file_handler import update_attributes, save_modelfile, add_var2ncfile
-from model_evaluation.products.grid_methods import CfGrid, IwcGrid, LwcGrid
+from model_evaluation.products.grid_methods import ProductGrid
 
 
 PATH = os.path.dirname(os.path.abspath(__file__))
@@ -32,12 +32,7 @@ def generate_regrid_products(model, obs, model_files, product_file, output_file)
     product_obj = ObservationManager(obs, product_file)
     for m_file in model_files:
         model_obj = ModelGrid(m_file, model, output_file, obs)
-        if obs is 'cf':
-            CfGrid(model_obj, product_obj, model, obs)
-        if obs is 'iwc':
-            IwcGrid(model_obj, product_obj, model, obs)
-        if obs is 'lwc':
-            LwcGrid(model_obj, product_obj, model, obs)
+        ProductGrid(model_obj, product_obj, model, obs)
         update_attributes(model_obj.data)
         if os.path.isfile(output_file) is False:
             add_date(model_obj, product_obj)
