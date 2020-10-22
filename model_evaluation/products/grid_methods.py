@@ -43,8 +43,10 @@ class ProductGrid:
                 elif self.obs is 'iwc':
                     x_ind_rain_adv = tl.get_adv_indices(i, j, model_t, self.time_adv, self.obs_time,
                                                         mask=~self.obs_obj.data['iwc_rain'][:])
-                    product_dict = self._regrid_iwc(product_dict, i, j, ind, x_ind_rain)
-                    product_adv_dict = self._regrid_iwc(product_adv_dict, i, j, ind_avd, x_ind_rain_adv)
+                    ind_rain = np.outer(x_ind_rain, y_ind)
+                    ind_rain_adv = np.outer(x_ind_rain_adv, y_ind)
+                    product_dict = self._regrid_iwc(product_dict, i, j, ind, ind_rain)
+                    product_adv_dict = self._regrid_iwc(product_adv_dict, i, j, ind_avd, ind_rain_adv)
                 else:
                     product_dict = self._regrid_product(product_dict, i, j, ind)
                     product_adv_dict = self._regrid_product(product_adv_dict, i, j, ind_avd)
@@ -99,7 +101,6 @@ class ProductGrid:
         return []
 
     def _regrid_iwc(self, array_dict, i, j, ind, ind_rain):
-        #TODO: tsekkaa hidastaako tämä haku ajoa merkittävästi?
         for key in array_dict.keys():
             storage = array_dict[key]
             if 'rain' in key:
