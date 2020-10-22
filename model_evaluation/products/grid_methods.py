@@ -88,7 +88,7 @@ class ProductGrid:
             if np.any(data):
                 if '_A' in key:
                     storage[i, j] = np.mean(np.sum(data, 1) > 0)
-                    storage[i, j] = np.mean(data)
+                storage[i, j] = np.mean(data)
             else:
                 storage[i, j] = np.nan
             array_dict[key] = storage
