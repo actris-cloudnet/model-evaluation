@@ -16,7 +16,9 @@ def rebin_edges(arr):
 
 def calculate_advection_time(resolution, wind):
     t_adv = ((resolution.data * 1000) / wind) / 60 ** 2
-    return np.asarray([[timedelta(seconds=float(t)) for t in time] for time in t_adv])
+    t_adv[t_adv > 1] = 1 # hour sampling
+    #t_adv[t_adv > 1/6] = 1/6 # 10 min sampling
+    return np.asarray([[timedelta(hours=float(t)) for t in time] for time in t_adv])
 
 
 def get_1d_indices(ind, x_window, data, mask=False):
@@ -29,8 +31,8 @@ def get_1d_indices(ind, x_window, data, mask=False):
 def get_adv_indices(i, j, model_t, adv_t, data, mask=False):
     if mask is True: #TODO: ei pelitä vielä kunnolla
         data = data[mask]
-    adv_indices = ((model_t[i] + adv_t[i, j]/2) <= data) & \
-                  (data < (model_t[i] - adv_t[i, j]/2))
+    adv_indices = ((model_t[i] - adv_t[i, j]/2) <= data) & \
+                  (data < (model_t[i] + adv_t[i, j]/2))
     return adv_indices
 
 

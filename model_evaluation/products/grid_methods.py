@@ -26,6 +26,9 @@ class ProductGrid:
         model_t = tl.time2datetime(self.model_time, self.date)
         for i in range(len(self.time_steps) - 1):
             x_ind = tl.get_1d_indices(i, self.time_steps, self.obs_time)
+            if self.obs is 'iwc':
+                x_ind_rain = tl.get_1d_indices(i, self.time_steps, self.obs_time,
+                                               mask=~self.obs_obj.data['iwc_rain'][:])
             y_steps = tl.rebin_edges(self.model_height[i])
             for j in range(len(y_steps) - 1):
                 x_ind_adv = tl.get_adv_indices(i, j, model_t, self.time_adv, self.obs_time)
@@ -38,8 +41,10 @@ class ProductGrid:
                     data_adv = self._reshape_data_to_window(ind_avd, x_ind_adv, y_ind)
                     product_adv_dict = self._regrid_cf(product_adv_dict, i, j, data_adv)
                 elif self.obs is 'iwc':
-                    product_dict = self._regrid_iwc(product_dict, i, j, ind)
-                    product_adv_dict = self._regrid_iwc(product_adv_dict, i, j, ind_avd)
+                    x_ind_rain_adv = tl.get_adv_indices(i, j, model_t, self.time_adv, self.obs_time,
+                                                        mask=~self.obs_obj.data['iwc_rain'][:])
+                    product_dict = self._regrid_iwc(product_dict, i, j, ind, x_ind_rain)
+                    product_adv_dict = self._regrid_iwc(product_adv_dict, i, j, ind_avd, x_ind_rain_adv)
                 else:
                     product_dict = self._regrid_product(product_dict, i, j, ind)
                     product_adv_dict = self._regrid_product(product_adv_dict, i, j, ind_avd)
@@ -93,10 +98,8 @@ class ProductGrid:
             return self.obs_data[ind].reshape(window_size)
         return []
 
-    def _regrid_iwc(self, array_dict, i, j, ind):
+    def _regrid_iwc(self, array_dict, i, j, ind, ind_rain):
         #TODO: tsekkaa hidastaako tämä haku ajoa merkittävästi?
-        ind_rain = tl.get_1d_indices(i, self.time_steps, self.obs_time,
-                                     mask=~self.obs_obj.data['iwc_rain'][:])
         for key in array_dict.keys():
             storage = array_dict[key]
             if 'rain' in key:
