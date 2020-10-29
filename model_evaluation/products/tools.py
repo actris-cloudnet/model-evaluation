@@ -21,24 +21,30 @@ def calculate_advection_time(resolution, wind):
     return np.asarray([[timedelta(hours=float(t)) for t in time] for time in t_adv])
 
 
-def get_1d_indices(ind, x_window, data, mask=False):
+def get_1d_indices(ind, window, data, mask=False):
     if mask is True: # TODO: Miksi toimii näin, muttei if mask?
         data = data[mask]
-    x_indices = (x_window[ind] <= data) & (data < x_window[ind + 1])
-    return x_indices
+    indices = (window[ind] <= data) & (data < window[ind + 1])
+    return indices
 
 
-def get_adv_indices(i, j, model_t, adv_t, data, mask=False):
+def get_adv_indices(ind, model_t, adv_t, data, mask=False):
     if mask is True: #TODO: ei pelitä vielä kunnolla
         data = data[mask]
-    adv_indices = ((model_t[i] - adv_t[i, j]/2) <= data) & \
-                  (data < (model_t[i] + adv_t[i, j]/2))
+    adv_indices = ((model_t - adv_t[ind] / 2) <= data) & \
+                  (data < (model_t + adv_t[ind] / 2))
     return adv_indices
 
 
 def get_obs_window_size(ind_x, ind_y):
-    x = np.where(ind_x == True)[0]
-    y = np.where(ind_y == True)[0]
+    """Gets location of corner indices of selected window"""
+    x = np.where(ind_x)[0]
+    y = np.where(ind_y)[0]
     if np.any(x) and np.any(y):
         return x[-1] - x[0] + 1, y[-1] - y[0] + 1
     return []
+
+
+def add_date(model_obj, obs_obj):
+    for a in ('year', 'month', 'day'):
+        model_obj.date.append(getattr(obs_obj.dataset, a))

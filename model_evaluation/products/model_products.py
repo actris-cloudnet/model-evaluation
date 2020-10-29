@@ -13,7 +13,7 @@ CONF.optionxform = str
 CONF.read(os.path.join(PATH, 'level3.ini'))
 
 
-class ModelGrid(DataSource):
+class ModelManager(DataSource):
     """ Generates model data to L2b products.
 
     Args:
@@ -36,7 +36,7 @@ class ModelGrid(DataSource):
         self.resolution_h = self._set_variables('horizontal_resolution')
 
     def _read_cycle_name(self, model_file):
-        """Get cycle name from config for savin variable name"""
+        """Get cycle name from config for saving variable name"""
         cycles = CONF[self._model]['cycle']
         cycles = [x.strip() for x in cycles.split(',')]
         for cycle in cycles:
@@ -45,7 +45,7 @@ class ModelGrid(DataSource):
         return ""
 
     def _generate_products(self):
-        cls = getattr(importlib.import_module(__name__), 'ModelGrid')
+        cls = getattr(importlib.import_module(__name__), 'ModelManager')
         try:
             getattr(cls, f"_get_{self._product}")(self)
         except RuntimeError as error:
@@ -55,7 +55,7 @@ class ModelGrid(DataSource):
         """Collect cloud fraction straight from model file."""
         cf_name = self._read_config('cf')
         cf = self._set_variables(cf_name)
-        cf = self.cut_off_extra_levels(cf)
+        cf = self._cut_off_extra_levels(cf)
         cf[cf < 0] = ma.masked
         self.append_data(cf, f'{self._model}_cf{self._cycle}')
         self.keys[self._product] = f'{self._model}_cf{self._cycle}'
@@ -64,7 +64,7 @@ class ModelGrid(DataSource):
         p_name, T_name, iwc_name = self._read_config('p', 'T', 'iwc')
         p, T, qi = self._set_variables(p_name, T_name, iwc_name)
         iwc = self._calc_water_content(qi, p, T)
-        iwc = self.cut_off_extra_levels(iwc)
+        iwc = self._cut_off_extra_levels(iwc)
         iwc[iwc < 0] = ma.masked
         self.append_data(iwc, f'{self._model}_iwc{self._cycle}')
         self.keys[self._product] = f'{self._model}_iwc{self._cycle}'
@@ -73,7 +73,7 @@ class ModelGrid(DataSource):
         p_name, T_name, lwc_name = self._read_config('p', 'T', 'lwc')
         p, T, ql = self._set_variables(p_name, T_name, lwc_name)
         lwc = self._calc_water_content(ql, p, T)
-        lwc = self.cut_off_extra_levels(lwc)
+        lwc = self._cut_off_extra_levels(lwc)
         lwc[lwc < 0] = ma.masked
         self.append_data(lwc, f'{self._model}_lwc{self._cycle}')
         self.keys[self._product] = f'{self._model}_lwc{self._cycle}'
@@ -108,7 +108,7 @@ class ModelGrid(DataSource):
                 if var in self.dataset.variables:
                     data = self.dataset.variables[var][:]
                     if not isscalar(data) and len(data) > 25:
-                        data = self.cut_off_extra_levels(self.dataset.variables[var][:])
+                        data = self._cut_off_extra_levels(self.dataset.variables[var][:])
                     self.append_data(data, f"{var}")
 
         def _add_cycle_variables():
@@ -118,7 +118,7 @@ class ModelGrid(DataSource):
                 if var in self.dataset.variables:
                     data = self.dataset.variables[var][:]
                     if data.ndim > 1 or len(data) > 25:
-                        data = self.cut_off_extra_levels(self.dataset.variables[var][:])
+                        data = self._cut_off_extra_levels(self.dataset.variables[var][:])
                     self.append_data(data, f"{self._model}_{var}{self._cycle}")
                 if var == 'height':
                     self.keys['height'] = f"{self._model}_{var}{self._cycle}"
@@ -126,7 +126,7 @@ class ModelGrid(DataSource):
             _add_common_variables()
         _add_cycle_variables()
 
-    def cut_off_extra_levels(self, data):
+    def _cut_off_extra_levels(self, data):
         """ Remove unused levels from model data"""
         level = int(CONF[self._model]['level'])
         if data.ndim > 1:
@@ -138,6 +138,6 @@ class ModelGrid(DataSource):
     def _calculate_wind_speed(self):
         u = self._set_variables('uwind')
         v = self._set_variables('vwind')
-        u = self.cut_off_extra_levels(u)
-        v = self.cut_off_extra_levels(v)
+        u = self._cut_off_extra_levels(u)
+        v = self._cut_off_extra_levels(v)
         return np.sqrt(u.data**2 + v.data**2)

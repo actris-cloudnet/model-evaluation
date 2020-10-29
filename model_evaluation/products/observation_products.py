@@ -1,49 +1,9 @@
-import os
 import numpy as np
 import numpy.ma as ma
-import configparser
 from datetime import datetime
 from cloudnetpy import utils
 from cloudnetpy.categorize.datasource import DataSource
 from cloudnetpy.products.product_tools import CategorizeBits
-from model_evaluation.products.model_products import ModelGrid
-from model_evaluation.file_handler import update_attributes, save_modelfile, add_var2ncfile
-from model_evaluation.products.grid_methods import ProductGrid
-
-
-PATH = os.path.dirname(os.path.abspath(__file__))
-PATH = os.path.split(PATH)[0]
-CONF = configparser.ConfigParser()
-CONF.optionxform = str
-CONF.read(os.path.join(PATH, 'level3.ini'))
-
-
-def generate_regrid_products(model, obs, model_files, product_file, output_file):
-    """Read observation and regrids them to model grid.
-        Creates and saves file also
-
-        Args:
-            model (str): name of model
-            obs (str): name of product to generate
-            model_files (list): List of files from model to be generated
-            product_files (str): observation to be regrided
-            output_file (str): name of model output file
-    """
-    product_obj = ObservationManager(obs, product_file)
-    for m_file in model_files:
-        model_obj = ModelGrid(m_file, model, output_file, obs)
-        ProductGrid(model_obj, product_obj, model, obs)
-        update_attributes(model_obj.data)
-        if os.path.isfile(output_file) is False:
-            add_date(model_obj, product_obj)
-            save_modelfile(f"{model}_products", model_obj, model_files, output_file)
-        else:
-            add_var2ncfile(model_obj, output_file)
-
-
-def add_date(model_obj, obs_obj):
-    for a in ('year', 'month', 'day'):
-        model_obj.date.append(getattr(obs_obj.dataset, a))
 
 
 class ObservationManager(DataSource):
