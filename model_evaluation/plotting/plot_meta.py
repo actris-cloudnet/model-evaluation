@@ -56,7 +56,7 @@ ATTRIBUTES = {
         plot_range=(223.15, 323.15),
         plot_type='model'
     ),
-    'cv': PlotMeta(
+    'cf': PlotMeta(
         name='Cloud fraction',
         cbar='Blues',
         clabel='',

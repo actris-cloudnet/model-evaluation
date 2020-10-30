@@ -7,37 +7,38 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from cloudnetpy.plotting.plotting import _set_ax, _set_labels, _handle_saving
 
 
-def generate_quick_plot(nc_file, name, model, save_path=None, show=True):
-    """Read files dimensions and generates simple plot from data"""
-    names = parse_wanted_names(nc_file, name)
-    fig, ax = initialize_figure(len(names))
-    for i, n in enumerate(names):
-        variable_info = ATTRIBUTES[name]
-        _set_ax(ax[i], 12)
-        _set_title(ax[i], n, variable_info)
-        data, x, y = read_data_characters(nc_file, n, model)
-        plot_data_quick_look(ax[i], data, (x, y), variable_info)
-    casedate = _set_labels(fig, ax[i], nc_file)
-    _handle_saving(None, save_path, show, 200, casedate, [name, model])
+def generate_quick_plot(nc_file, product, model, save_path=None, show=True):
+    """Read files dimensions and generates figure from all data parameters"""
+    names_sta, names_adv = parse_wanted_names(nc_file, product)
+    for names in [names_sta, names_adv]:
+        fig, ax = initialize_figure(len(names))
+        for i, name in enumerate(names):
+            variable_info = ATTRIBUTES[product]
+            _set_ax(ax[i], 12)
+            _set_title(ax[i], name, product, variable_info)
+            data, x, y = read_data_characters(nc_file, name, model)
+            plot_data_quick_look(ax[i], data, (x, y), variable_info)
+        casedate = _set_labels(fig, ax[i], nc_file)
+        _handle_saving(None, save_path, show, 200, casedate, [product, model])
 
 
 def generate_single_plot(nc_file, product, name, model, save_path=None, show=True):
-    names = parse_wanted_names(nc_file, product)
+    variable_info = ATTRIBUTES[product]
     fig, ax = initialize_figure(1)
-    for n in names:
-        if n == name:
-            variable_info = ATTRIBUTES[product]
-            _set_ax(ax[0], 12)
-            _set_title(ax[0], n, variable_info)
-            data, x, y = read_data_characters(nc_file, n, model)
-            plot_data_quick_look(ax[0], data, (x, y), variable_info)
+    _set_ax(ax[0], 12)
+    _set_title(ax[0], name, product, variable_info)
+    data, x, y = read_data_characters(nc_file, name, model)
+    plot_data_quick_look(ax[0], data, (x, y), variable_info)
     casedate = _set_labels(fig, ax[0], nc_file)
-    _handle_saving(None, save_path, show, 200, casedate, n)
+    _handle_saving(None, save_path, show, 200, casedate, name)
 
 
 def parse_wanted_names(nc_file, name):
     names = netCDF4.Dataset(nc_file).variables.keys()
-    return [n for n in names if name in n]
+    standard_n = [n for n in names if name in n and 'adv' not in n]
+    advection_n = [n for n in names if name in n and 'adv' in n]
+    advection_n.insert(0, standard_n[0])
+    return standard_n, advection_n
 
 
 def plot_data_quick_look(ax, data, axes, variable_info):
@@ -49,20 +50,69 @@ def plot_data_quick_look(ax, data, axes, variable_info):
     colorbar.set_label(variable_info.clabel, fontsize=13)
 
 
-def _set_title(ax, field_name, variable_info):
+def _set_title(ax, field_name, product, variable_info):
     parts = field_name.split('_')
-    if parts[1] == 'obs':
-        name = variable_info.name
-        model = parts[-1]
-        if len(parts) == 4:
-            model = f"{parts[-2]} cycle {parts[-1]}"
-        ax.set_title(f"Observed {name} regrid to {model}", fontsize=14)
+    if parts[0] == product:
+        title = get_product_title(field_name, variable_info)
+        if product is 'cf':
+            title = get_cf_title(field_name, variable_info)
+        if product is 'iwc':
+            title = get_iwc_title(field_name, variable_info)
+        if 'adv' in field_name:
+            adv = ' Downsampled using advection time'
+            ax.text(0.9, -0.13, adv, size=12, ha="center",
+                    transform=ax.transAxes)
+        ax.set_title(title, fontsize=14)
     else:
         name = variable_info.name
         model = parts[0]
-        if len(parts) == 3:
+        if len(parts) > 3:
             model = f"{parts[0]} cycle {parts[-1]}"
-        ax.set_title(f"Simulated {name} from {model}", fontsize=14)
+        ax.set_title(f"{name} of {model}", fontsize=14)
+
+
+def get_cf_title(field_name, variable_info):
+    parts = field_name.split('_')
+    name = variable_info.name
+    model = parts[-1]
+    if len(parts) > 3 and 'adv' not in field_name:
+        model = f"{parts[-2]} cycle {parts[-1]}"
+    if len(parts) > 4 and 'adv' in field_name:
+        model = f"{parts[-2]} cycle {parts[-1]}"
+    title = f'{name}, area downsampled from {model}'
+    if 'V' in field_name:
+        title = f'{name}, volume downsampled from {model}'
+    return title
+
+
+def get_iwc_title(field_name, variable_info):
+    parts = field_name.split('_')
+    name = variable_info.name
+    model = parts[-1]
+    if len(parts) > 3 and 'adv' not in field_name: # TODO: parempi menetelmä
+        model = f"{parts[-2]} cycle {parts[-1]}"
+    if len(parts) > 4 and 'adv' in field_name:
+        model = f"{parts[-2]} cycle {parts[-1]}"
+    title = f'{name} downsampled from {model}'
+    if 'mask' in field_name:
+        title = f'Masked {name}, downsampled from {model}'
+    if 'att' in field_name:
+        title = f'{name} with good attenuation, downsampled from {model}'
+    if 'rain' in field_name:
+        title = f'{name} with rain, downsampled from {model}'
+    return title
+
+
+def get_product_title(field_name, variable_info):
+    parts = field_name.split('_')
+    name = variable_info.name
+    model = parts[-1]
+    if len(parts) > 2 and 'adv' not in field_name:
+        model = f"{parts[-2]} cycle {parts[-1]}"
+    if len(parts) > 3 and 'adv' in field_name:
+        model = f"{parts[-2]} cycle {parts[-1]}"
+    title = f'{name} downsampled from {model}'
+    return title
 
 
 def read_data_characters(nc_file, name, model):
@@ -85,7 +135,6 @@ def reshape_1d2nd(one_d, two_d):
 
 def initialize_figure(n_subplots):
     """ Set up fig and ax object, if subplot"""
-    print("")
     fig, axes = plt.subplots(n_subplots, 1, figsize=(16, 4 + (n_subplots - 1) * 4.8))
     fig.subplots_adjust(left=0.06, right=0.73)
     if n_subplots == 1:
