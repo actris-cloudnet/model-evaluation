@@ -4,21 +4,23 @@ import matplotlib.pyplot as plt
 import netCDF4
 from ..plotting.plot_meta import ATTRIBUTES
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from cloudnetpy.plotting.plotting import _set_ax, _set_labels, _handle_saving
+from cloudnetpy.plotting.plotting import _set_ax, _set_labels, _handle_saving, _generate_log_cbar_ticklabel_list, _lin2log
 
 
 def generate_quick_plot(nc_file, product, model, save_path=None, show=True):
     """Read files dimensions and generates figure from all data parameters"""
     names_sta, names_adv = parse_wanted_names(nc_file, product)
-    for names in [names_sta, names_adv]:
+    for i, names in enumerate([names_sta, names_adv]):
         fig, ax = initialize_figure(len(names))
-        for i, name in enumerate(names):
+        for j, name in enumerate(names):
             variable_info = ATTRIBUTES[product]
-            _set_ax(ax[i], 12)
-            _set_title(ax[i], name, product, variable_info)
+            _set_ax(ax[j], 12)
+            _set_title(ax[j], name, product, variable_info)
             data, x, y = read_data_characters(nc_file, name, model)
-            plot_data_quick_look(ax[i], data, (x, y), variable_info)
-        casedate = _set_labels(fig, ax[i], nc_file)
+            plot_data_quick_look(ax[j], data, (x, y), variable_info)
+        casedate = _set_labels(fig, ax[j], nc_file)
+        if i == 1:
+            product = product + '_adv'
         _handle_saving(None, save_path, show, 200, casedate, [product, model])
 
 
@@ -43,10 +45,18 @@ def parse_wanted_names(nc_file, name):
 
 def plot_data_quick_look(ax, data, axes, variable_info):
     vmin, vmax = variable_info.plot_range
+    if variable_info.plot_scale == 'logarithmic':
+        data, vmin, vmax = _lin2log(data, vmin, vmax)
+
     cmap = plt.get_cmap(variable_info.cbar, 22)
     pl = ax.pcolormesh(*axes, data, vmin=vmin, vmax=vmax, cmap=cmap)
     colorbar = _init_colorbar(pl, ax)
     #TODO: Uudelleen formatoidaan tick labelit siistimmiksi
+    if variable_info.plot_scale == 'logarithmic':
+        tick_labels = _generate_log_cbar_ticklabel_list(vmin, vmax)
+        colorbar.set_ticks(np.arange(vmin, vmax+1))
+        colorbar.ax.set_yticklabels(tick_labels)
+
     colorbar.set_label(variable_info.clabel, fontsize=13)
 
 

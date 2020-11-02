@@ -1,5 +1,4 @@
 import numpy as np
-import time
 from model_evaluation.products import tools as tl
 from cloudnetpy import utils
 
@@ -34,7 +33,6 @@ class ProductGrid:
             for j in range(len(y_steps) - 1):
                 x_ind_adv = tl.get_adv_indices(j, model_t[i], self._time_adv[i], self._obs_time)
                 y_ind = tl.get_1d_indices(j, y_steps, self._obs_height)
-
                 ind = np.outer(x_ind, y_ind)
                 ind_avd = np.outer(x_ind_adv, y_ind)
                 if self._obs is 'cf':
@@ -105,6 +103,7 @@ class ProductGrid:
     def _regrid_iwc(self, array_dict, i, j, ind, ind_rain):
         for key in array_dict.keys():
             storage = array_dict[key]
+            storage[i, j] = np.mean(self._obs_data[ind_rain])
             if 'rain' in key:
                 storage[i, j] = np.mean(self._obs_data[ind])
             if 'att' in key:
@@ -113,7 +112,6 @@ class ProductGrid:
             if 'mask' in key:
                 iwc_mask = self._obs_obj.data['iwc_mask'][:]
                 storage[i, j] = np.mean(iwc_mask[ind_rain])
-            storage[i, j] = np.mean(self._obs_data[ind_rain])
             array_dict[key] = storage
         return array_dict
 

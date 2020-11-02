@@ -75,12 +75,12 @@ class ObservationManager(DataSource):
     def _generate_iwc_masks(self):
         iwc = self.getvar(self.obs)
         iwc_status = self.getvar('iwc_retrieval_status')
-        self._mask_iwc(iwc, iwc_status)
         self._mask_iwc_inc(iwc, iwc_status)
         self._get_rain_iwc(iwc_status.data)
+        self._mask_iwc(iwc, iwc_status)
 
     def _mask_iwc(self, iwc, iwc_status):
-        iwc[iwc_status != [1, 3]] = ma.masked
+        iwc[np.bitwise_and(iwc_status != 1, iwc_status != 3)] = ma.masked
         self.append_data(iwc, 'iwc_mask')
 
     def _mask_iwc_inc(self, iwc, iwc_status):
