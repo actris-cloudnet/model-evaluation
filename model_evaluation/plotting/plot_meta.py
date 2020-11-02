@@ -125,7 +125,7 @@ ATTRIBUTES = {
         name='Liquid water content',
         cbar='Blues',
         clabel=_KGM3,
-        plot_range=(1e-5, 1e-3),
+        plot_range=(1e-5, 1e-2),
         plot_scale=_LOG,
         plot_type='mesh'
     )
