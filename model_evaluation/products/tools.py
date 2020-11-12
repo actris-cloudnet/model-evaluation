@@ -1,4 +1,5 @@
 import numpy as np
+import numpy.ma as ma
 from datetime import timedelta
 
 
@@ -14,35 +15,35 @@ def rebin_edges(arr):
     return np.array(new_arr)
 
 
-def calculate_advection_time(resolution, wind):
-    t_adv = ((resolution.data * 1000) / wind) / 60 ** 2
-    t_adv[t_adv > 1] = 1 # hour sampling
-    #t_adv[t_adv > 1/6] = 1/6 # 10 min sampling
+def calculate_advection_time(resolution, wind, sampling):
+    t_adv = resolution.data * 1000 / wind / 60 ** 2
+    t_adv[t_adv > 1/sampling] = 1/sampling #sampling = 1 -> hour, sampling 1/6 -> 10min
     return np.asarray([[timedelta(hours=float(t)) for t in time] for time in t_adv])
 
 
-def get_1d_indices(ind, window, data, mask=False):
-    if mask is True: # TODO: Miksi toimii näin, muttei if mask?
-        data = data[mask]
-    indices = (window[ind] <= data) & (data < window[ind + 1])
+def get_1d_indices(window, data, mask=None):
+    if mask is not None:
+        data = ma.array(data)
+        data[mask] = ma.masked
+    indices = (window[0] <= data) & (data < window[-1])
     return indices
 
 
-def get_adv_indices(ind, model_t, adv_t, data, mask=False):
-    if mask is True: #TODO: ei pelitä vielä kunnolla
-        data = data[mask]
-    adv_indices = ((model_t - adv_t[ind] / 2) <= data) & \
-                  (data < (model_t + adv_t[ind] / 2))
+def get_adv_indices(model_t, adv_t, data, mask=None):
+    if mask is not None:
+        data = ma.array(data)
+        data[mask] = ma.masked
+    adv_indices = ((model_t - adv_t / 2) <= data) & (data < (model_t + adv_t / 2))
     return adv_indices
 
 
 def get_obs_window_size(ind_x, ind_y):
-    """Gets location of corner indices of selected window"""
+    """Returns shape of window area, where values are True"""
     x = np.where(ind_x)[0]
     y = np.where(ind_y)[0]
     if np.any(x) and np.any(y):
         return x[-1] - x[0] + 1, y[-1] - y[0] + 1
-    return []
+    return None
 
 
 def add_date(model_obj, obs_obj):

@@ -16,7 +16,7 @@ class ProductGrid:
         self._model = model
         self._model_time = model_obj.time
         self._model_height = model_obj.data[model_obj.keys['height']][:]
-        self._time_adv = tl.calculate_advection_time(model_obj.resolution_h, model_obj.wind)
+        self._time_adv = tl.calculate_advection_time(model_obj.resolution_h, model_obj.wind, 1)
         time_steps = utils.binvec(self._model_time)
         self._time_steps = tl.time2datetime(time_steps, self._date)
         self.generate_regrid_product()
@@ -25,14 +25,16 @@ class ProductGrid:
         product_dict, product_adv_dict = self._get_method_storage()
         model_t = tl.time2datetime(self._model_time, self._date)
         for i in range(len(self._time_steps) - 1):
-            x_ind = tl.get_1d_indices(i, self._time_steps, self._obs_time)
+            x_ind = tl.get_1d_indices((self._time_steps[i], self._time_steps[i+1]),
+                                      self._obs_time)
             if self._obs is 'iwc':
-                x_ind_rain = tl.get_1d_indices(i, self._time_steps, self._obs_time,
-                                               mask=~self._obs_obj.data['iwc_rain'][:])
+                x_ind_no_rain = tl.get_1d_indices((self._time_steps[i], self._time_steps[i+1]),
+                                               self._obs_time,
+                                               mask=self._obs_obj.data['iwc_rain'][:])
             y_steps = tl.rebin_edges(self._model_height[i])
             for j in range(len(y_steps) - 1):
-                x_ind_adv = tl.get_adv_indices(j, model_t[i], self._time_adv[i], self._obs_time)
-                y_ind = tl.get_1d_indices(j, y_steps, self._obs_height)
+                x_ind_adv = tl.get_adv_indices(model_t[i], self._time_adv[i, j], self._obs_time)
+                y_ind = tl.get_1d_indices((y_steps[j], y_steps[j+1]), self._obs_height)
                 ind = np.outer(x_ind, y_ind)
                 ind_avd = np.outer(x_ind_adv, y_ind)
                 if self._obs is 'cf':
@@ -41,12 +43,12 @@ class ProductGrid:
                     data_adv = self._reshape_data_to_window(ind_avd, x_ind_adv, y_ind)
                     product_adv_dict = self._regrid_cf(product_adv_dict, i, j, data_adv)
                 elif self._obs is 'iwc':
-                    x_ind_rain_adv = tl.get_adv_indices(j, model_t[i], self._time_adv[i], self._obs_time,
-                                                        mask=~self._obs_obj.data['iwc_rain'][:])
-                    ind_rain = np.outer(x_ind_rain, y_ind)
-                    ind_rain_adv = np.outer(x_ind_rain_adv, y_ind)
-                    product_dict = self._regrid_iwc(product_dict, i, j, ind, ind_rain)
-                    product_adv_dict = self._regrid_iwc(product_adv_dict, i, j, ind_avd, ind_rain_adv)
+                    x_ind_no_rain_adv = tl.get_adv_indices(model_t[i], self._time_adv[i, j], self._obs_time,
+                                                            mask=self._obs_obj.data['iwc_rain'][:])
+                    ind_no_rain = np.outer(x_ind_no_rain, y_ind)
+                    ind_no_rain_adv = np.outer(x_ind_no_rain_adv, y_ind)
+                    product_dict = self._regrid_iwc(product_dict, i, j, ind, ind_no_rain)
+                    product_adv_dict = self._regrid_iwc(product_adv_dict, i, j, ind_avd, ind_no_rain_adv)
                 else:
                     product_dict = self._regrid_product(product_dict, i, j, ind)
                     product_adv_dict = self._regrid_product(product_adv_dict, i, j, ind_avd)
@@ -68,11 +70,9 @@ class ProductGrid:
 
     def _iwc_method_storage(self):
         iwc_dict = {'iwc': np.zeros(self._model_height.shape),
-                    'iwc_mask': np.zeros(self._model_height.shape),
                     'iwc_att': np.zeros(self._model_height.shape),
                     'iwc_rain': np.zeros(self._model_height.shape)}
         iwc_adv_dict = {'iwc_adv': np.zeros(self._model_height.shape),
-                    'iwc_mask_adv': np.zeros(self._model_height.shape),
                     'iwc_att_adv': np.zeros(self._model_height.shape),
                     'iwc_rain_adv': np.zeros(self._model_height.shape)}
         return iwc_dict, iwc_adv_dict
@@ -82,13 +82,14 @@ class ProductGrid:
         adv_dict = {f'{self._obs}_adv': np.zeros(self._model_height.shape)}
         return dict, adv_dict
 
-    def _regrid_cf(self, array_dict, i, j, data):
+    @staticmethod
+    def _regrid_cf(array_dict, i, j, data):
         for key in array_dict.keys():
             storage = array_dict[key]
-            if np.any(data):
-                storage[i, j] = np.mean(data)
+            if data is not None:
+                storage[i, j] = np.nanmean(data)
                 if '_A' in key:
-                    storage[i, j] = np.mean(np.sum(data, 1) > 0)
+                    storage[i, j] = np.nanmean(np.nansum(data, 1) > 0)
             else:
                 storage[i, j] = np.nan
             array_dict[key] = storage
@@ -96,29 +97,32 @@ class ProductGrid:
 
     def _reshape_data_to_window(self, ind, x_ind, y_ind):
         window_size = tl.get_obs_window_size(x_ind, y_ind)
-        if np.any(window_size):
+        if window_size is not None:
             return self._obs_data[ind].reshape(window_size)
-        return []
+        return window_size
 
-    def _regrid_iwc(self, array_dict, i, j, ind, ind_rain):
+    def _regrid_iwc(self, array_dict, i, j, ind_rain, ind_no_rain):
         for key in array_dict.keys():
             storage = array_dict[key]
-            storage[i, j] = np.mean(self._obs_data[ind_rain])
-            if 'rain' in key:
-                storage[i, j] = np.mean(self._obs_data[ind])
+            if not self._obs_data[ind_no_rain].mask.all():
+                storage[i, j] = np.nanmean(self._obs_data[ind_no_rain])
+            elif 'rain' in key and not self._obs_data[ind_rain].mask.all():
+                storage[i, j] = np.nanmean(self._obs_data[ind_rain])
+            else:
+                storage[i, j] = np.nan
             if 'att' in key:
                 iwc_att = self._obs_obj.data['iwc_att'][:]
-                storage[i, j] = np.mean(iwc_att[ind_rain])
-            if 'mask' in key:
-                iwc_mask = self._obs_obj.data['iwc_mask'][:]
-                storage[i, j] = np.mean(iwc_mask[ind_rain])
+                if iwc_att[ind_no_rain].mask.all():
+                    storage[i, j] = np.nan
+                else:
+                    storage[i, j] = np.nanmean(iwc_att[ind_no_rain])
             array_dict[key] = storage
         return array_dict
 
     def _regrid_product(self, array_dict, i, j, ind):
         for key in array_dict.keys():
             storage = array_dict[key]
-            storage[i, j] = np.mean(self._obs_data[ind])
+            storage[i, j] = np.nanmean(self._obs_data[ind])
             array_dict[key] = storage
         return array_dict
 

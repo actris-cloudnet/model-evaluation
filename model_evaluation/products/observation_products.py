@@ -34,7 +34,7 @@ class ObservationManager(DataSource):
         cloud_mask = self._classify_basic_mask(categorize_bits.category_bits)
         cloud_mask = self._mask_cloud_bits(cloud_mask)
         if self._check_rainrate():
-            cloud_mask = cloud_mask[~self._rain_index(), :]
+            cloud_mask[~self._rain_index(), :] = ma.masked
         return cloud_mask
 
     def _classify_basic_mask(self, bits):
@@ -73,19 +73,22 @@ class ObservationManager(DataSource):
         return rainrate > rainrate_threshold
 
     def _generate_iwc_masks(self):
+        #TODO: Differences with CloudnetPy (status=2) and Legacy data (status=3)
         iwc = self.getvar(self.obs)
         iwc_status = self.getvar('iwc_retrieval_status')
-        self._mask_iwc_inc(iwc, iwc_status)
+        self._mask_iwc_att(iwc, iwc_status)
         self._get_rain_iwc(iwc_status.data)
         self._mask_iwc(iwc, iwc_status)
 
     def _mask_iwc(self, iwc, iwc_status):
-        iwc[np.bitwise_and(iwc_status != 1, iwc_status != 3)] = ma.masked
-        self.append_data(iwc, 'iwc_mask')
+        iwc_mask = ma.copy(iwc)
+        iwc_mask[np.bitwise_and(iwc_status != 1, iwc_status != 2)] = ma.masked
+        self.append_data(iwc, 'iwc')
 
-    def _mask_iwc_inc(self, iwc, iwc_status):
-        iwc[iwc_status > 3] = ma.masked
-        self.append_data(iwc, 'iwc_att')
+    def _mask_iwc_att(self, iwc, iwc_status):
+        iwc_att = ma.copy(iwc)
+        iwc_att[iwc_status > 3] = ma.masked
+        self.append_data(iwc_att, 'iwc_att')
 
     def _get_rain_iwc(self, iwc_status):
         iwc_rain = np.zeros(iwc_status.shape, dtype=bool)

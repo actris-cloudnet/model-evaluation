@@ -47,16 +47,13 @@ def plot_data_quick_look(ax, data, axes, variable_info):
     vmin, vmax = variable_info.plot_range
     if variable_info.plot_scale == 'logarithmic':
         data, vmin, vmax = _lin2log(data, vmin, vmax)
-
     cmap = plt.get_cmap(variable_info.cbar, 22)
     pl = ax.pcolormesh(*axes, data, vmin=vmin, vmax=vmax, cmap=cmap)
     colorbar = _init_colorbar(pl, ax)
-    #TODO: Uudelleen formatoidaan tick labelit siistimmiksi
     if variable_info.plot_scale == 'logarithmic':
         tick_labels = _generate_log_cbar_ticklabel_list(vmin, vmax)
         colorbar.set_ticks(np.arange(vmin, vmax+1))
         colorbar.ax.set_yticklabels(tick_labels)
-
     colorbar.set_label(variable_info.clabel, fontsize=13)
 
 
@@ -89,9 +86,9 @@ def get_cf_title(field_name, variable_info):
         model = f"{parts[-2]} cycle {parts[-1]}"
     if len(parts) > 4 and 'adv' in field_name:
         model = f"{parts[-2]} cycle {parts[-1]}"
-    title = f'{name}, area downsampled from {model}'
+    title = f'{name}, downsampled by area from {model}'
     if 'V' in field_name:
-        title = f'{name}, volume downsampled from {model}'
+        title = f'{name}, downsampled by volume from {model}'
     return title
 
 
@@ -99,17 +96,24 @@ def get_iwc_title(field_name, variable_info):
     parts = field_name.split('_')
     name = variable_info.name
     model = parts[-1]
-    if len(parts) > 3 and 'adv' not in field_name: # TODO: parempi menetelmä
-        model = f"{parts[-2]} cycle {parts[-1]}"
-    if len(parts) > 4 and 'adv' in field_name:
-        model = f"{parts[-2]} cycle {parts[-1]}"
-    title = f'{name} downsampled from {model}'
-    if 'mask' in field_name:
-        title = f'Masked {name}, downsampled from {model}'
     if 'att' in field_name:
+        if len(parts) > 3 and 'adv' not in field_name:
+            model = f"{parts[-2]} cycle {parts[-1]}"
+        if len(parts) > 4 and 'adv' in field_name:
+            model = f"{parts[-2]} cycle {parts[-1]}"
         title = f'{name} with good attenuation, downsampled from {model}'
-    if 'rain' in field_name:
+    elif 'rain' in field_name:
+        if len(parts) > 3 and 'adv' not in field_name:
+            model = f"{parts[-2]} cycle {parts[-1]}"
+        if len(parts) > 4 and 'adv' in field_name:
+            model = f"{parts[-2]} cycle {parts[-1]}"
         title = f'{name} with rain, downsampled from {model}'
+    else:
+        if len(parts) > 2 and 'adv' not in field_name:
+            model = f"{parts[-2]} cycle {parts[-1]}"
+        if len(parts) > 3 and 'adv' in field_name:
+            model = f"{parts[-2]} cycle {parts[-1]}"
+        title = f'{name} downsampled from {model}'
     return title
 
 
