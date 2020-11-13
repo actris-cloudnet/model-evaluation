@@ -30,7 +30,7 @@ jobs:
       - name: Lint with pylint
         run: |
           pip install pylint
-          pylint model_evaluation/**/*.py --errors-only
+          pylint model_evaluation/**/*.py
           
       - name: Test with pytest
         run: |
