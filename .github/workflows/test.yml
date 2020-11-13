@@ -1,0 +1,38 @@
+name: Model evaluation CI
+
+on: [push]
+
+jobs:
+  build:
+    
+    timeout-minutes: 5
+    
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8]
+
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+        
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install .
+          
+      - name: Lint with pylint
+        run: |
+          pip install pylint
+          pylint model_evalution/**/*.py --errors-only
+          
+      - name: Test with pytest
+        run: |
+          pip install pytest pytest-cov
+          pytest --cov=model_evalution tests/unit/
