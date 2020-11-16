@@ -27,7 +27,7 @@ class ProductGrid:
         for i in range(len(self._time_steps) - 1):
             x_ind = tl.get_1d_indices((self._time_steps[i], self._time_steps[i+1]),
                                       self._obs_time)
-            if self._obs is 'iwc':
+            if self._obs == 'iwc':
                 x_ind_no_rain = tl.get_1d_indices((self._time_steps[i], self._time_steps[i+1]),
                                                self._obs_time,
                                                mask=self._obs_obj.data['iwc_rain'][:])
@@ -37,12 +37,12 @@ class ProductGrid:
                 y_ind = tl.get_1d_indices((y_steps[j], y_steps[j+1]), self._obs_height)
                 ind = np.outer(x_ind, y_ind)
                 ind_avd = np.outer(x_ind_adv, y_ind)
-                if self._obs is 'cf':
+                if self._obs == 'cf':
                     data = self._reshape_data_to_window(ind, x_ind, y_ind)
                     product_dict = self._regrid_cf(product_dict, i, j, data)
                     data_adv = self._reshape_data_to_window(ind_avd, x_ind_adv, y_ind)
                     product_adv_dict = self._regrid_cf(product_adv_dict, i, j, data_adv)
-                elif self._obs is 'iwc':
+                elif self._obs == 'iwc':
                     x_ind_no_rain_adv = tl.get_adv_indices(model_t[i], self._time_adv[i, j], self._obs_time,
                                                             mask=self._obs_obj.data['iwc_rain'][:])
                     ind_no_rain = np.outer(x_ind_no_rain, y_ind)
@@ -55,9 +55,9 @@ class ProductGrid:
         self._append_data2object([product_dict, product_adv_dict])
 
     def _get_method_storage(self):
-        if self._obs is 'cf':
+        if self._obs == 'cf':
             return self._cf_method_storage()
-        if self._obs is 'iwc':
+        if self._obs == 'iwc':
             return self._iwc_method_storage()
         return self._product_method_storage()
 

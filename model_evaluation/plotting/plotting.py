@@ -7,7 +7,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from cloudnetpy.plotting.plotting import _set_ax, _set_labels, _handle_saving, _generate_log_cbar_ticklabel_list, _lin2log
 
 
-def generate_quick_plot(nc_file, product, model, save_path=None, show=True):
+def generate_quick_plot(nc_file, product, model, save_path=None, show=False):
     """Read files dimensions and generates figure from all data parameters"""
     names_sta, names_adv = parse_wanted_names(nc_file, product)
     for i, names in enumerate([names_sta, names_adv]):
@@ -24,7 +24,7 @@ def generate_quick_plot(nc_file, product, model, save_path=None, show=True):
         _handle_saving(None, save_path, show, 200, casedate, [product, model])
 
 
-def generate_single_plot(nc_file, product, name, model, save_path=None, show=True):
+def generate_single_plot(nc_file, product, name, model, save_path=None, show=False):
     variable_info = ATTRIBUTES[product]
     fig, ax = initialize_figure(1)
     _set_ax(ax[0], 12)
@@ -61,9 +61,9 @@ def _set_title(ax, field_name, product, variable_info):
     parts = field_name.split('_')
     if parts[0] == product:
         title = get_product_title(field_name, variable_info)
-        if product is 'cf':
+        if product == 'cf':
             title = get_cf_title(field_name, variable_info)
-        if product is 'iwc':
+        if product == 'iwc':
             title = get_iwc_title(field_name, variable_info)
         if 'adv' in field_name:
             adv = ' Downsampled using advection time'
