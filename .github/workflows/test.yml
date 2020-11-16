@@ -27,12 +27,6 @@ jobs:
           pip install --upgrade pip
           pip install .
           
-      - name: Lint with pylint
-        run: |
-          pip install pylint
-          pylint model_evaluation/**/*.py --errors-only
-          pylint model_evaluation/*.py --errors-only
-          
       - name: Test with pytest
         run: |
           pip install pytest pytest-cov
