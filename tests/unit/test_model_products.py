@@ -10,9 +10,8 @@ from model_evaluation.products.model_products import ModelManager
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 root = os.path.split(os.path.split(Path(__file__).parent)[0])[0]
 
-# Tässä testataan olemassa olevalla filulla, ei ehkä pidemmän päälle järkevin ratkaisu
 MODEL = 'ecmwf'
-OUTPUT_FILE = f'{root}/test_files/test_input_ecmwf_iwc.nc'
+OUTPUT_FILE = ''
 PRODUCT = 'iwc'
 
 
@@ -80,8 +79,8 @@ def test_add_common_variables_false(key, model_file):
 
 @pytest.mark.parametrize("key", [
     'time', 'level', 'horizontal_resolution', 'latitude', 'longitude'])
-def test_add_common_variables_true(key, model_file):
-    obj = ModelManager(str(model_file), MODEL, OUTPUT_FILE, PRODUCT)
+def test_add_common_variables_true(key, model_file, regrid_file):
+    obj = ModelManager(str(model_file), MODEL, regrid_file, PRODUCT)
     obj._is_file = True
     obj._add_variables()
     assert key not in obj.data.keys()

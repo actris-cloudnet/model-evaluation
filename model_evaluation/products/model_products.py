@@ -123,6 +123,7 @@ class ModelManager(DataSource):
                 if var == 'height':
                     self.keys['height'] = f"{self._model}_{var}{self._cycle}"
         if not self._is_file:
+            print("Täällä")
             _add_common_variables()
         _add_cycle_variables()
 
