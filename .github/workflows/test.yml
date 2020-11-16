@@ -1,4 +1,4 @@
-name: Model evaluation CI
+name: Model evaluation CI Test
 
 on: [push]
 
