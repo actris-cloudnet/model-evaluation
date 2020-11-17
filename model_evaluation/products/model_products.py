@@ -14,17 +14,22 @@ CONF.read(os.path.join(PATH, 'level3.ini'))
 
 
 class ModelManager(DataSource):
-    """ Generates model data to L2b products.
+    """Class to collect and manage model data.
 
     Args:
         model_file (DataSource): The :class:'DataSource' instance.
         model (str): Name of model
         output_file (str): name of output file to save data
         product (str): name of product to generate
+
+    Notes:
+        Output_file is given for saving all cycles to same nc-file. Some variables
+        are same in control run and cycles so checking existence of output-file
+        prevents duplicates as well as unnecessary processing.
     """
     def __init__(self, model_file, model, output_file, product):
         super().__init__(model_file)
-        self._model = model
+        self.model = model
         self._product = product
         self.keys = {}
         self._is_file = os.path.isfile(output_file)
@@ -37,7 +42,7 @@ class ModelManager(DataSource):
 
     def _read_cycle_name(self, model_file):
         """Get cycle name from config for saving variable name"""
-        cycles = CONF[self._model]['cycle']
+        cycles = CONF[self.model]['cycle']
         cycles = [x.strip() for x in cycles.split(',')]
         for cycle in cycles:
             if cycle in model_file:
@@ -57,8 +62,8 @@ class ModelManager(DataSource):
         cf = self._set_variables(cf_name)
         cf = self._cut_off_extra_levels(cf)
         cf[cf < 0] = ma.masked
-        self.append_data(cf, f'{self._model}_cf{self._cycle}')
-        self.keys[self._product] = f'{self._model}_cf{self._cycle}'
+        self.append_data(cf, f'{self.model}_cf{self._cycle}')
+        self.keys[self._product] = f'{self.model}_cf{self._cycle}'
 
     def _get_iwc(self):
         p_name, T_name, iwc_name = self._read_config('p', 'T', 'iwc')
@@ -66,8 +71,8 @@ class ModelManager(DataSource):
         iwc = self._calc_water_content(qi, p, T)
         iwc = self._cut_off_extra_levels(iwc)
         iwc[iwc < 0] = ma.masked
-        self.append_data(iwc, f'{self._model}_iwc{self._cycle}')
-        self.keys[self._product] = f'{self._model}_iwc{self._cycle}'
+        self.append_data(iwc, f'{self.model}_iwc{self._cycle}')
+        self.keys[self._product] = f'{self.model}_iwc{self._cycle}'
 
     def _get_lwc(self):
         p_name, T_name, lwc_name = self._read_config('p', 'T', 'lwc')
@@ -75,8 +80,8 @@ class ModelManager(DataSource):
         lwc = self._calc_water_content(ql, p, T)
         lwc = self._cut_off_extra_levels(lwc)
         lwc[lwc < 0] = ma.masked
-        self.append_data(lwc, f'{self._model}_lwc{self._cycle}')
-        self.keys[self._product] = f'{self._model}_lwc{self._cycle}'
+        self.append_data(lwc, f'{self.model}_lwc{self._cycle}')
+        self.keys[self._product] = f'{self.model}_lwc{self._cycle}'
 
     @staticmethod
     def _read_config(*args):
@@ -119,17 +124,16 @@ class ModelManager(DataSource):
                     data = self.dataset.variables[var][:]
                     if data.ndim > 1 or len(data) > 25:
                         data = self._cut_off_extra_levels(self.dataset.variables[var][:])
-                    self.append_data(data, f"{self._model}_{var}{self._cycle}")
+                    self.append_data(data, f"{self.model}_{var}{self._cycle}")
                 if var == 'height':
-                    self.keys['height'] = f"{self._model}_{var}{self._cycle}"
+                    self.keys['height'] = f"{self.model}_{var}{self._cycle}"
         if not self._is_file:
-            print("Täällä")
             _add_common_variables()
         _add_cycle_variables()
 
     def _cut_off_extra_levels(self, data):
         """ Remove unused levels from model data"""
-        level = int(CONF[self._model]['level'])
+        level = int(CONF[self.model]['level'])
         if data.ndim > 1:
             data = data[:, :level]
         else:
@@ -137,6 +141,7 @@ class ModelManager(DataSource):
         return data
 
     def _calculate_wind_speed(self):
+        """Real wind from x- and y-components"""
         u = self._set_variables('uwind')
         v = self._set_variables('vwind')
         u = self._cut_off_extra_levels(u)

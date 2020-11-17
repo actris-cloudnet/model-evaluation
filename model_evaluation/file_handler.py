@@ -30,10 +30,10 @@ def update_attributes(cloudnet_variables):
 
 
 def save_modelfile(id_mark, obj, model_files, file_name):
-    """Saves a standard Cloudnet product file.
+    """Saves a standard Model downsampled product file.
 
     Args:
-        id_mark (str): File identifier, format "(model name)_product"
+        id_mark (str): File identifier, format "(product name)_(model name)"
         obj (object): Instance containing product specific attributes: `time`,
             `dataset`, `data`.
         file_name (str): Name of the output file to be generated.

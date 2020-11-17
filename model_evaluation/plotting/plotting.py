@@ -8,7 +8,19 @@ from cloudnetpy.plotting.plotting import _set_ax, _set_labels, _handle_saving, _
 
 
 def generate_quick_plot(nc_file, product, model, save_path=None, show=False):
-    """Read files dimensions and generates figure from all data parameters"""
+    """ Subplot visualization for both standard and advection downsampling.
+
+        Generates subplot visualization of standard product and advection
+        product with model data and all different downsampling methods.
+
+        Args:
+            nc_file (str): Path to source file
+            product (str): Name of product wanted to plot
+            model (str): Name of model which downsampling was done with
+            save_path (str, optional): If not None, visualization is saved
+                                       to path location
+            show (bool, optional): If True, shows visualization
+    """
     names_sta, names_adv = parse_wanted_names(nc_file, product)
     for i, names in enumerate([names_sta, names_adv]):
         fig, ax = initialize_figure(len(names))
@@ -25,6 +37,16 @@ def generate_quick_plot(nc_file, product, model, save_path=None, show=False):
 
 
 def generate_single_plot(nc_file, product, name, model, save_path=None, show=False):
+    """Generates visualization of one product
+
+        Args:
+            nc_file (str): Path to source file
+            product (str): Name of product wanted to plot
+            model (str): Name of model which downsampling was done with
+            save_path (str, optional): If not None, visualization is saved
+                                       to path location
+            show (bool, optional): If True, shows visualization
+    """
     variable_info = ATTRIBUTES[product]
     fig, ax = initialize_figure(1)
     _set_ax(ax[0], 12)
@@ -32,10 +54,11 @@ def generate_single_plot(nc_file, product, name, model, save_path=None, show=Fal
     data, x, y = read_data_characters(nc_file, name, model)
     plot_data_quick_look(ax[0], data, (x, y), variable_info)
     casedate = _set_labels(fig, ax[0], nc_file)
-    _handle_saving(None, save_path, show, 200, casedate, name)
+    _handle_saving(None, save_path, show, 200, casedate, [name])
 
 
 def parse_wanted_names(nc_file, name):
+    """Returns standard and advection lists of product types to plot"""
     names = netCDF4.Dataset(nc_file).variables.keys()
     standard_n = [n for n in names if name in n and 'adv' not in n]
     advection_n = [n for n in names if name in n and 'adv' in n]
@@ -49,7 +72,7 @@ def plot_data_quick_look(ax, data, axes, variable_info):
         data, vmin, vmax = _lin2log(data, vmin, vmax)
     cmap = plt.get_cmap(variable_info.cbar, 22)
     pl = ax.pcolormesh(*axes, data, vmin=vmin, vmax=vmax, cmap=cmap)
-    colorbar = _init_colorbar(pl, ax)
+    colorbar = init_colorbar(pl, ax)
     if variable_info.plot_scale == 'logarithmic':
         tick_labels = _generate_log_cbar_ticklabel_list(vmin, vmax)
         colorbar.set_ticks(np.arange(vmin, vmax+1))
@@ -58,6 +81,7 @@ def plot_data_quick_look(ax, data, axes, variable_info):
 
 
 def _set_title(ax, field_name, product, variable_info):
+    """Generates subtitles for different product types"""
     parts = field_name.split('_')
     if parts[0] == product:
         title = get_product_title(field_name, variable_info)
@@ -130,6 +154,7 @@ def get_product_title(field_name, variable_info):
 
 
 def read_data_characters(nc_file, name, model):
+    """Gets dimensions and data for plotting"""
     nc = netCDF4.Dataset(nc_file)
     data = nc.variables[name][:]
     data[data <= 0] = ma.masked
@@ -156,7 +181,7 @@ def initialize_figure(n_subplots):
     return fig, axes
 
 
-def _init_colorbar(plot, axis):
+def init_colorbar(plot, axis):
     divider = make_axes_locatable(axis)
     cax = divider.append_axes("right", size="1%", pad=0.25)
     return plt.colorbar(plot, fraction=1.0, ax=axis, cax=cax)

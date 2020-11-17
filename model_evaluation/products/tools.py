@@ -16,8 +16,19 @@ def rebin_edges(arr):
 
 
 def calculate_advection_time(resolution, wind, sampling):
+    """Calculates time which variable take to cross through time window
+
+        Notes:
+            Wind speed is higher in upper levels, so advection time is more
+            there then lower levels. Effect is small in a mid-latitudes,
+            but visible in a tropics.
+
+            sampling = 1 -> hour, sampling 1/6 -> 10min
+
+        References:
+    """
     t_adv = resolution.data * 1000 / wind / 60 ** 2
-    t_adv[t_adv > 1/sampling] = 1/sampling #sampling = 1 -> hour, sampling 1/6 -> 10min
+    t_adv[t_adv > 1/sampling] = 1/sampling
     return np.asarray([[timedelta(hours=float(t)) for t in time] for time in t_adv])
 
 
@@ -38,7 +49,7 @@ def get_adv_indices(model_t, adv_t, data, mask=None):
 
 
 def get_obs_window_size(ind_x, ind_y):
-    """Returns shape of window area, where values are True"""
+    """Returns shape (tuple) of window area, where values are True"""
     x = np.where(ind_x)[0]
     y = np.where(ind_y)[0]
     if np.any(x) and np.any(y):
@@ -49,3 +60,8 @@ def get_obs_window_size(ind_x, ind_y):
 def add_date(model_obj, obs_obj):
     for a in ('year', 'month', 'day'):
         model_obj.date.append(getattr(obs_obj.dataset, a))
+
+
+def average_column_sum(data):
+    """Returns average sum of columns which have any data"""
+    return np.nanmean(np.nansum(data, 1) > 0)
