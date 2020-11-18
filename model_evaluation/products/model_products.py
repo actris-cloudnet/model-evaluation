@@ -17,7 +17,7 @@ class ModelManager(DataSource):
     """Class to collect and manage model data.
 
     Args:
-        model_file (DataSource): The :class:'DataSource' instance.
+        model_file (str): Path to source model file.
         model (str): Name of model
         output_file (str): name of output file to save data
         product (str): name of product to generate
@@ -26,6 +26,8 @@ class ModelManager(DataSource):
         Output_file is given for saving all cycles to same nc-file. Some variables
         are same in control run and cycles so checking existence of output-file
         prevents duplicates as well as unnecessary processing.
+
+        Class inherits DataSource interface from CloudnetPy.
     """
     def __init__(self, model_file, model, output_file, product):
         super().__init__(model_file)

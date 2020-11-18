@@ -11,7 +11,7 @@ class ObservationManager(DataSource):
 
         Args:
             obs (str): Name of observation product
-            obs_file (DataSource): The :class:'DataSource' instance
+            obs_file (str): Path to source observation file
 
         Notes:
             Output is ObservationManager object where all product data and
