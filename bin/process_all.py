@@ -16,17 +16,16 @@ CONF.read(os.path.join(PATH, 'level3.ini'))
 
 def main():
     """Example processing of product downsampling system including vizualization process"""
-    root = os.path.split(Path(__file__).parent)[0]
-    fname = f'{root}/test_files/20190517_mace-head_ecmwf.nc'
-    cf_input = f'{root}/test_files/categorize.nc'
-    cf_output = f'{root}/test_files/test_input_ecmwf_cf.nc'
-    iwc_input = f'{root}/test_files/iwc.nc'
-    iwc_output = f'{root}/test_files/test_input_ecmwf_iwc.nc'
-    lwc_input = f'{root}/test_files/lwc.nc'
-    lwc_output = f'{root}/test_files/test_input_ecmwf_lwc.nc'
+    fname = f'{PATH}/test_files/20190517_mace-head_ecmwf.nc'
+    cf_input = f'{PATH}/test_files/categorize.nc'
+    cf_output = f'{PATH}/test_files/test_input_ecmwf_cf.nc'
+    iwc_input = f'{PATH}/test_files/iwc.nc'
+    iwc_output = f'{PATH}/test_files/test_input_ecmwf_iwc.nc'
+    lwc_input = f'{PATH}/test_files/lwc.nc'
+    lwc_output = f'{PATH}/test_files/test_input_ecmwf_lwc.nc'
     input_files = [cf_input, iwc_input, lwc_input]
     output_files = [cf_output, iwc_output, lwc_output]
-    save_path = f'{root}/plots/'
+    save_path = f'{PATH}/plots/'
 
     for product, product_file, output_file in zip(['cf', 'iwc', 'lwc'], input_files, output_files):
         process_observation_resample2model('ecmwf', product, [fname], product_file, output_file)
