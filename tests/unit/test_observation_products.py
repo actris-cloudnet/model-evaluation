@@ -55,19 +55,19 @@ def test_add_height(obs_file):
 
 def test_generate_cf(obs_file):
     obj = ObservationManager('cf', str(obs_file))
-    compare = obj._generate_cf()
-    x = ma.array([[0, 1, 0, 0], [0, 0, 0, 0],
+    x = obj._generate_cf()
+    compare = ma.array([[0, 1, 0, 0], [0, 0, 0, 0],
                   [0, 0, 0, 1], [0, 0, 0, 1],
                   [1, 0, 0, 0], [0, 0, 0, 0]])
-    x[~obj._rain_index(), :] = ma.masked
+    compare[~obj._rain_index(), :] = ma.masked
     testing.assert_array_almost_equal(compare, x)
 
 
 def test_basic_cloud_mask(obs_file):
     cat = CategorizeBits(str(obs_file))
     obj = ObservationManager('cf', str(obs_file))
-    compare = obj._classify_basic_mask(cat.category_bits)
-    x = np.array([[0, 1, 2, 0], [2, 0, 0, 1],
+    x = obj._classify_basic_mask(cat.category_bits)
+    compare = np.array([[0, 1, 2, 0], [2, 0, 0, 1],
                   [1, 0, 0, 0], [0, 0, 0, 1],
                   [0, 0, 6, 6], [7, 2, 0, 7]])
     testing.assert_array_almost_equal(x, compare)
@@ -87,9 +87,9 @@ def test_mask_cloud_bits(obs_file):
 def test_basic_cloud_mask_all_values(obs_file):
     cat = CatBits()
     obj = ObservationManager('cf', str(obs_file))
-    compare = obj._classify_basic_mask(cat.category_bits)
-    x = np.array([[8, 7, 6, 1, 3, 1],
-                  [0, 1, 7, 5, 2, 4]])
+    x = obj._classify_basic_mask(cat.category_bits)
+    compare = np.array([[8, 7, 6, 1, 3, 1],
+                        [0, 1, 7, 5, 2, 4]])
     testing.assert_array_almost_equal(x, compare)
 
 
@@ -97,8 +97,8 @@ def test_mask_cloud_bits_all_values(obs_file):
     cat = CatBits()
     obj = ObservationManager('cf', str(obs_file))
     mask = obj._classify_basic_mask(cat.category_bits)
-    compare = obj._mask_cloud_bits(mask)
-    x = np.array([[0, 0, 0, 1, 1, 1],
+    x = obj._mask_cloud_bits(mask)
+    compare = np.array([[0, 0, 0, 1, 1, 1],
                   [0, 1, 0, 1, 0, 1]])
     testing.assert_array_almost_equal(x, compare)
 
@@ -133,21 +133,21 @@ def test_generate_iwc_masks(key, obs_file):
 def test_get_rain_iwc(obs_file):
     obj = ObservationManager('iwc', str(obs_file))
     iwc_status = obj.getvar('iwc_retrieval_status')
-    compare = np.zeros(iwc_status.shape)
-    compare[iwc_status == 5] = 1
-    compare = np.any(compare, axis=1)
+    x = np.zeros(iwc_status.shape)
+    x[iwc_status == 5] = 1
+    x = np.any(x, axis=1)
     obj._get_rain_iwc(iwc_status[:])
-    x = obj.data['iwc_rain']
-    testing.assert_array_almost_equal(x[:], compare)
+    compare = obj.data['iwc_rain']
+    testing.assert_array_almost_equal(x, compare[:])
 
 
 def test_mask_iwc_att(obs_file):
     obj = ObservationManager('iwc', str(obs_file))
     iwc = obj.getvar('iwc')
     iwc_status = obj.getvar('iwc_retrieval_status')
-    compare = ma.copy(iwc)
+    x = ma.copy(iwc)
     obj._mask_iwc_att(iwc, iwc_status)
-    x = obj.data['iwc_att']
-    compare[iwc_status > 3] = ma.masked
-    testing.assert_array_almost_equal(x[:], compare)
+    compare = obj.data['iwc_att']
+    x[iwc_status > 3] = ma.masked
+    testing.assert_array_almost_equal(x, compare[:])
 

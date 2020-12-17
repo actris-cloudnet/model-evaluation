@@ -55,8 +55,8 @@ def test_calculate_advection_time_10min(model_file):
 def test_get_1d_indices():
     from model_evaluation.products.tools import get_1d_indices
     w = (1, 5)
-    d = np.array([0, 1, 2, 3, 4, 5, 6, 7])
-    compare = (w[0] <= d) & (d < w[-1])
+    d = ma.array([0, 1, 2, 3, 4, 5, 6, 7])
+    compare = ma.array([0, 1, 1, 1, 1, 0, 0, 0])
     x = get_1d_indices(w, d)
     testing.assert_array_almost_equal(x, compare)
 
@@ -68,7 +68,7 @@ def test_get_1d_indices_mask():
     m = np.array([0, 0, 1, 0, 0, 1, 0, 1], dtype=bool)
     x = get_1d_indices(w, d, m)
     d[m] = ma.masked
-    compare = (w[0] <= d) & (d < w[-1])
+    compare = ma.array([0, 1, ma.masked, 1, 1, ma.masked, 0, ma.masked])
     testing.assert_array_almost_equal(x, compare)
 
 
@@ -76,8 +76,8 @@ def test_get_adv_indices():
     from model_evaluation.products.tools import get_adv_indices
     mt = 3
     at = 4
-    d = np.array([0, 1, 2, 3, 4, 5, 6, 7])
-    compare = ((mt - at / 2) <= d) & (d < (mt + at / 2))
+    d = ma.array([0, 1, 2, 3, 4, 5, 6, 7])
+    compare = ma.array([0, 1, 1, 1, 1, 0, 0, 0], dtype=bool)
     x = get_adv_indices(mt, at, d)
     testing.assert_array_almost_equal(x, compare)
 
@@ -87,10 +87,10 @@ def test_get_adv_indices_mask():
     mt = 3
     at = 4
     d = ma.array([0, 1, 2, 3, 4, 5, 6, 7])
-    m = np.array([0, 0, 1, 0, 0, 1, 0, 1], dtype=bool)
+    m = ma.array([0, 0, 1, 0, 0, 1, 0, 1], dtype=bool)
     x = get_adv_indices(mt, at, d, m)
     d[m] = ma.masked
-    compare = ((mt - at / 2) <= d) & (d < (mt + at / 2))
+    compare = ma.array([0, 1, ma.masked, 1, 1, ma.masked, 0, 0])
     testing.assert_array_almost_equal(x, compare)
 
 
@@ -98,11 +98,8 @@ def test_obs_windows_size():
     from model_evaluation.products.tools import get_obs_window_size
     i = np.array([0, 0, 1, 1, 1, 1, 0], dtype=bool)
     j = np.array([0, 1, 1, 1, 0, 0, 0], dtype=bool)
-    ii = np.where(i)[0]
-    jj = np.where(j)[0]
-    compare = ii[-1] - ii[0] + 1, jj[-1] -jj[0] + 1
     x = get_obs_window_size(i, j)
-    testing.assert_almost_equal(x, compare)
+    testing.assert_almost_equal(x, (4, 3))
 
 
 def test_obs_windows_size_none():

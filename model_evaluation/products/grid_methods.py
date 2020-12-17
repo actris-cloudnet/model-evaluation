@@ -42,8 +42,8 @@ class ProductGrid:
                                       self._obs_time)
             if self._obs_obj.obs == 'iwc':
                 x_ind_no_rain = tl.get_1d_indices((self._time_steps[i], self._time_steps[i+1]),
-                                               self._obs_time,
-                                               mask=self._obs_obj.data['iwc_rain'][:])
+                                                    self._obs_time,
+                                                    mask=self._obs_obj.data['iwc_rain'][:])
             y_steps = tl.rebin_edges(self._model_height[i])
             for j in range(len(y_steps) - 1):
                 x_ind_adv = tl.get_adv_indices(model_t[i], self._time_adv[i, j], self._obs_time)
