@@ -98,8 +98,7 @@ class ProductGrid:
     @staticmethod
     def _regrid_cf(storage: dict, i: int, j: int, data: np.ma.MaskedArray):
         """Calculates average cloud fraction value to grid point"""
-        for key in storage.keys():
-            downsample = storage[key]
+        for key, downsample in storage.items():
             if data is not None:
                 downsample[i, j] = np.nanmean(data)
                 if '_A' in key:
@@ -119,8 +118,7 @@ class ProductGrid:
     def _regrid_iwc(self, storage: dict, i: int, j: int,
                     ind_rain: np.ma.MaskedArray, ind_no_rain: np.ma.MaskedArray):
         """Calculates average iwc value for grid point"""
-        for key in storage.keys():
-            downsample = storage[key]
+        for key, downsample in storage.items():
             if not self._obs_data[ind_no_rain].mask.all():
                 downsample[i, j] = np.nanmean(self._obs_data[ind_no_rain])
             elif 'rain' in key and not self._obs_data[ind_rain].mask.all():
@@ -138,8 +136,7 @@ class ProductGrid:
 
     def _regrid_product(self, storage: dict, i: int, j: int, ind: np.ndarray):
         """Calculates average of standard product value to grid point"""
-        for key in storage.keys():
-            downsample = storage[key]
+        for key, downsample in storage.items():
             if not self._obs_data[ind].mask.all() and ind.any():
                 downsample[i, j] = np.nanmean(self._obs_data[ind])
             else:

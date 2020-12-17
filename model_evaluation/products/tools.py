@@ -1,13 +1,14 @@
 import numpy as np
 import numpy.ma as ma
+import datetime
 from datetime import timedelta
 
 
-def time2datetime(time_arr, date):
-    return np.asarray([date + timedelta(hours=float(time)) for time in time_arr])
+def time2datetime(time: np.ndarray, date: datetime.datetime):
+    return np.asarray([date + timedelta(hours=float(t)) for t in time])
 
 
-def rebin_edges(arr):
+def rebin_edges(arr: np.ndarray):
     """Rebins array bins by half and adds boundaries."""
     new_arr = [(arr[i] + arr[i + 1]) / 2 for i in range(len(arr) - 1)]
     new_arr.insert(0, arr[0] - ((arr[0] + arr[1]) / 2))
@@ -15,7 +16,8 @@ def rebin_edges(arr):
     return np.array(new_arr)
 
 
-def calculate_advection_time(resolution, wind, sampling):
+def calculate_advection_time(resolution: int, wind: np.ma.MaskedArray,
+                             sampling: int):
     """Calculates time which variable take to cross through time window
 
         Notes:
@@ -32,7 +34,8 @@ def calculate_advection_time(resolution, wind, sampling):
     return np.asarray([[timedelta(hours=float(t)) for t in time] for time in t_adv])
 
 
-def get_1d_indices(window, data, mask=None):
+def get_1d_indices(window: np.ndarray, data: np.ma.MaskedArray,
+                   mask: np.ma.MaskedArray = None):
     if mask is not None:
         data = ma.array(data)
         data[mask] = ma.masked
@@ -40,7 +43,8 @@ def get_1d_indices(window, data, mask=None):
     return indices
 
 
-def get_adv_indices(model_t, adv_t, data, mask=None):
+def get_adv_indices(model_t: np.ndarray, adv_t: np.ndarray,
+                    data: np.ma.MaskedArray, mask: np.ma.MaskedArray = None):
     if mask is not None:
         data = ma.array(data)
         data[mask] = ma.masked
@@ -48,7 +52,7 @@ def get_adv_indices(model_t, adv_t, data, mask=None):
     return adv_indices
 
 
-def get_obs_window_size(ind_x, ind_y):
+def get_obs_window_size(ind_x: np.ndarray, ind_y: np.ndarray):
     """Returns shape (tuple) of window area, where values are True"""
     x = np.where(ind_x)[0]
     y = np.where(ind_y)[0]
@@ -57,11 +61,11 @@ def get_obs_window_size(ind_x, ind_y):
     return None
 
 
-def add_date(model_obj, obs_obj):
+def add_date(model_obj: object, obs_obj: object):
     for a in ('year', 'month', 'day'):
         model_obj.date.append(getattr(obs_obj.dataset, a))
 
 
-def average_column_sum(data):
+def average_column_sum(data: np.ndarray):
     """Returns average sum of columns which have any data"""
     return np.nanmean(np.nansum(data, 1) > 0)
