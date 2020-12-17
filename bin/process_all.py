@@ -27,7 +27,7 @@ def main():
     output_files = [cf_output, iwc_output, lwc_output]
     save_path = f'{PATH}/plots/'
 
-    for product, product_file, output_file in zip(['iwc'], [iwc_input], [iwc_output]):
+    for product, product_file, output_file in zip(['cf', 'iwc', 'lwc'], input_files, output_files):
         process_observation_resample2model('ecmwf', product, [fname], product_file, output_file)
         generate_quick_plot(output_file, product, 'ecmwf', save_path=save_path)
         generate_single_plot(output_file, product, f'ecmwf_{product}', 'ecmwf', save_path=save_path)

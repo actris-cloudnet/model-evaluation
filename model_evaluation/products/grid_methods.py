@@ -15,7 +15,7 @@ class ProductGrid:
             downsampling and adds data to model_obj which is used for writing
             nc-file
     """
-    def __init__(self, model_obj, obs_obj):
+    def __init__(self, model_obj: object, obs_obj: object):
         self._obs_obj = obs_obj
         self._date = obs_obj.date
         self._obs_time = tl.time2datetime(obs_obj.time, self._date)
@@ -96,58 +96,59 @@ class ProductGrid:
         return product_dict, product_adv_dict
 
     @staticmethod
-    def _regrid_cf(array_dict, i, j, data):
+    def _regrid_cf(storage: dict, i: int, j: int, data: np.ma.MaskedArray):
         """Calculates average cloud fraction value to grid point"""
-        for key in array_dict.keys():
-            storage = array_dict[key]
+        for key in storage.keys():
+            downsample = storage[key]
             if data is not None:
-                storage[i, j] = np.nanmean(data)
+                downsample[i, j] = np.nanmean(data)
                 if '_A' in key:
-                    storage[i, j] = tl.average_column_sum(data)
+                    downsample[i, j] = tl.average_column_sum(data)
             else:
-                storage[i, j] = np.nan
-            array_dict[key] = storage
-        return array_dict
+                downsample[i, j] = np.nan
+            storage[key] = downsample
+        return storage
 
-    def _reshape_data_to_window(self, ind, x_ind, y_ind):
+    def _reshape_data_to_window(self, ind: np.ndarray, x_ind: np.ndarray, y_ind: np.ndarray):
         """Reshapes True observation values to windows shape"""
         window_size = tl.get_obs_window_size(x_ind, y_ind)
         if window_size is not None:
             return self._obs_data[ind].reshape(window_size)
         return window_size
 
-    def _regrid_iwc(self, array_dict, i, j, ind_rain, ind_no_rain):
+    def _regrid_iwc(self, storage: dict, i: int, j: int,
+                    ind_rain: np.ma.MaskedArray, ind_no_rain: np.ma.MaskedArray):
         """Calculates average iwc value for grid point"""
-        for key in array_dict.keys():
-            storage = array_dict[key]
+        for key in storage.keys():
+            downsample = storage[key]
             if not self._obs_data[ind_no_rain].mask.all():
-                storage[i, j] = np.nanmean(self._obs_data[ind_no_rain])
+                downsample[i, j] = np.nanmean(self._obs_data[ind_no_rain])
             elif 'rain' in key and not self._obs_data[ind_rain].mask.all():
-                storage[i, j] = np.nanmean(self._obs_data[ind_rain])
+                downsample[i, j] = np.nanmean(self._obs_data[ind_rain])
             else:
-                storage[i, j] = np.nan
+                downsample[i, j] = np.nan
             if 'att' in key:
                 iwc_att = self._obs_obj.data['iwc_att'][:]
                 if iwc_att[ind_no_rain].mask.all():
-                    storage[i, j] = np.nan
+                    downsample[i, j] = np.nan
                 else:
-                    storage[i, j] = np.nanmean(iwc_att[ind_no_rain])
-            array_dict[key] = storage
-        return array_dict
+                    downsample[i, j] = np.nanmean(iwc_att[ind_no_rain])
+            storage[key] = downsample
+        return storage
 
-    def _regrid_product(self, array_dict, i, j, ind):
+    def _regrid_product(self, storage: dict, i: int, j: int, ind: np.ndarray):
         """Calculates average of standard product value to grid point"""
-        for key in array_dict.keys():
-            storage = array_dict[key]
+        for key in storage.keys():
+            downsample = storage[key]
             if not self._obs_data[ind].mask.all() and ind.any():
-                storage[i, j] = np.nanmean(self._obs_data[ind])
+                downsample[i, j] = np.nanmean(self._obs_data[ind])
             else:
-                storage[i, j] = np.nan
-            array_dict[key] = storage
-        return array_dict
+                downsample[i, j] = np.nan
+            storage[key] = downsample
+        return storage
 
-    def _append_data2object(self, array_list):
-        for array_dict in array_list:
-            for key in array_dict.keys():
-                storage = array_dict[key]
-                self.model_obj.append_data(storage, f"{key}_{self.model_obj.model}{self.model_obj._cycle}")
+    def _append_data2object(self, data_storage: list):
+        for storage in data_storage:
+            for key in storage.keys():
+                downsample = storage[key]
+                self.model_obj.append_data(downsample, f"{key}_{self.model_obj.model}{self.model_obj._cycle}")

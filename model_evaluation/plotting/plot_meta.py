@@ -1,4 +1,4 @@
-""" Initialization info of variable, maybe also plot type """
+""" Initialization info of variable visualization """
 """Metadata for plotting module."""
 from collections import namedtuple
 

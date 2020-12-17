@@ -29,7 +29,8 @@ class ModelManager(DataSource):
 
         Class inherits DataSource interface from CloudnetPy.
     """
-    def __init__(self, model_file, model, output_file, product):
+    def __init__(self, model_file: str, model: str,
+                 output_file: str, product: str):
         super().__init__(model_file)
         self.model = model
         self._product = product
@@ -42,7 +43,7 @@ class ModelManager(DataSource):
         self.wind = self._calculate_wind_speed()
         self.resolution_h = self._set_variables('horizontal_resolution')
 
-    def _read_cycle_name(self, model_file):
+    def _read_cycle_name(self, model_file: str):
         """Get cycle name from config for saving variable name"""
         cycles = CONF[self.model]['cycle']
         cycles = [x.strip() for x in cycles.split(',')]
@@ -86,7 +87,7 @@ class ModelManager(DataSource):
         self.keys[self._product] = f'{self.model}_lwc{self._cycle}'
 
     @staticmethod
-    def _read_config(*args):
+    def _read_config(*args: str):
         var = []
         for arg in args:
             var.append(CONF['model_quantity'][arg])
@@ -94,7 +95,7 @@ class ModelManager(DataSource):
             return var[0]
         return var
 
-    def _set_variables(self, *args):
+    def _set_variables(self, *args: str):
         var = []
         for arg in args:
             var.append(self.getvar(arg))
@@ -103,7 +104,7 @@ class ModelManager(DataSource):
         return var
 
     @staticmethod
-    def _calc_water_content(q, p, T):
+    def _calc_water_content(q: float, p: float, T: float):
         return q * p / (287 * T)
 
     def _add_variables(self):
@@ -133,7 +134,7 @@ class ModelManager(DataSource):
             _add_common_variables()
         _add_cycle_variables()
 
-    def _cut_off_extra_levels(self, data):
+    def _cut_off_extra_levels(self, data: np.ndarray):
         """ Remove unused levels from model data"""
         level = int(CONF[self.model]['level'])
         if data.ndim > 1:

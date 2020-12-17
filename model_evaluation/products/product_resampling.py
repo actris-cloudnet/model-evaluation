@@ -6,7 +6,11 @@ from model_evaluation.file_handler import update_attributes, save_modelfile, add
 from model_evaluation.products.grid_methods import ProductGrid
 
 
-def process_observation_resample2model(model, obs, model_files, product_file, output_file):
+def process_observation_resample2model(model: str,
+                                       obs: str,
+                                       model_files: list,
+                                       product_file: str,
+                                       output_file: str):
     """Main function to generate downsampled observations to match model grid.
 
         This functio will generate nc-file of a downsampled product included all model and
