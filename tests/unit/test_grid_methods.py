@@ -129,6 +129,20 @@ def test_regrid_cf_area_masked(model_file, obs_file):
     assert x[0, 0] == compare
 
 
+def test_regrid_cf_area_all_masked(model_file, obs_file):
+    obs = ObservationManager(PRODUCT, str(obs_file))
+    model = ModelManager(str(model_file), MODEL, OUTPUT_FILE, PRODUCT)
+    obj = ProductGrid(model, obs)
+    data = ma.array([[1, 1, 1], [0, 1, 1], [0, 0, 1], [0, 0, 0]])
+    data[:, :] = ma.masked
+    dict = {'cf_A': np.zeros((1, 1))}
+    dict = obj._regrid_cf(dict, 0, 0, data)
+    x = dict['cf_A']
+    compare = np.zeros((1, 1))
+    compare[0, 0] = np.mean(np.sum(data, 1) > 0)
+    testing.assert_equal(x, compare)
+
+
 def test_regrid_cf_area_nan(model_file, obs_file):
     obs = ObservationManager(PRODUCT, str(obs_file))
     model = ModelManager(str(model_file), MODEL, OUTPUT_FILE, PRODUCT)
@@ -139,6 +153,19 @@ def test_regrid_cf_area_nan(model_file, obs_file):
     x = dict['cf_A']
     compare = np.nanmean(np.nansum(data, 1) > 0)
     assert x[0, 0] == compare
+
+
+def test_regrid_cf_area_all_nan(model_file, obs_file):
+    obs = ObservationManager(PRODUCT, str(obs_file))
+    model = ModelManager(str(model_file), MODEL, OUTPUT_FILE, PRODUCT)
+    obj = ProductGrid(model, obs)
+    data = np.array([[np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan],
+                    [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]])
+    dict = {'cf_A': np.zeros((1, 1))}
+    dict = obj._regrid_cf(dict, 0, 0, data)
+    x = dict['cf_A']
+    compare = np.nanmean(np.nansum(data, 1) > 0)
+    testing.assert_equal(x, compare)
 
 
 def test_regrid_cf_volume(model_file, obs_file):
@@ -166,6 +193,19 @@ def test_regrid_cf_volume_nan(model_file, obs_file):
     assert x[0, 0] == compare
 
 
+def test_regrid_cf_volume_all_nan(model_file, obs_file):
+    obs = ObservationManager(PRODUCT, str(obs_file))
+    model = ModelManager(str(model_file), MODEL, OUTPUT_FILE, PRODUCT)
+    obj = ProductGrid(model, obs)
+    data = np.array([[np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan],
+                     [np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan]])
+    dict = {'cf_V': np.zeros((1, 1))}
+    dict = obj._regrid_cf(dict, 0, 0, data)
+    x = dict['cf_V']
+    compare = np.nanmean(data)
+    testing.assert_equal(x, compare)
+
+
 def test_regrid_cf_volume_masked(model_file, obs_file):
     obs = ObservationManager(PRODUCT, str(obs_file))
     model = ModelManager(str(model_file), MODEL, OUTPUT_FILE, PRODUCT)
@@ -177,6 +217,20 @@ def test_regrid_cf_volume_masked(model_file, obs_file):
     x = dict['cf_V']
     compare = np.mean(data)
     assert x[0, 0] == compare
+
+
+def test_regrid_cf_volume_all_masked(model_file, obs_file):
+    obs = ObservationManager(PRODUCT, str(obs_file))
+    model = ModelManager(str(model_file), MODEL, OUTPUT_FILE, PRODUCT)
+    obj = ProductGrid(model, obs)
+    data = ma.array([[1, 1, 1], [0, 1, 1], [0, 0, 1], [0, 0, 0]])
+    data[:, :] = ma.masked
+    dict = {'cf_V': np.zeros((1, 1))}
+    dict = obj._regrid_cf(dict, 0, 0, data)
+    x = dict['cf_V']
+    compare = np.zeros((1, 1))
+    compare[0, 0] = np.nanmean(data)
+    testing.assert_equal(x, compare)
 
 
 def test_reshape_data_to_window(model_file, obs_file):
@@ -276,6 +330,26 @@ def test_regrid_iwc_nan(model_file, obs_file):
     testing.assert_almost_equal(x[0, 0], compare)
 
 
+def test_regrid_iwc_all_nan(model_file, obs_file):
+    obs = ObservationManager(PRODUCT, str(obs_file))
+    model = ModelManager(str(model_file), MODEL, OUTPUT_FILE, PRODUCT)
+    obj = ProductGrid(model, obs)
+    obj._obs_data = ma.array([[np.nan, np.nan, np.nan, np.nan],
+                              [np.nan, np.nan, np.nan, np.nan],
+                              [np.nan, np.nan, np.nan, np.nan],
+                              [np.nan, np.nan, np.nan, np.nan]])
+    dict = {'iwc': np.zeros((1, 1))}
+    ind = np.array([[0, 1, 1, 1]], dtype=bool)
+    no_rain = np.array([[0, 1, 1, 1],
+                        [0, 0, 1, 1],
+                        [0, 0, 0, 0],
+                        [0, 0, 0, 0]], dtype=bool)
+    dict = obj._regrid_iwc(dict, 0, 0, ind, no_rain)
+    compare = np.nanmean(obj._obs_data[no_rain])
+    x = dict['iwc']
+    testing.assert_almost_equal(x[0, 0], compare)
+
+
 def test_regrid_iwc_masked(model_file, obs_file):
     obs = ObservationManager(PRODUCT, str(obs_file))
     model = ModelManager(str(model_file), MODEL, OUTPUT_FILE, PRODUCT)
@@ -293,6 +367,27 @@ def test_regrid_iwc_masked(model_file, obs_file):
                         [0, 0, 0, 0]], dtype=bool)
     dict = obj._regrid_iwc(dict, 0, 0, ind, no_rain)
     compare = np.nanmean(obj._obs_data[no_rain])
+    x = dict['iwc']
+    testing.assert_almost_equal(x[0, 0], compare)
+
+
+def test_regrid_iwc_all_masked(model_file, obs_file):
+    obs = ObservationManager(PRODUCT, str(obs_file))
+    model = ModelManager(str(model_file), MODEL, OUTPUT_FILE, PRODUCT)
+    obj = ProductGrid(model, obs)
+    obj._obs_data = ma.array([[1, 1, 1, 1],
+                              [2, 2, 2, 2],
+                              [3, 3, 3, 3],
+                              [4, 4, 4, 4]])
+    obj._obs_data[:, :] = ma.masked
+    dict = {'iwc': np.zeros((1, 1))}
+    ind = np.array([[0, 1, 1, 1]], dtype=bool)
+    no_rain = np.array([[0, 1, 1, 1],
+                        [0, 0, 1, 1],
+                        [0, 0, 0, 0],
+                        [0, 0, 0, 0]], dtype=bool)
+    dict = obj._regrid_iwc(dict, 0, 0, ind, no_rain)
+    compare = np.nan
     x = dict['iwc']
     testing.assert_almost_equal(x[0, 0], compare)
 
@@ -359,6 +454,30 @@ def test_regrid_iwc_att_masked(model_file, obs_file):
     testing.assert_almost_equal(x[0, 0], compare)
 
 
+def test_regrid_iwc_att_all_masked(model_file, obs_file):
+    obs = ObservationManager(PRODUCT, str(obs_file))
+    model = ModelManager(str(model_file), MODEL, OUTPUT_FILE, PRODUCT)
+    obj = ProductGrid(model, obs)
+    obj._obs_obj.data['iwc_att'][:].mask = ma.array([[1, 1, 1, 1],
+                                                     [1, 1, 1, 1],
+                                                     [1, 1, 1, 1],
+                                                     [1, 1, 1, 1],
+                                                     [1, 1, 1, 1],
+                                                     [1, 1, 1, 1]], dtype=bool)
+    dict = {'iwc_att': np.zeros((1, 1))}
+    ind = np.array([[0, 1, 1, 1]], dtype=bool)
+    no_rain = np.array([[0, 1, 1, 1],
+                        [0, 0, 1, 1],
+                        [0, 1, 1, 1],
+                        [0, 0, 1, 1],
+                        [0, 0, 0, 0],
+                        [0, 0, 0, 0]], dtype=bool)
+    dict = obj._regrid_iwc(dict, 0, 0, ind, no_rain)
+    compare = np.nan
+    x = dict['iwc_att']
+    testing.assert_almost_equal(x[0, 0], compare)
+
+
 def test_regrid_iwc_att_none(model_file, obs_file):
     obs = ObservationManager(PRODUCT, str(obs_file))
     model = ModelManager(str(model_file), MODEL, OUTPUT_FILE, PRODUCT)
@@ -385,13 +504,16 @@ def test_regrid_iwc_rain(model_file, obs_file):
                               [3, 3, 3, 3],
                               [4, 4, 4, 3]])
     dict = {'iwc_rain': np.zeros((1, 1))}
-    ind = np.array([[1, 0, 1, 1]], dtype=bool)
-    no_rain = np.array([[0, 1, 1, 1],
+    ind = np.array([[0, 1, 1, 1],
                     [0, 0, 1, 1],
                     [0, 1, 1, 1],
                     [0, 0, 1, 1]], dtype=bool)
+    no_rain = np.array([[0, 1, 1, 1],
+                        [0, 0, 1, 1],
+                        [0, 1, 1, 1],
+                        [0, 0, 1, 1]], dtype=bool)
     dict = obj._regrid_iwc(dict, 0, 0, ind, no_rain)
-    compare = np.nanmean(obj._obs_data[no_rain])
+    compare = np.nanmean(obj._obs_data[ind])
     x = dict['iwc_rain']
     testing.assert_almost_equal(x[0, 0], compare)
 
@@ -405,13 +527,39 @@ def test_regrid_iwc_rain_nan(model_file, obs_file):
                               [3, 3, 3, 3],
                               [np.nan, 4, 4, np.nan]])
     dict = {'iwc_rain': np.zeros((1, 1))}
-    ind = np.array([[1, 0, 1, 1]], dtype=bool)
-    no_rain = np.array([[0, 1, 1, 1],
+    ind = np.array([[0, 1, 1, 1],
                     [0, 0, 1, 1],
                     [0, 1, 1, 1],
                     [0, 0, 1, 1]], dtype=bool)
+    no_rain = np.array([[0, 1, 1, 1],
+                        [0, 0, 1, 1],
+                        [0, 1, 1, 1],
+                        [0, 0, 1, 1]], dtype=bool)
     dict = obj._regrid_iwc(dict, 0, 0, ind, no_rain)
-    compare = np.nanmean(obj._obs_data[no_rain])
+    compare = np.nanmean(obj._obs_data[ind])
+    x = dict['iwc_rain']
+    testing.assert_almost_equal(x[0, 0], compare)
+
+
+def test_regrid_iwc_rain_all_nan(model_file, obs_file):
+    obs = ObservationManager(PRODUCT, str(obs_file))
+    model = ModelManager(str(model_file), MODEL, OUTPUT_FILE, PRODUCT)
+    obj = ProductGrid(model, obs)
+    obj._obs_data = ma.array([[np.nan, np.nan, np.nan, np.nan],
+                              [np.nan, np.nan, np.nan, np.nan],
+                              [np.nan, np.nan, np.nan, np.nan],
+                              [np.nan, np.nan, np.nan, np.nan]])
+    dict = {'iwc_rain': np.zeros((1, 1))}
+    ind = np.array([[0, 1, 1, 1],
+                    [0, 0, 1, 1],
+                    [0, 1, 1, 1],
+                    [0, 0, 1, 1]], dtype=bool)
+    no_rain = np.array([[0, 1, 1, 1],
+                        [0, 0, 1, 1],
+                        [0, 1, 1, 1],
+                        [0, 0, 1, 1]], dtype=bool)
+    dict = obj._regrid_iwc(dict, 0, 0, ind, no_rain)
+    compare = np.nanmean(obj._obs_data[ind])
     x = dict['iwc_rain']
     testing.assert_almost_equal(x[0, 0], compare)
 
@@ -426,22 +574,49 @@ def test_regrid_iwc_rain_masked(model_file, obs_file):
                               [4, 4, 4, 4]])
     obj._obs_data[2, :] = ma.masked
     dict = {'iwc_rain': np.zeros((1, 1))}
-    ind = np.array([[1, 0, 1, 1]], dtype=bool)
+    ind = np.array([[0, 1, 1, 1],
+                    [0, 0, 1, 1],
+                    [0, 1, 1, 1],
+                    [0, 0, 1, 1]], dtype=bool)
     no_rain = np.array([[0, 1, 1, 1],
                     [0, 0, 1, 1],
                     [0, 1, 1, 1],
                     [0, 0, 1, 1]], dtype=bool)
     dict = obj._regrid_iwc(dict, 0, 0, ind, no_rain)
-    compare = np.nanmean(obj._obs_data[no_rain])
+    compare = np.nanmean(obj._obs_data[ind])
     x = dict['iwc_rain']
     testing.assert_almost_equal(x[0, 0], compare)
+
+
+def test_regrid_iwc_rain_all_masked(model_file, obs_file):
+    obs = ObservationManager(PRODUCT, str(obs_file))
+    model = ModelManager(str(model_file), MODEL, OUTPUT_FILE, PRODUCT)
+    obj = ProductGrid(model, obs)
+    obj._obs_data = ma.array([[1, 3, 1, 1],
+                              [2, 2, 2, 2],
+                              [3, 3, 3, 3],
+                              [4, 4, 4, 4]])
+    obj._obs_data[:, :] = ma.masked
+    dict = {'iwc_rain': np.zeros((1, 1))}
+    ind = np.array([[0, 1, 1, 1],
+                    [0, 0, 1, 1],
+                    [0, 1, 1, 1],
+                    [0, 0, 1, 1]], dtype=bool)
+    no_rain = np.array([[0, 1, 1, 1],
+                    [0, 0, 1, 1],
+                    [0, 1, 1, 1],
+                    [0, 0, 1, 1]], dtype=bool)
+    dict = obj._regrid_iwc(dict, 0, 0, ind, no_rain)
+    compare = np.nan
+    x = dict['iwc_rain']
+    testing.assert_equal(x[0, 0], compare)
 
 
 def test_regrid_product(model_file, obs_file):
     obs = ObservationManager('lwc', str(obs_file))
     model = ModelManager(str(model_file), MODEL, OUTPUT_FILE, 'lwc')
     obj = ProductGrid(model, obs)
-    obj._obs_data = np.array([[1, 1, 1, 1],
+    obj._obs_data = ma.array([[1, 1, 1, 1],
                               [2, 1, 2, 2],
                               [3, 3, 3, 3],
                               [4, 4, 4, 4]])
@@ -460,10 +635,29 @@ def test_regrid_product_nan(model_file, obs_file):
     obs = ObservationManager('lwc', str(obs_file))
     model = ModelManager(str(model_file), MODEL, OUTPUT_FILE, 'lwc')
     obj = ProductGrid(model, obs)
-    obj._obs_data = np.array([[1, np.nan, 1, 1],
+    obj._obs_data = ma.array([[1, np.nan, 1, 1],
                               [np.nan, 1, 2, 2],
                               [3, 3, np.nan, 3],
                               [4, np.nan, 4, 4]])
+    dict = {'lwc': np.zeros((1, 1))}
+    ind = np.array([[0, 1, 1, 1],
+                    [0, 0, 1, 1],
+                    [0, 0, 0, 0],
+                    [0, 0, 0, 0]], dtype=bool)
+    dict = obj._regrid_product(dict, 0, 0, ind)
+    compare = np.nanmean(obj._obs_data[ind])
+    x = dict['lwc']
+    testing.assert_almost_equal(x[0, 0], compare)
+
+
+def test_regrid_product_all_nan(model_file, obs_file):
+    obs = ObservationManager('lwc', str(obs_file))
+    model = ModelManager(str(model_file), MODEL, OUTPUT_FILE, 'lwc')
+    obj = ProductGrid(model, obs)
+    obj._obs_data = ma.array([[np.nan, np.nan, np.nan, np.nan],
+                              [np.nan, np.nan, np.nan, np.nan],
+                              [np.nan, np.nan, np.nan, np.nan],
+                              [np.nan, np.nan, np.nan, np.nan]])
     dict = {'lwc': np.zeros((1, 1))}
     ind = np.array([[0, 1, 1, 1],
                     [0, 0, 1, 1],
@@ -494,6 +688,26 @@ def test_regrid_product_masked(model_file, obs_file):
     x = dict['lwc']
     testing.assert_almost_equal(x[0, 0], compare)
 
+
+def test_regrid_product_all_masked(model_file, obs_file):
+    obs = ObservationManager('lwc', str(obs_file))
+    model = ModelManager(str(model_file), MODEL, OUTPUT_FILE, 'lwc')
+    obj = ProductGrid(model, obs)
+    compare = np.zeros((1, 1))
+    obj._obs_data = ma.array([[1, 1, 1, 1],
+                              [2, 1, 2, 2],
+                              [3, 3, 3, 3],
+                              [4, 4, 4, 4]])
+    obj._obs_data[:, :] = ma.masked
+    dict = {'lwc': np.zeros((1, 1))}
+    ind = np.array([[0, 1, 1, 1],
+                    [0, 0, 1, 1],
+                    [0, 0, 0, 0],
+                    [0, 0, 0, 0]], dtype=bool)
+    dict = obj._regrid_product(dict, 0, 0, ind)
+    compare[0, 0] = np.nan
+    x = dict['lwc']
+    testing.assert_almost_equal(x, compare)
 
 
 def test_regrid_product_none(model_file, obs_file):

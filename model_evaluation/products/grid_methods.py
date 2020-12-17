@@ -139,9 +139,10 @@ class ProductGrid:
         """Calculates average of standard product value to grid point"""
         for key in array_dict.keys():
             storage = array_dict[key]
-            storage[i, j] = np.nan
             if not self._obs_data[ind].mask.all() and ind.any():
                 storage[i, j] = np.nanmean(self._obs_data[ind])
+            else:
+                storage[i, j] = np.nan
             array_dict[key] = storage
         return array_dict
 
