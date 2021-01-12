@@ -2,7 +2,7 @@ import sys
 import os
 from pathlib import Path
 import configparser
-from model_evaluation.products.product_resampling import process_observation_resample2model
+from model_evaluation.products.product_resampling import resample_observation2model
 from model_evaluation.plotting.plotting import generate_quick_plot, generate_single_plot
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -28,7 +28,7 @@ def main():
     save_path = f'{PATH}/plots/'
 
     for product, product_file, output_file in zip(['cf', 'iwc', 'lwc'], input_files, output_files):
-        process_observation_resample2model('ecmwf', product, [fname], product_file, output_file)
+        resample_observation2model('ecmwf', product, [fname], product_file, output_file)
         generate_quick_plot(output_file, product, 'ecmwf', save_path=save_path)
         generate_single_plot(output_file, product, f'ecmwf_{product}', 'ecmwf', save_path=save_path)
         if product == 'cf':

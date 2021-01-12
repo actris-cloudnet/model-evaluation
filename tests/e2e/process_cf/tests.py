@@ -15,8 +15,8 @@ class TestCloudFractionProcessing:
         assert nc.year == '2019'
         assert nc.month == '05'
         assert nc.day == '17'
-        assert nc.title == f'Model data of Ecmwf cf from Mace-Head'
-        assert nc.cloudnet_file_type == "ecmwf_cf"
+        assert nc.title == f'Resampled Cf of ecmwf from Mace-Head'
+        assert nc.cloudnet_file_type == "cf_ecmwf"
         assert nc.Conventions == 'CF-1.7'
         nc.close()
 
@@ -44,7 +44,7 @@ class TestCloudFractionProcessing:
 
     @pytest.mark.reprocess
     @pytest.mark.parametrize("key", [
-        'ecmwf_forecast_time', 'ecmwf_height'])
+        'ecmwf_forecast_time', 'ecmwf_height', 'ecmwf_cf'])
     def test_that_has_correct_cycle_variables(self, key):
         nc = netCDF4.Dataset(self.full_path)
         var = nc.variables.keys()
