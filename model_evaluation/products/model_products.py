@@ -10,8 +10,11 @@ PATH = os.path.dirname(os.path.abspath(__file__))
 PATH = os.path.split(PATH)[0]
 CONF = configparser.ConfigParser()
 CONF.optionxform = str
-CONF.read(os.path.join(PATH, 'level3.ini'))
-
+if os.path.isfile(os.path.join(PATH, 'level3.ini')) is True:
+    CONF.read(os.path.join(PATH, 'level3.ini'))
+else:
+    PATH = os.path.abspath(os.curdir)
+    CONF.read(os.path.join(PATH, 'model_evaluation/level3.ini'))
 
 class ModelManager(DataSource):
     """Class to collect and manage model data.
