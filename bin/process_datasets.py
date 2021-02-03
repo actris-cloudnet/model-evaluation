@@ -57,20 +57,18 @@ def main():
     test_files = [f for f in test_files for date in case_dates if date in f and site in f]
 
     for model in models:
-        model_files = [[f for f in test_files if model in f and date in f] for date in case_dates]
+        model_file_set = [[f for f in test_files if model in f and date in f] for date in case_dates]
         cat_files = [f for f in test_files if 'categorize' in f]
         iwc_files = [f for f in test_files if 'iwc' in f]
         lwc_files = [f for f in test_files if 'lwc' in f]
 
-        for model_file_set in model_files:
-            for product, product_files in (zip(['iwc', 'lwc', 'cf'], [iwc_files, lwc_files, cat_files])):
-                print(product)
-                for i in range(len(product_files)):
-                    f_name = product_files[i].split('/')[-1]
-                    date = [a for a in f_name.split('_') if a.isdigit()]
-                    save_name = os.path.join(save_path, f"{date[0]}_{site}_{model}_{product}_downsampled.nc")
-                    process_observation_resample2model(
-                        model, product, model_file_set, product_files[i], save_name)
+        for product, product_files in (zip(['iwc', 'lwc', 'cf'], [iwc_files, lwc_files, cat_files])):
+            for i in range(len(product_files)):
+                f_name = product_files[i].split('/')[-1]
+                date = [a for a in f_name.split('_') if a.isdigit()]
+                save_name = os.path.join(path1, f"{date[0]}_{site}_{model}_{product}_downsampled.nc")
+                process_observation_resample2model(
+                    model, product, model_file_set[i], product_files[i], save_name)
 
 
 if __name__ == "__main__":
