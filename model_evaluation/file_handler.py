@@ -5,49 +5,46 @@ from model_evaluation import version
 from model_evaluation.metadata import MODEL_ATTRIBUTES, CYCLE_ATTRIBUTES, MODEL_L3_ATTRIBUTES, REGRID_PRODUCT_ATTRIBUTES
 
 
-def update_attributes(model_evaluation_variables):
-    """Overrides existing ModelEvaluationArray-attributes.
+def update_attributes(cloudnet_variables):
+    """Overrides existing CloudnetArray-attributes.
 
     Overrides existing attributes using hard-coded values.
     New attributes are added.
 
     Args:
-        model_evaluation_variables (dict): Model evaluation array instances.
+        cloudnet_variables (dict): CloudnetArray instances.
         attributes (dict): Product-specific attributes.
 
     """
-    for key in model_evaluation_variables:
+    for key in cloudnet_variables:
         x = len(key.split('_')) - 1
         key_parts = key.split('_', x)
         if key in MODEL_ATTRIBUTES:
-            model_evaluation_variables[key].set_attributes(MODEL_ATTRIBUTES[key])
+            cloudnet_variables[key].set_attributes(MODEL_ATTRIBUTES[key])
         elif '_'.join(key_parts[0:-1]) in REGRID_PRODUCT_ATTRIBUTES:
-            model_evaluation_variables[key].set_attributes(REGRID_PRODUCT_ATTRIBUTES['_'.join(key_parts[0:-1])])
+            cloudnet_variables[key].set_attributes(REGRID_PRODUCT_ATTRIBUTES['_'.join(key_parts[0:-1])])
         elif key_parts[1] in MODEL_L3_ATTRIBUTES:
-            model_evaluation_variables[key].set_attributes(MODEL_L3_ATTRIBUTES[key_parts[1]])
+            cloudnet_variables[key].set_attributes(MODEL_L3_ATTRIBUTES[key_parts[1]])
         elif '_'.join(key_parts[1:]) in CYCLE_ATTRIBUTES:
-            model_evaluation_variables[key].set_attributes(CYCLE_ATTRIBUTES['_'.join(key_parts[1:])])
+            cloudnet_variables[key].set_attributes(CYCLE_ATTRIBUTES['_'.join(key_parts[1:])])
 
 
-def save_modelfile(id_mark, file_name, objs, files):
-    """Saves a standard resampled product file.
+def save_modelfile(id_mark, obj, model_files, file_name):
+    """Saves a standard Model downsampled product file.
 
     Args:
         id_mark (str): File identifier, format "(product name)_(model name)"
-        file_name (str): Name of the output file to be generated
-        objs (tuple): Include two objects: The :class:'ModelManager' and
-                      The :class:'ObservationManager.
-        files (tuple): Includes two sourcefile group: List of model file(s) used
-                       for processing output file and Cloudnet L2 product file
+        obj (object): Instance containing product specific attributes: `time`,
+            `dataset`, `data`.
+        file_name (str): Name of the output file to be generated.
     """
-    obj = objs[0]
     dimensions = {'time': len(obj.time),
                   'level': len(obj.data['level'][:])}
     root_group = output.init_file(file_name, dimensions, obj.data)
     _add_standard_global_attributes(root_group)
     output.add_file_type(root_group, id_mark)
-    root_group.title = f"Resampled {id_mark.capitalize().replace('_', ' of ')} from {obj.dataset.location}"
-    _add_source(root_group, objs, files)
+    root_group.title = f"Model data of {id_mark.capitalize().replace('_', ' ')} from {obj.dataset.location}"
+    _add_source(root_group, obj, model_files)
     output.copy_global(obj.dataset, root_group, ('location', 'day', 'month', 'year'))
     try:
         obj.dataset.day
@@ -97,13 +94,13 @@ def _add_standard_global_attributes(root_group):
     root_group.file_uuid = utils.get_uuid()
 
 
-def _add_source(root_ground, objs, files):
-    """generates source info for multiple files"""
-    model, obs = objs
-    model_files, obs_file = files
-    source = f"Observation file: {os.path.basename(obs_file)}"
-    source += f"\n"
-    source += f"{model.model} file(s): "
+def _add_source(root_ground, obj, model_files):
+    """generates source multiple files is existing"""
+<<<<<<< HEAD
+    source = f"{obj._model} file(s): "
+=======
+    source = f"{obj.model} file(s): "
+>>>>>>> 4f8ca63... Testcase processing setup ready
     for i, f in enumerate(model_files):
         source += f"{os.path.basename(f)}"
         if i < len(model_files) - 1:

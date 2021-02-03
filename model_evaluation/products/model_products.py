@@ -48,12 +48,14 @@ class ModelManager(DataSource):
 
     def _read_cycle_name(self, model_file: str):
         """Get cycle name from config for saving variable name"""
-        cycles = CONF[self.model]['cycle']
-        cycles = [x.strip() for x in cycles.split(',')]
-        for cycle in cycles:
-            if cycle in model_file:
-                return f"_{cycle}"
-        return ""
+        try:
+            cycles = CONF[self.model]['cycle']
+            cycles = [x.strip() for x in cycles.split(',')]
+            for cycle in cycles:
+                if cycle in model_file:
+                    return f"_{cycle}"
+        except KeyError:
+            return ""
 
     def _generate_products(self):
         cls = getattr(importlib.import_module(__name__), 'ModelManager')
@@ -139,7 +141,11 @@ class ModelManager(DataSource):
 
     def _cut_off_extra_levels(self, data: np.ndarray):
         """ Remove unused levels from model data"""
-        level = int(CONF[self.model]['level'])
+        try:
+            level = int(CONF[self.model]['level'])
+        except KeyError:
+            return data
+
         if data.ndim > 1:
             data = data[:, :level]
         else:
