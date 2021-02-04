@@ -5,9 +5,9 @@ import datetime
 from model_evaluation.products.product_resampling import process_observation_resample2model
 
 ROOT_PATH = os.path.split(Path(__file__).parent)[0]
-L3_CONF = configparser.ConfigParser()
-L3_CONF.optionxform = str
-L3_CONF.read(os.path.join(ROOT_PATH, 'model_evaluation/level3.ini'))
+#L3_CONF = configparser.ConfigParser()
+#L3_CONF.optionxform = str
+#L3_CONF.read(os.path.join(ROOT_PATH, 'model_evaluation/level3.ini'))
 PROCESS_CONF = configparser.ConfigParser()
 PROCESS_CONF.optionxform = str
 PROCESS_CONF.read(os.path.join(os.getcwd(), 'config.ini'))
@@ -32,8 +32,8 @@ def remove_missing_days(obs_files, model_files):
 
 def generate_casetime_list():
     dates = []
-    dateFrom = PROCESS_CONF['run']['start_date']
-    dateTo = PROCESS_CONF['run']['end_date']
+    dateFrom = PROCESS_CONF['run2']['start_date']
+    dateTo = PROCESS_CONF['run2']['end_date']
     df = datetime.datetime.strptime(dateFrom, '%Y%m%d')
     dt = datetime.datetime.strptime(dateTo, '%Y%m%d')
     dates.append(dateFrom)
@@ -44,8 +44,8 @@ def generate_casetime_list():
 
 
 def main():
-    site = PROCESS_CONF['run']['site']
-    models = L3_CONF[site]['model']
+    site = PROCESS_CONF['run2']['site']
+    models = PROCESS_CONF['run2']['model']
     models = [x.strip() for x in models.split(',')]
 
     save_plots = f'{ROOT_PATH}/plots/'
@@ -67,7 +67,7 @@ def main():
             for i in range(len(product_files)):
                 f_name = product_files[i].split('/')[-1]
                 date = [a for a in f_name.split('_') if a.isdigit()]
-                save_name = os.path.join(save_files, f"{date[0]}_{site}_{model}_{product}_downsampled.nc")
+                save_name = os.path.join(save_files, f"{date[0]}_{site}_{product}_downsampled_{model}.nc")
                 process_observation_resample2model(
                     model, product, model_file_set[i], product_files[i], save_name)
 

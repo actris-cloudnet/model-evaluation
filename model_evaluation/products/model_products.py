@@ -163,4 +163,5 @@ class ModelManager(DataSource):
 
     def _get_horizontal_resolution(self):
         h_res = self._set_variables('horizontal_resolution')
+        # Maybe requires to be same size as time array
         return np.unique(h_res.data)[0]

@@ -16,6 +16,7 @@ def update_attributes(cloudnet_variables):
         attributes (dict): Product-specific attributes.
 
     """
+    # TODO: Change name order: model_cycle_product_method
     for key in cloudnet_variables:
         x = len(key.split('_')) - 1
         key_parts = key.split('_', x)
@@ -23,10 +24,15 @@ def update_attributes(cloudnet_variables):
             cloudnet_variables[key].set_attributes(MODEL_ATTRIBUTES[key])
         elif '_'.join(key_parts[0:-1]) in REGRID_PRODUCT_ATTRIBUTES:
             cloudnet_variables[key].set_attributes(REGRID_PRODUCT_ATTRIBUTES['_'.join(key_parts[0:-1])])
+        elif '_'.join(key_parts[0:-2]) in REGRID_PRODUCT_ATTRIBUTES:
+            cloudnet_variables[key].set_attributes(REGRID_PRODUCT_ATTRIBUTES['_'.join(key_parts[0:-2])])
         elif key_parts[1] in MODEL_L3_ATTRIBUTES:
             cloudnet_variables[key].set_attributes(MODEL_L3_ATTRIBUTES[key_parts[1]])
         elif '_'.join(key_parts[1:]) in CYCLE_ATTRIBUTES:
             cloudnet_variables[key].set_attributes(CYCLE_ATTRIBUTES['_'.join(key_parts[1:])])
+        elif '_'.join(key_parts[1:-1]) in CYCLE_ATTRIBUTES:
+            cloudnet_variables[key].set_attributes(CYCLE_ATTRIBUTES['_'.join(key_parts[1:-1])])
+
 
 
 def save_modelfile(id_mark, obj, model_files, file_name):
