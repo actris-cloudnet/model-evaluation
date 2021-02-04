@@ -48,8 +48,9 @@ def main():
     models = L3_CONF[site]['model']
     models = [x.strip() for x in models.split(',')]
 
-    save_path = f'{ROOT_PATH}/plots/'
+    save_plots = f'{ROOT_PATH}/plots/'
     path1 = f'{ROOT_PATH}/test_files/'
+    save_files = f'{ROOT_PATH}/processed_files/'
     test_files = [os.path.join(path1, i) for i in os.listdir(path1)]
     test_files.sort()
 
@@ -66,7 +67,7 @@ def main():
             for i in range(len(product_files)):
                 f_name = product_files[i].split('/')[-1]
                 date = [a for a in f_name.split('_') if a.isdigit()]
-                save_name = os.path.join(path1, f"{date[0]}_{site}_{model}_{product}_downsampled.nc")
+                save_name = os.path.join(save_files, f"{date[0]}_{site}_{model}_{product}_downsampled.nc")
                 process_observation_resample2model(
                     model, product, model_file_set[i], product_files[i], save_name)
 

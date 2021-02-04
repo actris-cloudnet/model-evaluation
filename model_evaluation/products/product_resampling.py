@@ -55,7 +55,6 @@ def process_observation_resample2model(model, obs, model_files, product_file, ou
     """
     product_obj = ObservationManager(obs, product_file)
     for m_file in model_files:
-        print(m_file)
         model_obj = ModelManager(m_file, model, output_file, obs)
         ProductGrid(model_obj, product_obj)
         update_attributes(model_obj.data)

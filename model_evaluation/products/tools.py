@@ -21,7 +21,7 @@ def calculate_advection_time(resolution: int, wind: np.ma.MaskedArray,
     """Calculates time which variable take to cross through time window
 
         Notes:
-            Wind speed is higher in upper levels, so advection time is more
+            Wind speed is stronger in upper levels, so advection time is more
             there then lower levels. Effect is small in a mid-latitudes,
             but visible in a tropics.
 
@@ -29,7 +29,7 @@ def calculate_advection_time(resolution: int, wind: np.ma.MaskedArray,
 
         References:
     """
-    t_adv = resolution.data * 1000 / wind / 60 ** 2
+    t_adv = resolution * 1000 / wind / 60 ** 2
     t_adv[t_adv > 1/sampling] = 1/sampling
     return np.asarray([[timedelta(hours=float(t)) for t in time] for time in t_adv])
 

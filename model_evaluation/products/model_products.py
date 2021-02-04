@@ -3,6 +3,7 @@ import configparser
 import importlib
 import numpy as np
 import numpy.ma as ma
+import netCDF4
 from cloudnetpy.utils import isscalar
 from cloudnetpy.categorize.datasource import DataSource
 
@@ -44,7 +45,7 @@ class ModelManager(DataSource):
         self._generate_products()
         self.date = []
         self.wind = self._calculate_wind_speed()
-        self.resolution_h = self._set_variables('horizontal_resolution')
+        self.resolution_h = self._get_horizontal_resolution()
 
     def _read_cycle_name(self, model_file: str):
         """Get cycle name from config for saving variable name"""
@@ -159,3 +160,7 @@ class ModelManager(DataSource):
         u = self._cut_off_extra_levels(u)
         v = self._cut_off_extra_levels(v)
         return np.sqrt(u.data**2 + v.data**2)
+
+    def _get_horizontal_resolution(self):
+        h_res = self._set_variables('horizontal_resolution')
+        return np.unique(h_res.data)[0]
