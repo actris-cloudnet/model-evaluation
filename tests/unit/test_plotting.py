@@ -27,26 +27,26 @@ def test_parse_wanted_names_adv(regrid_file):
 @pytest.mark.parametrize("key", [
     'cf_V', 'cf_A', 'cf_V_adv', 'cf_A_adv'])
 def test_get_cf_title(key):
-    from model_evaluation.plotting.plotting import get_cf_title
+    from model_evaluation.plotting.plotting import _get_cf_title
     var = VariableInfo()
     field_name = key + '_' + MODEL
     value = 'Product, downsampled by volume from ecmwf'
     if 'A' in key:
         value = 'Product, downsampled by area from ecmwf'
-    x = get_cf_title(field_name, var)
+    x = _get_cf_title(field_name, var)
     assert x == value
 
 
 @pytest.mark.parametrize("key", [
     'cf_V', 'cf_A',  'cf_V_adv', 'cf_A_adv'])
 def test_get_cf_title_cycle(key):
-    from model_evaluation.plotting.plotting import get_cf_title
+    from model_evaluation.plotting.plotting import _get_cf_title
     var = VariableInfo()
     field_name = key + '_' + MODEL + '_001'
     value = 'Product, downsampled by volume from ecmwf cycle 001'
     if 'A' in key:
         value = 'Product, downsampled by area from ecmwf cycle 001'
-    x = get_cf_title(field_name, var)
+    x = _get_cf_title(field_name, var)
     assert x == value
 
 
@@ -58,10 +58,10 @@ def test_get_cf_title_cycle(key):
     ('iwc_att_adv', 'Product with good attenuation, downsampled from ecmwf'),
     ('iwc_rain_adv', 'Product with rain, downsampled from ecmwf')])
 def test_get_iwc_title(key, value):
-    from model_evaluation.plotting.plotting import get_iwc_title
+    from model_evaluation.plotting.plotting import _get_iwc_title
     var = VariableInfo()
     field_name = key + '_' + MODEL
-    x = get_iwc_title(field_name, var)
+    x = _get_iwc_title(field_name, var)
     assert x == value
 
 
@@ -73,30 +73,30 @@ def test_get_iwc_title(key, value):
     ('iwc_att_adv', 'Product with good attenuation, downsampled from ecmwf cycle 001'),
     ('iwc_rain_adv', 'Product with rain, downsampled from ecmwf cycle 001')])
 def test_get_iwc_title_cycle(key, value):
-    from model_evaluation.plotting.plotting import get_iwc_title
+    from model_evaluation.plotting.plotting import _get_iwc_title
     var = VariableInfo()
     field_name = key + '_' + MODEL + '_001'
-    x = get_iwc_title(field_name, var)
+    x = _get_iwc_title(field_name, var)
     assert x == value
 
 
 @pytest.mark.parametrize("key", ['lwc','lwc_adv'])
 def test_get_product_title(key):
-    from model_evaluation.plotting.plotting import get_product_title
+    from model_evaluation.plotting.plotting import _get_product_title
     var = VariableInfo()
     field_name = key + '_' + MODEL
     value = 'Product downsampled from ecmwf'
-    x = get_product_title(field_name, var)
+    x = _get_product_title(field_name, var)
     assert x == value
 
 
 @pytest.mark.parametrize("key", ['lwc','lwc_adv'])
 def test_get_product_title_cycle(key):
-    from model_evaluation.plotting.plotting import get_product_title
+    from model_evaluation.plotting.plotting import _get_product_title
     var = VariableInfo()
     field_name = key + '_' + MODEL + '_001'
     value = 'Product downsampled from ecmwf cycle 001'
-    x = get_product_title(field_name, var)
+    x = _get_product_title(field_name, var)
     assert x == value
 
 

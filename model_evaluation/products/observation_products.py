@@ -47,8 +47,8 @@ class ObservationManager(DataSource):
         categorize_bits = CategorizeBits(self._file)
         cloud_mask = self._classify_basic_mask(categorize_bits.category_bits)
         cloud_mask = self._mask_cloud_bits(cloud_mask)
-        if self._check_rainrate():
-            cloud_mask[~self._rain_index(), :] = ma.masked
+        #if self._check_rainrate():
+        #    cloud_mask[~self._rain_index(), :] = ma.masked
         return cloud_mask
 
     def _classify_basic_mask(self, bits: dict):
@@ -71,6 +71,7 @@ class ObservationManager(DataSource):
         """Check if rainrate in file"""
         try:
             self.getvar('rainrate')
+            print("Täällä")
             return True
         except RuntimeError:
             return False

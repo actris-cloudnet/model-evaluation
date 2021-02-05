@@ -7,13 +7,22 @@ from ..plotting.plot_meta import ATTRIBUTES
 import model_evaluation.plotting.plot_tools as p_tools
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from cloudnetpy.plotting.plotting import _set_ax, _set_labels, _handle_saving, _generate_log_cbar_ticklabel_list, _lin2log
+from model_evaluation.model_metadata import MODELS
 
 
+<<<<<<< HEAD
+<<<<<<< HEAD
 <<<<<<< HEAD
 def generate_quick_plot(nc_file, product, model, save_path=None, show=False):
 =======
 def generate_day_figures(nc_file, product, model, save_path=None, show=False):
 >>>>>>> 8043b0d... Adds Statistical plotting
+=======
+def generate_day_figures(nc_file, site, product, model, save_path=None, show=False):
+>>>>>>> fb4ac0c... Fix config bug and remove rainrate masking
+=======
+def generate_day_group_plots(nc_file, site, product, model, save_path=None, show=False):
+>>>>>>> 6d55dac... Plotting cycles and no cycles functioning
     """ Subplot visualization for both standard and advection downsampling.
 
         Generates subplot visualization of standard product and advection
@@ -27,42 +36,93 @@ def generate_day_figures(nc_file, product, model, save_path=None, show=False):
                                        to path location
             show (bool, optional): If True, shows visualization
     """
-    names_sta, names_adv = p_tools.parse_wanted_names(nc_file, product)
+    names_sta, names_adv = p_tools.parse_wanted_names(nc_file, product, model)
     for i, names in enumerate([names_sta, names_adv]):
-        fig, ax = initialize_figure(len(names))
-        for j, name in enumerate(names):
-            variable_info = ATTRIBUTES[product]
-            _set_ax(ax[j], 12)
-            _set_title(ax[j], name, product, variable_info)
-            data, x, y = p_tools.read_data_characters(nc_file, name, model)
-            plot_data_quick_look(ax[j], data, (x, y), variable_info)
-        casedate = _set_labels(fig, ax[j], nc_file)
-        if i == 1:
-            product = product + '_adv'
-        _handle_saving(None, save_path, show, 200, casedate, [product, model])
+        try:
+            cycle_names = p_tools.parce_cycles(names, model)
+            for c_names in cycle_names:
+                get_group_plots(product, c_names, nc_file, model, site, i, save_path, show)
+        except AttributeError:
+            get_group_plots(product, names, nc_file, model, site, i, save_path, show)
 
 
-def generate_single_plot(nc_file, product, name, model, save_path=None, show=False):
-    """Generates visualization of one product
+def get_group_plots(product, names, nc_file, model, site, i, save_path, show):
+    fig, ax = initialize_figure(len(names))
+    for j, name in enumerate(names):
+        variable_info = ATTRIBUTES[product]
+        _set_ax(ax[j], 12)
+        _set_title(ax[j], name, product, variable_info)
+        if j == 0:
+            _set_title(ax[j], model, product, variable_info)
+        data, x, y = p_tools.read_data_characters(nc_file, name, model)
+        plot_colormesh(ax[j], data, (x, y), variable_info)
+    casedate = _set_labels(fig, ax[j], nc_file)
+    if i == 1:
+        product = product + '_adv'
+    _handle_saving(None, save_path, show, 200, casedate, [site, product, model])
+
+
+def generate_day_plot_pairs(nc_file, product, site, model, save_path=None, show=False):
+    """Generates visualization of model and product method pairs.
+
+        In upper subplot is presenting model output and lower subplot one of the
+        downsampled method of select product. Function generates all product methods
+        in a given nc-file.
 
         Args:
             nc_file (str): Path to source file
-            product (str): Name of product wanted to plot
+            product (str): Name of the product
+            site (str): Name of the site
             model (str): Name of model which downsampling was done with
             save_path (str, optional): If not None, visualization is saved
                                        to path location
             show (bool, optional): If True, shows visualization
     """
+    names_sta, names_adv = p_tools.parse_wanted_names(nc_file, product, model)
+    for names in [names_adv, names_sta]:
+        try:
+            cycle_names = p_tools.parce_cycles(names, model)
+            for c_names in cycle_names:
+                get_pair_plots(product, c_names, nc_file, model, site, save_path, show)
+        except KeyError:
+            get_pair_plots(product, names, nc_file, model, site, save_path, show)
+
+
+def get_pair_plots(product, names, nc_file, model, site, save_path, show):
     variable_info = ATTRIBUTES[product]
-    fig, ax = initialize_figure(1)
-    _set_ax(ax[0], 12)
-    _set_title(ax[0], name, product, variable_info)
-    data, x, y = p_tools.read_data_characters(nc_file, name, model)
-    plot_data_quick_look(ax[0], data, (x, y), variable_info)
-    casedate = _set_labels(fig, ax[0], nc_file)
-    _handle_saving(None, save_path, show, 200, casedate, [name])
+    model_ax = names[0]
+    for i, name in enumerate(names):
+        if i == 0:
+            continue
+        fig, ax = initialize_figure(2)
+        _set_ax(ax[0], 12)
+        _set_ax(ax[-1], 12)
+        _set_title(ax[0], model, product, variable_info)
+        _set_title(ax[-1], name, product, variable_info)
+        model_data, mx, my = p_tools.read_data_characters(nc_file, model_ax, model)
+        data, x, y = p_tools.read_data_characters(nc_file, name, model)
+        plot_colormesh(ax[0], model_data, (mx, my), variable_info)
+        plot_colormesh(ax[-1], data, (x, y), variable_info)
+        casedate = _set_labels(fig, ax[-1], nc_file)
+        _handle_saving(None, save_path, show, 200, casedate, [site, name, model])
 
 
+def plot_colormesh(ax, data, axes, variable_info):
+    vmin, vmax = variable_info.plot_range
+    if variable_info.plot_scale == 'logarithmic':
+        data, vmin, vmax = _lin2log(data, vmin, vmax)
+    cmap = plt.get_cmap(variable_info.cbar, 22)
+    pl = ax.pcolormesh(*axes, data, vmin=vmin, vmax=vmax, cmap=cmap)
+    colorbar = init_colorbar(pl, ax)
+    if variable_info.plot_scale == 'logarithmic':
+        tick_labels = _generate_log_cbar_ticklabel_list(vmin, vmax)
+        colorbar.set_ticks(np.arange(vmin, vmax+1))
+        colorbar.ax.set_yticklabels(tick_labels)
+    ax.set_facecolor('whitesmoke')
+    colorbar.set_label(variable_info.clabel, fontsize=13)
+
+
+<<<<<<< HEAD
 <<<<<<< HEAD
 def parse_wanted_names(nc_file, name):
     """Returns standard and advection lists of product types to plot"""
@@ -73,6 +133,9 @@ def parse_wanted_names(nc_file, name):
     return standard_n, advection_n
 =======
 def generate_day_statistics(nc_file, product, model, save_path=None, show=False):
+=======
+def generate_day_statistics(nc_file, product, model, site, save_path=None, show=False):
+>>>>>>> 50e75af... Plotting cycles and no cycles functioning
     """ Subplots statistical analysis for day scale products.
 >>>>>>> 8043b0d... Adds Statistical plotting
 
@@ -91,6 +154,7 @@ def generate_day_statistics(nc_file, product, model, save_path=None, show=False)
     """
     names = p_tools.select_vars2stats(nc_file, product)
     variable_info = ATTRIBUTES[product]
+<<<<<<< HEAD
     stats = ['error', 'cov', 'hist']
     #stats = ['hist_vertical', 'vertical']
     #stats = ['hist']
@@ -106,8 +170,8 @@ def generate_day_statistics(nc_file, product, model, save_path=None, show=False)
                 name = _get_stat_titles(name, product, variable_info)
                 day_stat = DayStatistics(stat, [product, model, name], model_data,
                                          data)
-                get_day_statistic_plots(ax[j-1], stat, product, day_stat, model_data,
-                                        data, (x, y), variable_info)
+                get_statistic_plots(ax[j - 1], stat, product, day_stat, model_data,
+                                    data, (x, y), variable_info)
         casedate = _set_labels(fig, ax[j-1], nc_file)
         if stat =='hist' or stat == 'vertical':
             ax[j-1].set_xlabel(variable_info.hist_x_title, fontsize=13)
@@ -116,6 +180,7 @@ def generate_day_statistics(nc_file, product, model, save_path=None, show=False)
         _handle_saving(None, save_path, show, 200, casedate, [product, model, stat])
 
 
+<<<<<<< HEAD
 def initialize_figure(n_subplots, stat=''):
     """ Set up fig and ax object, if subplot"""
     fig, axes = plt.subplots(n_subplots, 1, figsize=(16, 4 + (n_subplots - 1) * 4.8))
@@ -146,6 +211,52 @@ def plot_data_quick_look(ax, data, axes, variable_info):
 <<<<<<< HEAD
 =======
 def get_day_statistic_plots(ax, method, product, day_stat, model, obs, args, variable_info):
+=======
+def get_statistic_plots(ax, method, product, day_stat, model, obs, args, variable_info):
+>>>>>>> 6d55dac... Plotting cycles and no cycles functioning
+=======
+    stats = ['error', 'cov']
+    #stats = ['hist', 'hist_vertical', 'vertical']
+    for stat in stats:
+        try:
+            model_info = MODELS[model]
+            cycles = model_info.cycle
+            cycles = [x.strip() for x in cycles.split(',')]
+            cycle_names = p_tools.parce_cycles(names, model)
+            for i, c_names in enumerate(cycle_names):
+                initialize_statistic_plots(c_names, nc_file, site, stat, model,
+                                           product, variable_info, save_path,
+                                           show, cycle=cycles[i])
+        except AttributeError:
+            initialize_statistic_plots(names, nc_file, site, stat, model,
+                                       product, variable_info, save_path, show)
+
+
+def initialize_statistic_plots(names, nc_file, site, stat, model, product,
+                               variable_info, save_path, show, cycle=""):
+    fig, ax = initialize_figure(len(names) - 1)
+    for j, name in enumerate(names):
+        data, x, y = p_tools.read_data_characters(nc_file, name, model)
+        if product == 'cf' and stat == 'error':
+            stat = 'aerror'
+        if j == 0:
+            model_data = data
+        if j > 0:
+            name = _get_stat_titles(name, product, variable_info)
+            day_stat = DayStatistics(stat, [product, model, name], model_data,
+                                     data)
+            get_statistic_plots(ax[j - 1], stat, day_stat, model_data, data,
+                                (x, y), variable_info)
+    casedate = _set_labels(fig, ax[j - 1], nc_file)
+    if stat == 'hist' or stat == 'vertical':
+        ax[j - 1].set_xlabel(variable_info.hist_x_title, fontsize=13)
+    if stat == 'hist_vert':
+        ax[j - 1].set_xlabel('Relative frequency %', fontsize=13)
+    _handle_saving(None, save_path, show, 200, casedate, [site, product, stat, model, cycle])
+
+
+def get_statistic_plots(ax, method, day_stat, model, obs, args, variable_info):
+>>>>>>> 50e75af... Plotting cycles and no cycles functioning
     if method == 'error' or method == 'aerror':
         plot_relative_error(ax, day_stat.stat_data.T, args, method)
         ax.set_title(day_stat.title, fontsize=14)
@@ -222,16 +333,36 @@ def plot_histogram_vertical(ax, day_stat, variable_info):
     ax.yaxis.grid(True, 'major')
 
 
+<<<<<<< HEAD
 >>>>>>> 8043b0d... Adds Statistical plotting
+=======
+def initialize_figure(n_subplots, stat=''):
+    """ Set up fig and ax object, if subplot"""
+    fig, axes = plt.subplots(n_subplots, 1, figsize=(16, 4 + (n_subplots - 1) * 4.8))
+    if stat == 'hist':
+        fig, axes = plt.subplots(n_subplots, figsize=(16, 10))
+    fig.subplots_adjust(left=0.06, right=0.73, hspace=0.3)
+    if n_subplots == 1:
+        axes = [axes]
+    return fig, axes
+
+
+def init_colorbar(plot, axis):
+    divider = make_axes_locatable(axis)
+    cax = divider.append_axes("right", size="1%", pad=0.25)
+    return plt.colorbar(plot, fraction=1.0, ax=axis, cax=cax)
+
+
+>>>>>>> 6d55dac... Plotting cycles and no cycles functioning
 def _set_title(ax, field_name, product, variable_info):
     """Generates subtitles for different product types"""
     parts = field_name.split('_')
     if parts[0] == product:
-        title = get_product_title(field_name, variable_info)
+        title = _get_product_title(field_name, variable_info)
         if product == 'cf':
-            title = get_cf_title(field_name, variable_info)
+            title = _get_cf_title(field_name, variable_info)
         if product == 'iwc':
-            title = get_iwc_title(field_name, variable_info)
+            title = _get_iwc_title(field_name, variable_info)
         if 'adv' in field_name:
             adv = ' Downsampled using advection time'
             ax.text(0.9, -0.13, adv, size=12, ha="center",
@@ -245,7 +376,7 @@ def _set_title(ax, field_name, product, variable_info):
         ax.set_title(f"{name} of {model}", fontsize=14)
 
 
-def get_cf_title(field_name, variable_info):
+def _get_cf_title(field_name, variable_info):
     parts = field_name.split('_')
     name = variable_info.name
     model = parts[-1]
@@ -259,7 +390,7 @@ def get_cf_title(field_name, variable_info):
     return title
 
 
-def get_iwc_title(field_name, variable_info):
+def _get_iwc_title(field_name, variable_info):
     parts = field_name.split('_')
     name = variable_info.name
     model = parts[-1]
@@ -284,7 +415,7 @@ def get_iwc_title(field_name, variable_info):
     return title
 
 
-def get_product_title(field_name, variable_info):
+def _get_product_title(field_name, variable_info):
     parts = field_name.split('_')
     name = variable_info.name
     model = parts[-1]
@@ -325,19 +456,18 @@ def initialize_figure(n_subplots):
     return fig, axes
 =======
 def _get_stat_titles(field_name, product, variable_info):
-    title = get_product_title_stat(field_name, variable_info)
+    title = _get_product_title_stat(variable_info)
     if product == 'cf':
-        title = get_cf_title_stat(field_name, variable_info)
+        title = _get_cf_title_stat(field_name, variable_info)
     if product == 'iwc':
-        title = get_iwc_title_stat(field_name, variable_info)
+        title = _get_iwc_title_stat(field_name, variable_info)
     if 'adv' in field_name:
         adv = ' (Advection time)'
         return f"{title}{adv}"
     return title
 
 
-def get_cf_title_stat(field_name, variable_info):
-    parts = field_name.split('_')
+def _get_cf_title_stat(field_name, variable_info):
     name = variable_info.name
     title = f'{name} area'
     if 'V' in field_name:
@@ -345,7 +475,7 @@ def get_cf_title_stat(field_name, variable_info):
     return title
 
 
-def get_iwc_title_stat(field_name, variable_info):
+def _get_iwc_title_stat(field_name, variable_info):
     name = variable_info.name
     if 'att' in field_name:
         title = f'{name} with good attenuation'
@@ -356,10 +486,11 @@ def get_iwc_title_stat(field_name, variable_info):
     return title
 
 
-def get_product_title_stat(field_name, variable_info):
+def _get_product_title_stat(variable_info):
     name = variable_info.name
     title = f'{name}'
     return title
+<<<<<<< HEAD
 >>>>>>> 8043b0d... Adds Statistical plotting
 
 
@@ -367,3 +498,5 @@ def init_colorbar(plot, axis):
     divider = make_axes_locatable(axis)
     cax = divider.append_axes("right", size="1%", pad=0.25)
     return plt.colorbar(plot, fraction=1.0, ax=axis, cax=cax)
+=======
+>>>>>>> 6d55dac... Plotting cycles and no cycles functioning

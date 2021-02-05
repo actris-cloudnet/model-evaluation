@@ -63,7 +63,7 @@ print("Full processing done")
 
 =======
 from model_evaluation.products.product_resampling import process_observation_resample2model
-from model_evaluation.plotting.plotting import generate_day_figures, generate_single_plot
+from model_evaluation.plotting.plotting import generate_day_group_plots, generate_day_plot_pairs, generate_day_statistics
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -72,27 +72,32 @@ def main():
     """Example processing of product downsampling system including visualization process"""
     root = os.path.split(Path(__file__).parent)[0]
     #root = os.path.split(root)[0]
-    fname = f'{root}/test_files/20190517_mace-head_ecmwf.nc'
-    cf_input = f'{root}/test_files/categorize.nc'
-    cf_output = f'{root}/test_files/test_input_ecmwf_cf.nc'
+    fname = f'{root}/test_files/20201208_juelich_icon-iglo-12-23.nc'
+    fname2 = f'{root}/test_files/20201208_juelich_icon-iglo-24-35.nc'
+    fname3 = f'{root}/test_files/20201208_juelich_icon-iglo-36-47.nc'
+    cf_input = f'{root}/test_files/20201208_juelich_categorize.nc'
+    cf_output = f'{root}/processed_files/test_input_icon_cf.nc'
     iwc_input = f'{root}/test_files/iwc.nc'
-    iwc_output = f'{root}/test_files/test_input_ecmwf_iwc.nc'
+    iwc_output = f'{root}/processed_files/test_input_ecmwf_iwc.nc'
     lwc_input = f'{root}/test_files/lwc.nc'
     lwc_output = f'{root}/test_files/test_input_ecmwf_lwc.nc'
     input_files = [cf_input, iwc_input, lwc_input]
     output_files = [cf_output, iwc_output, lwc_output]
     save_path = f'{root}/plots/'
 
-    for product, product_file, output_file in zip(['cf', 'iwc', 'lwc'], input_files, output_files):
-        process_observation_resample2model('ecmwf', product, [fname], product_file, output_file)
-        generate_day_figures(output_file, product, 'ecmwf', save_path=save_path, show=True)
-        generate_single_plot(output_file, product, f'ecmwf_{product}', 'ecmwf', save_path=save_path)
+    for product, product_file, output_file in zip(['iwc'], [iwc_input], [iwc_output]):
+        #process_observation_resample2model('icon', product, [fname, fname2, fname3], product_file, output_file)
+        #generate_day_group_plots(output_file, 'Mace-Head', product, 'ecmwf', save_path=save_path)
+        #generate_day_plot_pairs(output_file, product, 'juelich', 'icon', save_path=save_path)
+        generate_day_statistics(output_file, product, 'ecmwf', 'juelich', save_path=save_path)
+        """
         if product == 'cf':
-            generate_single_plot(output_file, product, f'{product}_V_ecmwf', 'ecmwf', save_path=save_path)
-            generate_single_plot(output_file, product, f'{product}_V_adv_ecmwf', 'ecmwf', save_path=save_path)
+            generate_plot_pairs(output_file, product, f'{product}_V_ecmwf', 'ecmwf', save_path=save_path)
+            generate_plot_pairs(output_file, product, f'{product}_V_adv_ecmwf', 'ecmwf', save_path=save_path)
         else:
-            generate_single_plot(output_file, product, f'{product}_ecmwf', 'ecmwf', save_path=save_path)
-            generate_single_plot(output_file, product, f'{product}_adv_ecmwf', 'ecmwf', save_path=save_path)
+            generate_plot_pairs(output_file, product, f'{product}_ecmwf', 'ecmwf', save_path=save_path)
+            generate_plot_pairs(output_file, product, f'{product}_adv_ecmwf', 'ecmwf', save_path=save_path)
+        """
 
 
 if __name__ == "__main__":
