@@ -36,19 +36,17 @@ def calculate_advection_time(resolution: int, wind: np.ma.MaskedArray,
 
 def get_1d_indices(window: tuple, data: np.ma.MaskedArray,
                    mask: np.ma.MaskedArray = None):
-    if mask is not None:
-        data = ma.array(data)
-        data[mask] = ma.masked
     indices = (window[0] <= data) & (data < window[-1])
+    if mask is not None:
+        indices[mask] = ma.masked
     return indices
 
 
 def get_adv_indices(model_t: int, adv_t: float, data: np.ma.MaskedArray,
                     mask: np.ma.MaskedArray = None):
-    if mask is not None:
-        data = ma.array(data)
-        data[mask] = ma.masked
     adv_indices = ((model_t - adv_t / 2) <= data) & (data < (model_t + adv_t / 2))
+    if mask is not None:
+        adv_indices[mask] = ma.masked
     return adv_indices
 
 
