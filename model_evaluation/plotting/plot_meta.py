@@ -1,4 +1,4 @@
-""" Initialization info of variable, maybe also plot type """
+""" Initialization info of variable visualization """
 """Metadata for plotting module."""
 from collections import namedtuple
 
@@ -7,10 +7,14 @@ FIELDS = ('name',
           'clabel',
           'ylabel',
           'plot_range',
+          'plot_scale',
           'plot_type')
 
 PlotMeta = namedtuple('PlotMeta', FIELDS)
 PlotMeta.__new__.__defaults__ = (None,) * len(FIELDS)
+
+_LOG = 'logarithmic'
+_LIN = 'linear'
 
 _M3 = '$m^{-3}$'
 _MS1 = 'm s$^{-1}$'
@@ -26,6 +30,7 @@ ATTRIBUTES = {
         cbar='viridis',
         clabel=_M3,
         plot_range=(1e4, 1e9),
+        plot_scale=_LIN,
         plot_type='mesh'
     ),
     'v_air': PlotMeta(
@@ -33,6 +38,7 @@ ATTRIBUTES = {
         cbar='RdBu_r',
         clabel=_MS1,
         plot_range=(-2, 2),
+        plot_scale=_LIN,
         plot_type='mesh'
     ),
     'uwind': PlotMeta(
@@ -40,6 +46,7 @@ ATTRIBUTES = {
         cbar='RdBu_r',
         clabel=_MS1,
         plot_range=(-50, 50),
+        plot_scale=_LIN,
         plot_type='model'
     ),
     'vwind': PlotMeta(
@@ -47,6 +54,7 @@ ATTRIBUTES = {
         cbar='RdBu_r',
         clabel=_MS1,
         plot_range=(-50, 50),
+        plot_scale=_LIN,
         plot_type='model'
     ),
     'temperature': PlotMeta(
@@ -54,13 +62,15 @@ ATTRIBUTES = {
         cbar='RdBu_r',
         clabel='K',
         plot_range=(223.15, 323.15),
+        plot_scale=_LIN,
         plot_type='model'
     ),
-    'cv': PlotMeta(
+    'cf': PlotMeta(
         name='Cloud fraction',
         cbar='Blues',
         clabel='',
         plot_range=(0, 1),
+        plot_scale=_LIN,
         plot_type='model'
     ),
     'specific_humidity': PlotMeta(
@@ -68,6 +78,7 @@ ATTRIBUTES = {
         cbar='viridis',
         clabel='',
         plot_range=(1e-5, 1e-2),
+        plot_scale=_LIN,
         plot_type='model'
     ),
     'q': PlotMeta(
@@ -75,6 +86,7 @@ ATTRIBUTES = {
         cbar='viridis',
         clabel='',
         plot_range=(1e-5, 1e-2),
+        plot_scale=_LIN,
         plot_type='model'
     ),
     'pressure': PlotMeta(
@@ -82,6 +94,7 @@ ATTRIBUTES = {
         cbar='viridis',
         clabel='Pa',
         plot_range=(1e4, 1.5e5),
+        plot_scale=_LIN,
         plot_type='model'
     ),
     'v': PlotMeta(
@@ -89,6 +102,7 @@ ATTRIBUTES = {
         cbar='RdBu_r',
         clabel=_MS1,
         plot_range=(-4, 4),
+        plot_scale=_LIN,
         plot_type='mesh'
      ),
     'lwp': PlotMeta(
@@ -96,20 +110,23 @@ ATTRIBUTES = {
         cbar='Blues',
         ylabel=_KGM2,
         plot_range=(0, 1),
+        plot_scale=_LIN,
         plot_type='bar'
     ),
     'iwc': PlotMeta(
         name='Ice water content',
-        cbar='Blues',
+        cbar='viridis',
         clabel=_KGM3,
-        plot_range=(1e-7, 1e-5),
+        plot_range=(1e-7, 1e-3),
+        plot_scale=_LOG,
         plot_type='mesh'
     ),
     'lwc': PlotMeta(
         name='Liquid water content',
         cbar='Blues',
         clabel=_KGM3,
-        plot_range=(1e-5, 1e-3),
+        plot_range=(1e-5, 1e-2),
+        plot_scale=_LOG,
         plot_type='mesh'
     )
 }

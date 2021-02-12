@@ -48,6 +48,10 @@ def model_file(tmpdir_factory, file_metadata):
     var[:] = np.array([[300, 301], [302, 299], [305, 298]])
     var = root_grp.createVariable('pressure', 'f8', ('time', 'level'))
     var[:] = np.array([[1000, 1001], [1010, 1003], [1020, 1005]])
+    var = root_grp.createVariable('uwind', 'f8', ('time', 'level'))
+    var[:] = np.array([[1, 2], [2, 2], [3, 1]])
+    var = root_grp.createVariable('vwind', 'f8', ('time', 'level'))
+    var[:] = np.array([[3, 1], [2, 1], [5, 2]])
     root_grp.close()
     return file_name
 
@@ -88,6 +92,10 @@ def obs_file(tmpdir_factory, file_metadata):
     var[:] = np.array([[0.01, 0.02, 0.06, 0.01], [0.02, 0.06,0.00, 0.03],
                        [0.08, 0.00, 0.03, 0.08], [0.01, 0.02, 0.06, 0.01],
                        [0.02, 0.06, 0.00, 0.03], [0.08, 0.00, 0.03, 0.08]])
+    var = root_grp.createVariable('iwc_retrieval_status', 'f8', ('time', 'height'))
+    var[:] = np.array([[1, 2, 6, 1], [2, 6, 5, 3],
+                       [7, 1, 3, 4], [1, 2, 6, 7],
+                       [4, 6, 5, 3], [7, 5, 3, 4]])
     var = root_grp.createVariable('lwc', 'f8', ('time', 'height'))
     var[:] = np.array([[0.08, 0.04, 0.01, 0.08], [0.04, 0.01, 0.09, 0.07],
                        [0.02, 0.09, 0.07, 0.02], [0.08, 0.04, 0.01, 0.08],
@@ -123,7 +131,11 @@ def regrid_file(tmpdir_factory, file_metadata):
     var[:] = np.array([[10, 14], [8, 14], [9, 15]])
     var = root_grp.createVariable('ecmwf_forecast_time', 'f8', 'time')
     var[:] = np.array([1, 5, 10])
-    var = root_grp.createVariable('ecmwf_cv', 'f8', ('time', 'level'))
+    var = root_grp.createVariable('ecmwf_cf', 'f8', ('time', 'level'))
+    var[:] = np.array([[0, 2], [3, 6], [5, 8]])
+    var = root_grp.createVariable('cf_ecmwf', 'f8', ('time', 'level'))
+    var[:] = np.array([[0, 2], [3, 6], [5, 8]])
+    var = root_grp.createVariable('cf_adv_ecmwf', 'f8', ('time', 'level'))
     var[:] = np.array([[0, 2], [3, 6], [5, 8]])
     var = root_grp.createVariable('temperature', 'f8', ('time', 'level'))
     var[:] = np.array([[300, 301], [302, 299], [305, 298]])

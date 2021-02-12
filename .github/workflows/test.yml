@@ -31,3 +31,7 @@ jobs:
         run: |
           pip install pytest pytest-cov
           pytest --cov=model_evaluation tests/unit/
+
+      - name: Run e2e tests
+        run: |
+          for f in tests/e2e/*/main.py; do $f; done

@@ -4,70 +4,171 @@ import matplotlib.pyplot as plt
 import netCDF4
 from ..plotting.plot_meta import ATTRIBUTES
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from cloudnetpy.plotting.plotting import _set_ax, _set_labels, _handle_saving
+from cloudnetpy.plotting.plotting import _set_ax, _set_labels, _handle_saving, _generate_log_cbar_ticklabel_list, _lin2log
 
 
-def generate_quick_plot(nc_file, name, model, save_path=None, show=True):
-    """Read files dimensions and generates simple plot from data"""
-    names = parse_wanted_names(nc_file, name)
-    fig, ax = initialize_figure(len(names))
-    for i, n in enumerate(names):
-        variable_info = ATTRIBUTES[name]
-        _set_ax(ax[i], 12)
-        _set_title(ax[i], n, variable_info)
-        data, x, y = read_data_characters(nc_file, n, model)
-        plot_data_quick_look(ax[i], data, (x, y), variable_info)
-    casedate = _set_labels(fig, ax[i], nc_file)
-    _handle_saving(None, save_path, show, 200, casedate, [name, model])
+def generate_quick_plot(nc_file: str,
+                        product: str,
+                        model: str,
+                        save_path: str = None,
+                        show: bool = False):
+    """ Subplot visualization for both standard and advection downsampling.
 
+        Generates subplot visualization of standard product and advection
+        product with model data and all different downsampling methods.
 
-def generate_single_plot(nc_file, product, name, model, save_path=None, show=True):
-    names = parse_wanted_names(nc_file, product)
-    fig, ax = initialize_figure(1)
-    for n in names:
-        if n == name:
+        Args:
+            nc_file (str): Path to source file
+            product (str): Short name of product wanted to plot
+            model (str): Name of model which downsampling was done with
+            save_path (str, optional): If not None, visualization is saved
+                                       to path location
+            show (bool, optional): If True, shows visualization
+    """
+    names_sta, names_adv = parse_wanted_names(nc_file, product)
+    for i, names in enumerate([names_sta, names_adv]):
+        fig, ax = initialize_figure(len(names))
+        for j, name in enumerate(names):
             variable_info = ATTRIBUTES[product]
-            _set_ax(ax[0], 12)
-            _set_title(ax[0], n, variable_info)
-            data, x, y = read_data_characters(nc_file, n, model)
-            plot_data_quick_look(ax[0], data, (x, y), variable_info)
+            _set_ax(ax[j], 12)
+            _set_title(ax[j], name, product, variable_info)
+            data, x, y = read_data_characters(nc_file, name, model)
+            plot_data_quick_look(ax[j], data, (x, y), variable_info)
+        casedate = _set_labels(fig, ax[j], nc_file)
+        if i == 1:
+            product = product + '_adv'
+        _handle_saving(None, save_path, show, 200, casedate, [product, model])
+
+
+def generate_single_plot(nc_file: str,
+                         product: str,
+                         name: str,
+                         model: str,
+                         save_path: str = None,
+                         show: bool = False):
+    """Generates visualization of one product
+
+        Args:
+            nc_file (str): Path to source file
+            product (str): Short name of product wanted to plot
+            name (str): Long name of product
+            model (str): Name of model which downsampling was done with
+            save_path (str, optional): If not None, visualization is saved
+                                       to path location
+            show (bool, optional): If True, shows visualization
+    """
+    variable_info = ATTRIBUTES[product]
+    fig, ax = initialize_figure(1)
+    _set_ax(ax[0], 12)
+    _set_title(ax[0], name, product, variable_info)
+    data, x, y = read_data_characters(nc_file, name, model)
+    plot_data_quick_look(ax[0], data, (x, y), variable_info)
     casedate = _set_labels(fig, ax[0], nc_file)
-    _handle_saving(None, save_path, show, 200, casedate, n)
+    _handle_saving(None, save_path, show, 200, casedate, [name])
 
 
-def parse_wanted_names(nc_file, name):
+def parse_wanted_names(nc_file: str, name: str):
+    """Returns standard and advection lists of product types to plot"""
     names = netCDF4.Dataset(nc_file).variables.keys()
-    return [n for n in names if name in n]
+    standard_n = [n for n in names if name in n and 'adv' not in n]
+    advection_n = [n for n in names if name in n and 'adv' in n]
+    advection_n.insert(0, standard_n[0])
+    return standard_n, advection_n
 
 
-def plot_data_quick_look(ax, data, axes, variable_info):
+def plot_data_quick_look(ax: object, data: np.ma.MaskedArray, axes: tuple,
+                         variable_info: object):
     vmin, vmax = variable_info.plot_range
+    if variable_info.plot_scale == 'logarithmic':
+        data, vmin, vmax = _lin2log(data, vmin, vmax)
     cmap = plt.get_cmap(variable_info.cbar, 22)
     pl = ax.pcolormesh(*axes, data, vmin=vmin, vmax=vmax, cmap=cmap)
-    colorbar = _init_colorbar(pl, ax)
-    #TODO: Uudelleen formatoidaan tick labelit siistimmiksi
+    colorbar = init_colorbar(pl, ax)
+    if variable_info.plot_scale == 'logarithmic':
+        tick_labels = _generate_log_cbar_ticklabel_list(vmin, vmax)
+        colorbar.set_ticks(np.arange(vmin, vmax+1))
+        colorbar.ax.set_yticklabels(tick_labels)
     colorbar.set_label(variable_info.clabel, fontsize=13)
 
 
-def _set_title(ax, field_name, variable_info):
+def _set_title(ax: object, field_name: str, product: str, variable_info: object):
+    """Generates subtitles for different product types"""
     parts = field_name.split('_')
-    if parts[1] == 'obs':
-        name = variable_info.name
-        model = parts[-1]
-        if len(parts) == 4:
-            model = f"{parts[-2]} cycle {parts[-1]}"
-        ax.set_title(f"Observed {name} regrid to {model}", fontsize=14)
+    if parts[0] == product:
+        title = get_product_title(field_name, variable_info)
+        if product == 'cf':
+            title = get_cf_title(field_name, variable_info)
+        if product == 'iwc':
+            title = get_iwc_title(field_name, variable_info)
+        if 'adv' in field_name:
+            adv = ' Downsampled using advection time'
+            ax.text(0.9, -0.13, adv, size=12, ha="center",
+                    transform=ax.transAxes)
+        ax.set_title(title, fontsize=14)
     else:
         name = variable_info.name
         model = parts[0]
-        if len(parts) == 3:
+        if len(parts) > 3:
             model = f"{parts[0]} cycle {parts[-1]}"
-        ax.set_title(f"Simulated {name} from {model}", fontsize=14)
+        ax.set_title(f"{name} of {model}", fontsize=14)
 
 
-def read_data_characters(nc_file, name, model):
+def get_cf_title(field_name: str, variable_info: object):
+    parts = field_name.split('_')
+    name = variable_info.name
+    model = parts[-1]
+    if len(parts) > 3 and 'adv' not in field_name:
+        model = f"{parts[-2]} cycle {parts[-1]}"
+    if len(parts) > 4 and 'adv' in field_name:
+        model = f"{parts[-2]} cycle {parts[-1]}"
+    title = f'{name}, downsampled by area from {model}'
+    if 'V' in field_name:
+        title = f'{name}, downsampled by volume from {model}'
+    return title
+
+
+def get_iwc_title(field_name: str, variable_info: object):
+    parts = field_name.split('_')
+    name = variable_info.name
+    model = parts[-1]
+    if 'att' in field_name:
+        if len(parts) > 3 and 'adv' not in field_name:
+            model = f"{parts[-2]} cycle {parts[-1]}"
+        if len(parts) > 4 and 'adv' in field_name:
+            model = f"{parts[-2]} cycle {parts[-1]}"
+        title = f'{name} with good attenuation, downsampled from {model}'
+    elif 'rain' in field_name:
+        if len(parts) > 3 and 'adv' not in field_name:
+            model = f"{parts[-2]} cycle {parts[-1]}"
+        if len(parts) > 4 and 'adv' in field_name:
+            model = f"{parts[-2]} cycle {parts[-1]}"
+        title = f'{name} with rain, downsampled from {model}'
+    else:
+        if len(parts) > 2 and 'adv' not in field_name:
+            model = f"{parts[-2]} cycle {parts[-1]}"
+        if len(parts) > 3 and 'adv' in field_name:
+            model = f"{parts[-2]} cycle {parts[-1]}"
+        title = f'{name} downsampled from {model}'
+    return title
+
+
+def get_product_title(field_name: str, variable_info: object):
+    parts = field_name.split('_')
+    name = variable_info.name
+    model = parts[-1]
+    if len(parts) > 2 and 'adv' not in field_name:
+        model = f"{parts[-2]} cycle {parts[-1]}"
+    if len(parts) > 3 and 'adv' in field_name:
+        model = f"{parts[-2]} cycle {parts[-1]}"
+    title = f'{name} downsampled from {model}'
+    return title
+
+
+def read_data_characters(nc_file: str, name: str, model: str):
+    """Gets dimensions and data for plotting"""
     nc = netCDF4.Dataset(nc_file)
     data = nc.variables[name][:]
+    data[data <= 0] = ma.masked
     x = nc.variables['time'][:]
     x = reshape_1d2nd(x, data)
     y = nc.variables[f'{model}_height'][:]
@@ -75,16 +176,15 @@ def read_data_characters(nc_file, name, model):
     return data, x, y
 
 
-def reshape_1d2nd(one_d, two_d):
+def reshape_1d2nd(one_d: np.ndarray, two_d: np.ndarray):
     new_arr = np.zeros(two_d.shape)
     for i in range(len(two_d[0])):
         new_arr[:, i] = one_d
     return new_arr
 
 
-def initialize_figure(n_subplots):
+def initialize_figure(n_subplots: int):
     """ Set up fig and ax object, if subplot"""
-    print("")
     fig, axes = plt.subplots(n_subplots, 1, figsize=(16, 4 + (n_subplots - 1) * 4.8))
     fig.subplots_adjust(left=0.06, right=0.73)
     if n_subplots == 1:
@@ -92,7 +192,7 @@ def initialize_figure(n_subplots):
     return fig, axes
 
 
-def _init_colorbar(plot, axis):
+def init_colorbar(plot: object, axis: object):
     divider = make_axes_locatable(axis)
     cax = divider.append_axes("right", size="1%", pad=0.25)
     return plt.colorbar(plot, fraction=1.0, ax=axis, cax=cax)
