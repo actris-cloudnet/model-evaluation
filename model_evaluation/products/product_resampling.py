@@ -98,6 +98,7 @@ from model_evaluation.products.grid_methods import ProductGrid
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 >>>>>>> b91fc3f... Cleaning processing
 def process_observation_resample2model(model, obs, model_files, product_file, output_file):
 =======
@@ -114,6 +115,10 @@ def resample_observation2model(model: str,
                                product_file: str,
                                output_file: str):
 >>>>>>> 89306c0... Cleaning processing
+=======
+
+def process_observation_resample2model(model, obs, model_files, product_file, output_file):
+>>>>>>> 4b00ebd... Improve documentation
     """Main function to generate downsampled observations to match model grid.
 >>>>>>> 122b8aa... Fixes process_all script and bug in standard product downsampling
 
@@ -137,13 +142,13 @@ def resample_observation2model(model: str,
             same file.
 
         Examples:
-            >>> from model_evaluation.products.product_resampling import resample_observation2model
+            >>> from model_evaluation.products.product_resampling import process_observation_resample2model
             >>> product = 'cf'
             >>> model = 'ecmwf'
             >>> model_file = 'ecmwf.nc'
             >>> input_file = 'categorize.nc'
             >>> output_file = 'cf_ecmwf.nc'
-            >>> resample_observation2model(model, product, [model_file], input_file, output_file)
+            >>> process_observation_resample2model(model, product, [model_file], input_file, output_file)
 
     """
     product_obj = ObservationManager(obs, product_file)
@@ -153,7 +158,6 @@ def resample_observation2model(model: str,
         update_attributes(model_obj.data)
         if os.path.isfile(output_file) is False:
             tl.add_date(model_obj, product_obj)
-            save_modelfile(f"{obs}_{model}", output_file, (model_obj, product_obj),
-                           (model_files, product_file))
+            save_modelfile(f"{model}_products", model_obj, model_files, output_file)
         else:
             add_var2ncfile(model_obj, output_file)
