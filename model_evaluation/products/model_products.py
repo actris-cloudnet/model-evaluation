@@ -3,7 +3,6 @@ import configparser
 import importlib
 import numpy as np
 import numpy.ma as ma
-import netCDF4
 from cloudnetpy.utils import isscalar
 from cloudnetpy.categorize.datasource import DataSource
 

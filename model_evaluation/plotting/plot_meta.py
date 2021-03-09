@@ -8,7 +8,14 @@ FIELDS = ('name',
           'ylabel',
           'plot_range',
           'plot_scale',
+<<<<<<< HEAD
           'plot_type')
+=======
+          'plot_type',
+          'hist_bin',
+          'hist_limits',
+          'hist_x_title')
+>>>>>>> fed6cde... Fix histogram bins for plot
 
 PlotMeta = namedtuple('PlotMeta', FIELDS)
 PlotMeta.__new__.__defaults__ = (None,) * len(FIELDS)
@@ -113,13 +120,34 @@ ATTRIBUTES = {
         plot_scale=_LIN,
         plot_type='bar'
     ),
+<<<<<<< HEAD
+=======
+    'cf': PlotMeta(
+        name='Cloud fraction',
+        cbar='Blues',
+        clabel='',
+        plot_range=(0, 1),
+        plot_scale=_LIN,
+        plot_type='model',
+        hist_bin=10,
+        hist_limits=(0.0, 1.1, 0.1),
+        hist_x_title=''
+    ),
+>>>>>>> fed6cde... Fix histogram bins for plot
     'iwc': PlotMeta(
         name='Ice water content',
         cbar='viridis',
         clabel=_KGM3,
         plot_range=(1e-7, 1e-3),
         plot_scale=_LOG,
+<<<<<<< HEAD
         plot_type='mesh'
+=======
+        plot_type='mesh',
+        hist_bin=11,
+        hist_limits=(0.0, 3.4e-5, 0.3e-5),
+        hist_x_title='g/kg'
+>>>>>>> fed6cde... Fix histogram bins for plot
     ),
     'lwc': PlotMeta(
         name='Liquid water content',
@@ -127,6 +155,13 @@ ATTRIBUTES = {
         clabel=_KGM3,
         plot_range=(1e-5, 1e-2),
         plot_scale=_LOG,
+<<<<<<< HEAD
         plot_type='mesh'
+=======
+        plot_type='mesh',
+        hist_bin=10,
+        hist_limits=(0.0, 3.4e-5, 0.3e-5),
+        hist_x_title='g/kg'
+>>>>>>> fed6cde... Fix histogram bins for plot
     )
 }

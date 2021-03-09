@@ -30,6 +30,7 @@ CONF.read(os.path.join(PATH, 'level3.ini'))
 =======
 >>>>>>> a3513da... Cleaning processing
 
+<<<<<<< HEAD
 def process_observation_resample2model(model, obs, model_files, product_file, output_file):
     """Main function to generate downsampled observations to match model grid.
 =======
@@ -38,6 +39,13 @@ def downsample_observation2model(model: str,
                                model_files: list,
                                product_file: str,
                                output_file: str):
+=======
+def process_observation_resample2model(model: str,
+                                       obs: str,
+                                       model_files: list,
+                                       product_file: str,
+                                       output_file: str):
+>>>>>>> fed6cde... Fix histogram bins for plot
     """ Main function to generate downsampled observations to match model grid.
 >>>>>>> 79ae918... Fix merge issues and improve documentation
 
@@ -56,13 +64,13 @@ def downsample_observation2model(model: str,
             If list have only one element, nc-file is created, with more elements -> data is added to
             same file.
         Examples:
-            >>> from model_evaluation.products.product_resampling import downsample_observation2model
+            >>> from model_evaluation.products.product_resampling import process_observation_resample2model
             >>> product = 'cf'
             >>> model = 'ecmwf'
             >>> model_file = 'ecmwf.nc'
             >>> input_file = 'categorize.nc'
             >>> output_file = 'cf_ecmwf.nc'
-            >>> downsample_observation2model(model, product, [model_file], input_file, output_file)
+            >>> process_observation_resample2model(model, product, [model_file], input_file, output_file)
     """
     product_obj = ObservationManager(obs, product_file)
     for m_file in model_files:

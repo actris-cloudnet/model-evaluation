@@ -63,7 +63,7 @@ print("Full processing done")
 
 =======
 from model_evaluation.products.product_resampling import process_observation_resample2model
-from model_evaluation.plotting.plotting import generate_day_group_plots, generate_day_plot_pairs, generate_day_statistics
+from model_evaluation.plotting.plotting import generate_day_group_plots, generate_day_plot_pairs, generate_day_statistics, generate_day_plot_single
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -80,15 +80,16 @@ def main():
     iwc_input = f'{root}/test_files/iwc.nc'
     iwc_output = f'{root}/processed_files/test_input_ecmwf_iwc.nc'
     lwc_input = f'{root}/test_files/lwc.nc'
-    lwc_output = f'{root}/test_files/test_input_ecmwf_lwc.nc'
+    lwc_output = f'{root}/processed_files/test_input_ecmwf_lwc.nc'
     input_files = [cf_input, iwc_input, lwc_input]
     output_files = [cf_output, iwc_output, lwc_output]
     save_path = f'{root}/plots/'
 
-    for product, product_file, output_file in zip(['iwc'], [iwc_input], [iwc_output]):
+    for product, product_file, output_file in zip(['lwc'], [lwc_input], [lwc_output]):
         #process_observation_resample2model('icon', product, [fname, fname2, fname3], product_file, output_file)
         #generate_day_group_plots(output_file, 'Mace-Head', product, 'ecmwf', save_path=save_path)
-        #generate_day_plot_pairs(output_file, product, 'juelich', 'icon', save_path=save_path)
+        #generate_day_plot_pairs(output_file, product, 'juelich', 'ecmwf', save_path=save_path)
+        #generate_day_plot_single(output_file, product, 'juelich', 'icon', save_path=save_path)
         generate_day_statistics(output_file, product, 'ecmwf', 'juelich', save_path=save_path)
         """
         if product == 'cf':
