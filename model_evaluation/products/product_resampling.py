@@ -4,6 +4,7 @@ import os
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> b91fc3f... Cleaning processing
 from pathlib import Path
@@ -17,13 +18,19 @@ from model_evaluation.plotting.plotting import generate_quick_plot, generate_sin
 <<<<<<< HEAD
 =======
 import model_evaluation.products.tools as tl
+=======
+import model_evaluation.products.tools as tl
+>>>>>>> 575313f... Fix histogram bins for plot
 from ..products.observation_products import ObservationManager
 from ..products.model_products import ModelManager
 from ..file_handler import update_attributes, save_downsampled_file, add_var2ncfile
 from ..products.grid_methods import ProductGrid
+<<<<<<< HEAD
 >>>>>>> 79ae918... Fix merge issues and improve documentation
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+=======
+>>>>>>> 575313f... Fix histogram bins for plot
 
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -73,6 +80,7 @@ def process_observation_resample2model(model: str,
 =======
 =======
 
+<<<<<<< HEAD
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 PATH = os.path.dirname(os.path.abspath(__file__))
@@ -102,11 +110,14 @@ from model_evaluation.products.grid_methods import ProductGrid
 >>>>>>> b91fc3f... Cleaning processing
 def process_observation_resample2model(model, obs, model_files, product_file, output_file):
 =======
+=======
+>>>>>>> 575313f... Fix histogram bins for plot
 def process_observation_resample2model(model: str,
                                        obs: str,
                                        model_files: list,
                                        product_file: str,
                                        output_file: str):
+<<<<<<< HEAD
 >>>>>>> 24bb1eb... Adds type hints for attributes of functions
 =======
 def resample_observation2model(model: str,
@@ -121,6 +132,9 @@ def process_observation_resample2model(model, obs, model_files, product_file, ou
 >>>>>>> 4b00ebd... Improve documentation
     """Main function to generate downsampled observations to match model grid.
 >>>>>>> 122b8aa... Fixes process_all script and bug in standard product downsampling
+=======
+    """ Main function to generate downsampled observations to match model grid.
+>>>>>>> 575313f... Fix histogram bins for plot
 
         This functio will generate nc-file of a downsampled product included all model and
         cycles information as well as resampled observations for each model and cycle grid.
@@ -131,16 +145,12 @@ def process_observation_resample2model(model, obs, model_files, product_file, ou
             model_files (list): List of files from model to be generated
             product_file (str): observation to be regrided
             output_file (str): name of model output file
-
-
         Raises:
             RuntimeError: Failed to create the resampled product file.
-
         Notes:
             Model files are given as list to make all different cycles to be at same nc-file.
             If list have only one element, nc-file is created, with more elements -> data is added to
             same file.
-
         Examples:
             >>> from model_evaluation.products.product_resampling import process_observation_resample2model
             >>> product = 'cf'
@@ -149,7 +159,6 @@ def process_observation_resample2model(model, obs, model_files, product_file, ou
             >>> input_file = 'categorize.nc'
             >>> output_file = 'cf_ecmwf.nc'
             >>> process_observation_resample2model(model, product, [model_file], input_file, output_file)
-
     """
     product_obj = ObservationManager(obs, product_file)
     for m_file in model_files:
@@ -158,6 +167,7 @@ def process_observation_resample2model(model, obs, model_files, product_file, ou
         update_attributes(model_obj.data)
         if os.path.isfile(output_file) is False:
             tl.add_date(model_obj, product_obj)
-            save_modelfile(f"{model}_products", model_obj, model_files, output_file)
+            save_downsampled_file(f"{obs}_{model}", output_file, (model_obj, product_obj),
+                                  (model_files, product_file))
         else:
             add_var2ncfile(model_obj, output_file)

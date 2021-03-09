@@ -3,7 +3,7 @@ from pathlib import Path
 import configparser
 import datetime
 from model_evaluation.products.product_resampling import process_observation_resample2model
-from model_evaluation.plotting.plotting import generate_day_group_plots
+from model_evaluation.plotting.plotting import generate_L3_day_plots
 
 ROOT_PATH = os.path.split(Path(__file__).parent)[0]
 PROCESS_CONF = configparser.ConfigParser()
@@ -68,7 +68,7 @@ def main():
                 save_name = os.path.join(save_files, f"{date[0]}_{site}_{model}_downsampled_{product}.nc")
                 process_observation_resample2model(
                     model, product, model_file_set[i], product_files[i], save_name)
-                #generate_day_group_plots(save_name, site, product, model, save_path=save_plots)
+                generate_L3_day_plots(save_name, product, site, model, save_path=save_plots)
 
 
 if __name__ == "__main__":

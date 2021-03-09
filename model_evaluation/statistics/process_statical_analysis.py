@@ -1,7 +1,6 @@
 import sys
-import os
 from pathlib import Path
-from model_evaluation.statistics.statistical_methods import DayStatistics
+#from model_evaluation.statistics.statistical_methods import DayStatistics
 from cloudnetpy.categorize.datasource import DataSource
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -9,9 +8,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 def process_product_statistics(model, product, product_file, scale='day'):
     obj = DataManager(model, product, product_file)
-    day_stat = DayStatistics(product, obj)
-    # Talletetaan tämä otus tiedostoksi
-    # Pitää myöhemmin päättää, halutaanko data omiin tiedostoihin vai yhteen isoon
+    #day_stat = DayStatistics(product, obj.model, obj.)
 
 
 class DataGroup:
@@ -74,23 +71,3 @@ class DataManager(DataSource, DataGroup):
                     obs.append(var)
                     obs_data.append(self.getvar(var))
         return [obs, obs_adv], [obs_data, obs_data_adv]
-
-
-def main():
-    """Example processing of a product statistical analysing system for day level"""
-    root = os.path.split(Path(__file__).parent)[0]
-    root = os.path.split(root)[0]
-    cf_input = f'{root}/test_files/test_input_ecmwf_cf.nc'
-    cf_output = f'{root}/test_files/ecmwf_cf_statistics_day.nc'
-    iwc_input = f'{root}/test_files/test_input_ecmwf_iwc.nc'
-    iwc_output = f'{root}/test_files/ecmwf_iwc_statistics_day.nc'
-    lwc_input = f'{root}/test_files/test_input_ecmwf_lwc.nc'
-    lwc_output = f'{root}/test_files/ecmwf_lwc_statistics_day.nc'
-    input_files = [cf_input, iwc_input, lwc_input]
-    output_files = [cf_output, iwc_output, lwc_output]
-    save_path = f'{root}/plots/'
-    process_product_statistics('ecmwf', 'cf', cf_input)
-
-
-if __name__ == "__main__":
-    main()

@@ -5,28 +5,34 @@ from model_evaluation import version
 from model_evaluation.metadata import MODEL_ATTRIBUTES, CYCLE_ATTRIBUTES, MODEL_L3_ATTRIBUTES, REGRID_PRODUCT_ATTRIBUTES
 
 
-def update_attributes(cloudnet_variables: dict):
+def update_attributes(model_downsample_variables: dict):
     """Overrides existing CloudnetArray-attributes.
 
     Overrides existing attributes using hard-coded values.
     New attributes are added.
 
     Args:
-        cloudnet_variables (dict): CloudnetArray instances.
+        model_downsample_variables (dict): CloudnetArray instances.
         attributes (dict): Product-specific attributes.
 
     """
-    for key in cloudnet_variables:
+    # TODO: Change name order: model_cycle_product_method
+    for key in model_downsample_variables:
         x = len(key.split('_')) - 1
         key_parts = key.split('_', x)
         if key in MODEL_ATTRIBUTES:
-            cloudnet_variables[key].set_attributes(MODEL_ATTRIBUTES[key])
+            model_downsample_variables[key].set_attributes(MODEL_ATTRIBUTES[key])
         elif '_'.join(key_parts[0:-1]) in REGRID_PRODUCT_ATTRIBUTES:
-            cloudnet_variables[key].set_attributes(REGRID_PRODUCT_ATTRIBUTES['_'.join(key_parts[0:-1])])
+            model_downsample_variables[key].set_attributes(REGRID_PRODUCT_ATTRIBUTES['_'.join(key_parts[0:-1])])
+        elif '_'.join(key_parts[0:-2]) in REGRID_PRODUCT_ATTRIBUTES:
+            model_downsample_variables[key].set_attributes(REGRID_PRODUCT_ATTRIBUTES['_'.join(key_parts[0:-2])])
         elif key_parts[1] in MODEL_L3_ATTRIBUTES:
-            cloudnet_variables[key].set_attributes(MODEL_L3_ATTRIBUTES[key_parts[1]])
+            model_downsample_variables[key].set_attributes(MODEL_L3_ATTRIBUTES[key_parts[1]])
         elif '_'.join(key_parts[1:]) in CYCLE_ATTRIBUTES:
-            cloudnet_variables[key].set_attributes(CYCLE_ATTRIBUTES['_'.join(key_parts[1:])])
+            model_downsample_variables[key].set_attributes(CYCLE_ATTRIBUTES['_'.join(key_parts[1:])])
+        elif '_'.join(key_parts[1:-1]) in CYCLE_ATTRIBUTES:
+            model_downsample_variables[key].set_attributes(CYCLE_ATTRIBUTES['_'.join(key_parts[1:-1])])
+
 
 def save_downsampled_file(id_mark: str,
                           file_name: str,

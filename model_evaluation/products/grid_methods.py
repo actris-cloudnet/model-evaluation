@@ -42,8 +42,8 @@ class ProductGrid:
                                       self._obs_time)
             if self._obs_obj.obs == 'iwc':
                 x_ind_no_rain = tl.get_1d_indices((self._time_steps[i], self._time_steps[i+1]),
-                                               self._obs_time,
-                                               mask=self._obs_obj.data['iwc_rain'][:])
+                                                    self._obs_time,
+                                                    mask=self._obs_obj.data['iwc_rain'][:])
             y_steps = tl.rebin_edges(self._model_height[i])
             for j in range(len(y_steps) - 1):
                 x_ind_adv = tl.get_adv_indices(model_t[i], self._time_adv[i, j], self._obs_time)
@@ -98,8 +98,7 @@ class ProductGrid:
     @staticmethod
     def _regrid_cf(storage: dict, i: int, j: int, data: np.ma.MaskedArray):
         """Calculates average cloud fraction value to grid point"""
-        for key in storage.keys():
-            downsample = storage[key]
+        for key, downsample in storage.items():
             if data is not None:
                 downsample[i, j] = np.nanmean(data)
                 if '_A' in key:
@@ -119,8 +118,7 @@ class ProductGrid:
     def _regrid_iwc(self, storage: dict, i: int, j: int,
                     ind_rain: np.ma.MaskedArray, ind_no_rain: np.ma.MaskedArray):
         """Calculates average iwc value for grid point"""
-        for key in storage.keys():
-            downsample = storage[key]
+        for key, downsample in storage.items():
             if not self._obs_data[ind_no_rain].mask.all():
                 downsample[i, j] = np.nanmean(self._obs_data[ind_no_rain])
             elif 'rain' in key and not self._obs_data[ind_rain].mask.all():
@@ -139,6 +137,7 @@ class ProductGrid:
     def _regrid_product(self, storage: dict, i: int, j: int, ind: np.ndarray):
         """Calculates average of standard product value to grid point"""
 <<<<<<< HEAD
+<<<<<<< HEAD
         for key in array_dict.keys():
             storage = array_dict[key]
 <<<<<<< HEAD
@@ -153,6 +152,9 @@ class ProductGrid:
 =======
         for key in storage.keys():
             downsample = storage[key]
+=======
+        for key, downsample in storage.items():
+>>>>>>> 575313f... Fix histogram bins for plot
             if not self._obs_data[ind].mask.all() and ind.any():
                 downsample[i, j] = np.nanmean(self._obs_data[ind])
             else:

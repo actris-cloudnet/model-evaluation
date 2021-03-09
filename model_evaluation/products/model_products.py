@@ -69,7 +69,7 @@ class ModelManager(DataSource):
         cf_name = self._read_config('cf')
         cf = self._set_variables(cf_name)
         cf = self._cut_off_extra_levels(cf)
-        cf[cf < 0] = ma.masked
+        cf[cf <= 0] = ma.masked
         self.append_data(cf, f'{self.model}_cf{self._cycle}')
         self.keys[self._product] = f'{self.model}_cf{self._cycle}'
 
@@ -78,7 +78,7 @@ class ModelManager(DataSource):
         p, T, qi = self._set_variables(p_name, T_name, iwc_name)
         iwc = self._calc_water_content(qi, p, T)
         iwc = self._cut_off_extra_levels(iwc)
-        iwc[iwc < 0] = ma.masked
+        iwc[iwc <= 0] = ma.masked
         self.append_data(iwc, f'{self.model}_iwc{self._cycle}')
         self.keys[self._product] = f'{self.model}_iwc{self._cycle}'
 
@@ -87,7 +87,7 @@ class ModelManager(DataSource):
         p, T, ql = self._set_variables(p_name, T_name, lwc_name)
         lwc = self._calc_water_content(ql, p, T)
         lwc = self._cut_off_extra_levels(lwc)
-        lwc[lwc < 0] = ma.masked
+        lwc[lwc <= 0] = ma.masked
         self.append_data(lwc, f'{self.model}_lwc{self._cycle}')
         self.keys[self._product] = f'{self.model}_lwc{self._cycle}'
 
