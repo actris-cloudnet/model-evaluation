@@ -70,7 +70,3 @@ def create_segment_values(arrays):
     cmap = ListedColormap(['whitesmoke', 'khaki', newcolors[90], newcolors[140]])
     return new_array, cmap
 
-
-def set_yaxis(ax, max_y, min_y: float = 0.0):
-    ax.set_ylim(min_y, max_y)
-    ax.set_ylabel('Height (km)', fontsize=13)

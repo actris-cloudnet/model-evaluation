@@ -1,7 +1,10 @@
 import os
 from pathlib import Path
 <<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
 import configparser
+<<<<<<< HEAD
 import datetime
 from model_evaluation.products.product_resampling import process_observation_resample2model
 
@@ -62,8 +65,22 @@ for set, save_path in zip([files_2018, files_2019], [save_path1, save_path2]):
 print("Full processing done")
 
 =======
+=======
+import configparser
+>>>>>>> 122b8aa... Fixes process_all script and bug in standard product downsampling
 from model_evaluation.products.product_resampling import process_observation_resample2model
-from model_evaluation.plotting.plotting import generate_day_group_plots, generate_day_plot_pairs, generate_day_statistics, generate_day_plot_single
+=======
+from model_evaluation.products.product_resampling import resample_observation2model
+>>>>>>> a109d5e... Testcase processing setup ready
+from model_evaluation.plotting.plotting import generate_quick_plot, generate_single_plot
+=======
+from model_evaluation.products.product_resampling import process_observation_resample2model
+<<<<<<< HEAD
+from model_evaluation.plotting.plotting import generate_day_figures, generate_single_plot
+>>>>>>> 8deb5b8... Plotting cycles and no cycles functioning
+=======
+from model_evaluation.plotting.plotting import generate_day_group_plots, generate_day_plot_pairs
+>>>>>>> 19dc204... Plotting cycles and no cycles functioning
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -80,17 +97,15 @@ def main():
     iwc_input = f'{root}/test_files/iwc.nc'
     iwc_output = f'{root}/processed_files/test_input_ecmwf_iwc.nc'
     lwc_input = f'{root}/test_files/lwc.nc'
-    lwc_output = f'{root}/processed_files/test_input_ecmwf_lwc.nc'
+    lwc_output = f'{root}/test_files/test_input_ecmwf_lwc.nc'
     input_files = [cf_input, iwc_input, lwc_input]
     output_files = [cf_output, iwc_output, lwc_output]
     save_path = f'{root}/plots/'
 
-    for product, product_file, output_file in zip(['lwc'], [lwc_input], [lwc_output]):
+    for product, product_file, output_file in zip(['iwc'], [iwc_input], [iwc_output]):
         #process_observation_resample2model('icon', product, [fname, fname2, fname3], product_file, output_file)
-        #generate_day_group_plots(output_file, 'Mace-Head', product, 'ecmwf', save_path=save_path)
-        #generate_day_plot_pairs(output_file, product, 'juelich', 'ecmwf', save_path=save_path)
-        #generate_day_plot_single(output_file, product, 'juelich', 'icon', save_path=save_path)
-        generate_day_statistics(output_file, product, 'ecmwf', 'juelich', save_path=save_path)
+        generate_day_group_plots(output_file, 'Mace-Head', product, 'ecmwf', save_path=save_path)
+        #generate_day_plot_pairs(output_file, product, 'juelich', 'icon', save_path=save_path)
         """
         if product == 'cf':
             generate_plot_pairs(output_file, product, f'{product}_V_ecmwf', 'ecmwf', save_path=save_path)
