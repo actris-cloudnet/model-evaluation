@@ -74,28 +74,24 @@ class MonthStatistics:
 
 
 def relative_error(product, model, observation):
-    def unify_array_mask():
-        unity_mask = model.mask + observation.mask
-        model[unity_mask] = ma.masked
-        observation[unity_mask] = ma.masked
-        return model, observation
-    model, observation = unify_array_mask()
-    error = utils.calc_relative_error(model, observation)
+    model, observation = combine_array_mask(model, observation)
+    error = ((model - observation) / observation) * 100
     title = f"{product[1]} vs {product[-1]}"
     return error, title
 
 
 def absolute_error(product, model, observation):
-    def unify_array_mask():
-        unity_mask = model.mask + observation.mask
-        model[unity_mask] = ma.masked
-        observation[unity_mask] = ma.masked
-        return model, observation
-
-    model, observation = unify_array_mask()
+    model, observation = combine_array_mask(model, observation)
     error = (observation - model) * 100
     title = f"{product[1]} vs {product[-1]}"
     return error, title
+
+
+def combine_array_mask(model, observation):
+    unity_mask = model.mask + observation.mask
+    model[unity_mask] = ma.masked
+    observation[unity_mask] = ma.masked
+    return model, observation
 
 
 def coverage_mask(product, model, observation):
@@ -112,7 +108,6 @@ def coverage_mask(product, model, observation):
 
 
 def histogram(product, model, observation):
-    # make histogram from all height at one
     if 'cf' in product:
         model = ma.round(model[~model.mask].data, decimals=1).flatten()
         observation = ma.round(observation[[~observation.mask]].data,
@@ -123,13 +118,16 @@ def histogram(product, model, observation):
                                decimals=6).flatten()
     observation = observation[~np.isnan(observation)]
     hist_bins = np.histogram(observation, density=True)[-1]
-    title = f"{product[1]} vs {product[-1]}"
-    return ((model, hist_bins), (observation, hist_bins)), title
+    model[model > hist_bins[-1]] = hist_bins[-1]
+    title = f"{product[-1]}"
+    return ((model, hist_bins), (observation, hist_bins)), (title, product[1])
 
 
-def vertical_profile():
-    print("")
-    # Voi olla, että tästä tulee oma luokka tai tällä on submetodeja
+def vertical_profile(product, model, observation):
+    model_vertical = ma.mean(model, axis=0)
+    obs_vertical = np.nanmean(observation, axis=0)
+    title = f"{product[-1]}"
+    return (model_vertical, obs_vertical), (title, product[1])
 
 
 def verification():

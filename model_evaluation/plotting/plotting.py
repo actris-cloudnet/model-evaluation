@@ -2,21 +2,19 @@ import sys, os
 import numpy as np
 import numpy.ma as ma
 import matplotlib.pyplot as plt
-import mpld3
-from mpld3 import plugins
-import plotly.graph_objects as go
 from matplotlib.patches import Patch
-from ..statistics.statistical_methods import DayStatistics
-from ..plotting.plot_meta import ATTRIBUTES
+from model_evaluation.statistics.statistical_methods import DayStatistics
+from model_evaluation.plotting.plot_meta import ATTRIBUTES
 import model_evaluation.plotting.plot_tools as p_tools
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from cloudnetpy.plotting.plotting import _set_ax, _set_labels, _handle_saving, _generate_log_cbar_ticklabel_list, _lin2log
+import cloudnetpy.plotting.plotting as cloud_plt
 from model_evaluation.model_metadata import MODELS
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 
 def generate_L3_day_plots(nc_file, site, product, model, fig_type='group',
+                          stats=['error', 'cov', 'hist', 'vertical'],
                           save_path=None, show=False):
     """ Subplot visualization for both standard and advection downsampling.
 
@@ -32,15 +30,18 @@ def generate_L3_day_plots(nc_file, site, product, model, fig_type='group',
             show (bool, optional): If True, shows visualization
     """
     cls = __import__("plotting")
+    model_info = MODELS[model]
+    model_name = model_info.model_name
     if fig_type in ['group', 'pair']:
         name_set = p_tools.parse_wanted_names(nc_file, product, model)
         for i, names in enumerate(name_set):
-            if i == 1:
-                product = product + '_adv'
             try:
+                cycles = model_info.cycle
+                cycles = [x.strip() for x in cycles.split(',')]
                 cycle_names = p_tools.parce_cycles(names, model)
-                for c_names in cycle_names:
-                    params = [product, c_names, nc_file, model, site, save_path, show]
+                for i, c_names in enumerate(cycle_names):
+                    params = [product, c_names, nc_file, model, site, save_path,
+                              show, cycles[i]]
                     getattr(cls, f"get_{fig_type}_plots")(*params)
             except AttributeError:
                 params = [product, names, nc_file, model, site, save_path, show]
@@ -48,16 +49,25 @@ def generate_L3_day_plots(nc_file, site, product, model, fig_type='group',
     else:
         names = p_tools.select_vars2stats(nc_file, product)
         try:
+            cycles = model_info.cycle
+            cycles = [x.strip() for x in cycles.split(',')]
             cycle_names = p_tools.parce_cycles(names, model)
-            for c_names in cycle_names:
-                #TODO: STATs omat paramsit
-                params = [product, c_names, nc_file, model, site, save_path, show]
+            for i, c_names in enumerate(cycle_names):
+                params = [product, c_names, nc_file, model, site, save_path,
+                          show, cycles[i]]
+                if fig_type == 'statistic':
+                    params = [product, c_names, nc_file, model, site, model_name,
+                              stats, save_path, show, cycles[i]]
                 getattr(cls, f"get_{fig_type}_plots")(*params)
         except AttributeError:
             params = [product, names, nc_file, model, site, save_path, show]
+            if fig_type == 'statistic':
+                params = [product, names, nc_file, model, site, model_name,
+                          stats, save_path, show]
             getattr(cls, f"get_{fig_type}_plots")(*params)
 
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -71,6 +81,9 @@ def generate_day_figures(nc_file, site, product, model, save_path=None, show=Fal
 =======
 def generate_day_group_plots(nc_file, site, product, model, save_path=None, show=False):
 >>>>>>> 6d55dac... Plotting cycles and no cycles functioning
+=======
+def get_group_plots(product, names, nc_file, model, site, save_path, show, cycle=''):
+>>>>>>> 1855b30... Fix general_L3_day plotting system and code cleaning
     """ Subplot visualization for both standard and advection downsampling.
 
         Generates subplot visualization of standard product and advection
@@ -84,31 +97,25 @@ def generate_day_group_plots(nc_file, site, product, model, save_path=None, show
                                        to path location
             show (bool, optional): If True, shows visualization
     """
-    names_sta, names_adv = p_tools.parse_wanted_names(nc_file, product, model)
-    for i, names in enumerate([names_sta, names_adv]):
-        try:
-            cycle_names = p_tools.parce_cycles(names, model)
-            for c_names in cycle_names:
-                get_group_plots(product, c_names, nc_file, model, site, i, save_path, show)
-        except AttributeError:
-            get_group_plots(product, names, nc_file, model, site, i, save_path, show)
-
-
-def get_group_plots(product, names, nc_file, model, site, i, save_path, show):
     fig, ax = initialize_figure(len(names))
     for j, name in enumerate(names):
         variable_info = ATTRIBUTES[product]
-        _set_ax(ax[j], 12)
+        cloud_plt._set_ax(ax[j], 12)
         _set_title(ax[j], name, product, variable_info)
         if j == 0:
             _set_title(ax[j], model, product, variable_info)
         data, x, y = p_tools.read_data_characters(nc_file, name, model)
         plot_colormesh(ax[j], data, (x, y), variable_info)
-    casedate = _set_labels(fig, ax[j], nc_file)
-    _handle_saving(None, save_path, show, 200, casedate, [site, product, model])
+    casedate = cloud_plt._set_labels(fig, ax[j], nc_file)
+    if 'adv' in name:
+        product = product + '_adv'
+    if len(cycle) > 1:
+        fig.text(0.64, 0.885, f"Cycle: {cycle}", fontsize=13)
+    cloud_plt._handle_saving(None, save_path, show, 200, casedate,
+                             [site, product, model, cycle, 'group'])
 
 
-def generate_day_plot_pairs(nc_file, product, site, model, save_path=None, show=False):
+def get_pair_plots(product, names, nc_file, model, site, save_path, show, cycle=''):
     """Generates visualization of model and product method pairs.
 
         In upper subplot is presenting model output and lower subplot one of the
@@ -124,37 +131,29 @@ def generate_day_plot_pairs(nc_file, product, site, model, save_path=None, show=
                                        to path location
             show (bool, optional): If True, shows visualization
     """
-    names_sta, names_adv = p_tools.parse_wanted_names(nc_file, product, model)
-    for names in [names_adv, names_sta]:
-        try:
-            cycle_names = p_tools.parce_cycles(names, model)
-            for c_names in cycle_names:
-                get_pair_plots(product, c_names, nc_file, model, site, save_path, show)
-        except AttributeError:
-            get_pair_plots(product, names, nc_file, model, site, save_path, show)
-
-
-def get_pair_plots(product, names, nc_file, model, site, save_path, show):
     variable_info = ATTRIBUTES[product]
     model_ax = names[0]
     for i, name in enumerate(names):
         if i == 0:
             continue
         fig, ax = initialize_figure(2)
-        _set_ax(ax[0], 12)
-        _set_ax(ax[-1], 12)
+        cloud_plt._set_ax(ax[0], 12)
+        cloud_plt._set_ax(ax[-1], 12)
         _set_title(ax[0], model, product, variable_info)
         _set_title(ax[-1], name, product, variable_info)
         model_data, mx, my = p_tools.read_data_characters(nc_file, model_ax, model)
         data, x, y = p_tools.read_data_characters(nc_file, name, model)
         plot_colormesh(ax[0], model_data, (mx, my), variable_info)
         plot_colormesh(ax[-1], data, (x, y), variable_info)
-        casedate = _set_labels(fig, ax[-1], nc_file)
-        _handle_saving(None, save_path, show, 200, casedate, [site, name, model])
+        casedate = cloud_plt._set_labels(fig, ax[-1], nc_file)
+        if len(cycle) > 1:
+            fig.text(0.64, 0.889, f"Cycle: {cycle}", fontsize=13)
+        cloud_plt._handle_saving(None, save_path, show, 200, casedate,
+                                 [site, name, model, cycle, 'pair'])
 
 
-def generate_day_plot_single(nc_file, product, site, model, save_path=None, show=False):
-    """Generates visualization of model and product method pairs.
+def get_single_plots(product, names, nc_file, model, site, save_path, show, cycle=''):
+    """Generates visualization of a select product method.
 
         In upper subplot is presenting model output and lower subplot one of the
         downsampled method of select product. Function generates all product methods
@@ -169,42 +168,37 @@ def generate_day_plot_single(nc_file, product, site, model, save_path=None, show
                                        to path location
             show (bool, optional): If True, shows visualization
     """
-    names = p_tools.select_vars2stats(nc_file, product)
-    try:
-        cycle_names = p_tools.parce_cycles(names, model)
-        for c_names in cycle_names:
-            get_single_plots(product, c_names, nc_file, model, site, save_path, show)
-    except AttributeError:
-        get_single_plots(product, names, nc_file, model, site, save_path, show)
-
-
-def get_single_plots(product, names, nc_file, model, site, save_path, show):
     variable_info = ATTRIBUTES[product]
     for i, name in enumerate(names):
-        fig, ax = initialize_figure(2)
-        _set_ax(ax[0], 12)
+        fig, ax = initialize_figure(1)
+        cloud_plt._set_ax(ax[0], 12)
         _set_title(ax[0], model, product, variable_info)
         data, x, y = p_tools.read_data_characters(nc_file, name, model)
         plot_colormesh(ax[0], data, (x, y), variable_info)
-        casedate = _set_labels(fig, ax[-1], nc_file)
-        _handle_saving(None, save_path, show, 200, casedate, [site, name, model])
+        casedate = cloud_plt._set_labels(fig, ax[0], nc_file)
+        if len(cycle) > 1:
+            fig.text(0.64, 0.9, f"Cycle: {cycle}", fontsize=13)
+        cloud_plt._handle_saving(None, save_path, show, 200, casedate,
+                                 [site, name, model, cycle, 'single'])
 
 
 def plot_colormesh(ax, data, axes, variable_info):
     vmin, vmax = variable_info.plot_range
     if variable_info.plot_scale == 'logarithmic':
-        data, vmin, vmax = _lin2log(data, vmin, vmax)
+        data, vmin, vmax = cloud_plt._lin2log(data, vmin, vmax)
     cmap = plt.get_cmap(variable_info.cbar, 22)
     pl = ax.pcolormesh(*axes, data, vmin=vmin, vmax=vmax, cmap=cmap)
     colorbar = init_colorbar(pl, ax)
     if variable_info.plot_scale == 'logarithmic':
-        tick_labels = _generate_log_cbar_ticklabel_list(vmin, vmax)
+        tick_labels = cloud_plt._generate_log_cbar_ticklabel_list(vmin, vmax)
         colorbar.set_ticks(np.arange(vmin, vmax+1))
         colorbar.ax.set_yticklabels(tick_labels)
     ax.set_facecolor('whitesmoke')
     colorbar.set_label(variable_info.clabel, fontsize=13)
 
 
+<<<<<<< HEAD
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 def parse_wanted_names(nc_file, name):
@@ -219,6 +213,15 @@ def generate_day_statistics(nc_file, product, model, save_path=None, show=False)
 =======
 def generate_day_statistics(nc_file, product, model, site, save_path=None, show=False):
 >>>>>>> 50e75af... Plotting cycles and no cycles functioning
+=======
+def generate_day_statistics(nc_file, product, model, site,
+                            stats=['error', 'cov', 'hist', 'vertical'],
+                            save_path=None, show=False):
+>>>>>>> 26c037e... All statistic visualizations done
+=======
+def get_statistic_plots(product, names, nc_file, model, site, model_name, stats,
+                        save_path, show, cycle=""):
+>>>>>>> 1855b30... Fix general_L3_day plotting system and code cleaning
     """ Subplots statistical analysis for day scale products.
 >>>>>>> 8043b0d... Adds Statistical plotting
 
@@ -226,7 +229,7 @@ def generate_day_statistics(nc_file, product, model, site, save_path=None, show=
         nc_file:
         product:
         model:
-        stats (boolean):
+        stats (list, optional): List of processed statistics
         save_path:
         show:
 
@@ -235,7 +238,9 @@ def generate_day_statistics(nc_file, product, model, site, save_path=None, show=
     Returns:
 
     """
+<<<<<<< HEAD
     names = p_tools.select_vars2stats(nc_file, product)
+<<<<<<< HEAD
 <<<<<<< HEAD
     variable_info = ATTRIBUTES[product]
 <<<<<<< HEAD
@@ -305,76 +310,81 @@ def get_statistic_plots(ax, method, product, day_stat, model, obs, args, variabl
     stats = ['error', 'cov', 'hist']
     stats = ['vertical']
 >>>>>>> fed6cde... Fix histogram bins for plot
+=======
+>>>>>>> 26c037e... All statistic visualizations done
+=======
+>>>>>>> 1855b30... Fix general_L3_day plotting system and code cleaning
     for stat in stats:
-        try:
-            model_info = MODELS[model]
-            cycles = model_info.cycle
-            cycles = [x.strip() for x in cycles.split(',')]
-            cycle_names = p_tools.parce_cycles(names, model)
-            for i, c_names in enumerate(cycle_names):
-                get_statistic_plots(product, c_names, nc_file, model, site,
-                                    stat, save_path, show, cycle=cycles[i])
-        except AttributeError:
-            get_statistic_plots(product, names, nc_file, model, site, stat,
-                                save_path, show)
+        variable_info = ATTRIBUTES[product]
+        fig, ax = initialize_figure(len(names) - 1, stat)
+        for j, name in enumerate(names):
+            data, x, y = p_tools.read_data_characters(nc_file, name, model)
+            if product == 'cf' and stat == 'error':
+                stat = 'aerror'
+            if j == 0:
+                model_data = data
+            if j > 0:
+                name = _get_stat_titles(name, product, variable_info)
+                day_stat = DayStatistics(stat, [product, model_name, name], model_data,
+                                         data)
+                initialize_statistic_plots(j, len(names) - 1, ax[j - 1], stat,
+                                           day_stat, model_data, data, (x, y),
+                                           variable_info)
+        if stat != 'hist' and stat != 'vertical':
+            casedate = cloud_plt._set_labels(fig, ax[j - 1], nc_file)
+        else:
+            casedate = cloud_plt._read_date(nc_file)
+            site_name = cloud_plt._read_location(nc_file)
+            cloud_plt._add_subtitle(fig, casedate, site_name)
+        if len(cycle) > 1:
+            fig.text(0.64, 0.885, f"Cycle: {cycle}", fontsize=13)
+        cloud_plt._handle_saving(None, save_path, show, 200, casedate, [site, product, stat, model, cycle])
 
 
-def get_statistic_plots(product, names, nc_file, model, site, stat,
-                        save_path, show, cycle=""):
-    variable_info = ATTRIBUTES[product]
-    fig, ax = initialize_figure(len(names) - 1)
-    for j, name in enumerate(names):
-        data, x, y = p_tools.read_data_characters(nc_file, name, model)
-        if product == 'cf' and stat == 'error':
-            stat = 'aerror'
-        if j == 0:
-            model_data = data
-        if j > 0:
-            name = _get_stat_titles(name, product, variable_info)
-            day_stat = DayStatistics(stat, [product, model, name], model_data,
-                                     data)
-            initialize_statistic_plots(ax[j - 1], stat, day_stat, model_data, data,
-                                       (x, y), variable_info)
-    casedate = _set_labels(fig, ax[j - 1], nc_file)
-    if stat == 'hist' or stat == 'vertical':
-        ax[j - 1].set_xlabel(variable_info.hist_x_title, fontsize=13)
-    if stat == 'hist_vert':
-        ax[j - 1].set_xlabel('Relative frequency %', fontsize=13)
-    _handle_saving(None, save_path, show, 200, casedate, [site, product, stat, model, cycle])
-
-
+<<<<<<< HEAD
 <<<<<<< HEAD
 def get_statistic_plots(ax, method, day_stat, model, obs, args, variable_info):
 >>>>>>> 50e75af... Plotting cycles and no cycles functioning
 =======
 def initialize_statistic_plots(ax, method, day_stat, model, obs, args, variable_info):
 >>>>>>> fed6cde... Fix histogram bins for plot
+=======
+def initialize_statistic_plots(j, max_len, ax, method, day_stat, model, obs, args,
+                               variable_info):
+>>>>>>> 26c037e... All statistic visualizations done
     if method == 'error' or method == 'aerror':
         plot_relative_error(ax, day_stat.stat_data.T, args, method)
         ax.set_title(day_stat.title, fontsize=14)
-        _set_ax(ax, 12)
+        cloud_plt._set_ax(ax, 12)
     if method == 'cov':
         plot_mask_coverage(ax, day_stat, model, obs, args)
-        ax.text(0.9, -0.14, f"Common coverage: {day_stat.stat_data} %",
+        ax.text(0.9, -0.17, f"Common coverage: {day_stat.stat_data} %",
                 size=12, ha="center", transform=ax.transAxes)
-        _set_ax(ax, 12)
+        cloud_plt._set_ax(ax, 12)
     if method == 'hist':
-        plot_histogram(ax, day_stat)
-    if method == 'hist_vertical':
-        plot_histogram_vertical(ax, day_stat, variable_info)
+        plot_histogram(ax, day_stat, variable_info)
+        if j == max_len - 1 and (max_len % 2) == 0:
+            ax.legend(loc='lower left', ncol=4, fontsize=12, bbox_to_anchor=(-0.03, -0.24))
+    if method == 'vertical':
+        plot_vertical_profile(ax, day_stat, args, variable_info)
+        p_tools.set_yaxis(ax, 12)
+        if j == max_len - 1 and (max_len % 2) == 0:
+            ax.legend(loc='lower left', ncol=4, fontsize=12, bbox_to_anchor=(-0.03, -0.2))
 
 
 def plot_relative_error(ax, error, axes, method):
     pl = ax.pcolormesh(*axes, error[:-1, :-1].T, cmap='RdBu', vmin=-50, vmax=50)
     colorbar = init_colorbar(pl, ax)
     colorbar.set_label("%", fontsize=13)
+    error[np.isnan(error)] = ma.masked
+    error = ma.round(error, decimals=4)
     median_error = ma.median(error.compressed())
     median_error = "%.1f" % median_error
     if method == 'aerror':
-        ax.text(0.9, -0.14, f"Median absolute error: {median_error} %", size=12, ha="center",
+        ax.text(0.9, -0.17, f"Median absolute error: {median_error} %", size=12, ha="center",
                 transform=ax.transAxes)
     else:
-        ax.text(0.9, -0.14, f"Median relative error: {median_error} %", size=12, ha="center",
+        ax.text(0.9, -0.17, f"Median relative error: {median_error} %", size=12, ha="center",
                 transform=ax.transAxes)
 
 
@@ -388,38 +398,53 @@ def plot_mask_coverage(ax, day_stat, model_data, obs_data, axes):
     legend_elements = [Patch(facecolor='khaki', edgecolor='k', label='Model'),
                        Patch(facecolor=cmap(0.5), edgecolor='k', label='Common'),
                        Patch(facecolor=cmap(1.), edgecolor='k', label='Observation')]
-    ax.legend(handles=legend_elements, loc='lower left', ncol=3, fontsize=12, bbox_to_anchor=(-0.0, -0.22))
+    ax.legend(handles=legend_elements, loc='lower left', ncol=3, fontsize=12, bbox_to_anchor=(-0.005, -0.25))
 
 
-def plot_histogram(ax, day_stat):
-    # TODO: Fix issues with data
+def plot_histogram(ax, day_stat, variable_info):
     weights = np.ones_like(day_stat.stat_data[0][0]) / float(len(day_stat.stat_data[0][0]))
-    pl1 = ax.hist(day_stat.stat_data[0][0], weights=weights, bins=day_stat.stat_data[0][-1],
-                  alpha=0.7, facecolor='khaki', edgecolor='k', label='Model')
+    ax.hist(day_stat.stat_data[0][0], weights=weights, bins=day_stat.stat_data[0][-1],
+                  alpha=0.7, facecolor='khaki', edgecolor='k', label=f'Model: {day_stat.title[-1]}')
 
     weights = np.ones_like(day_stat.stat_data[1][0]) / float(len(day_stat.stat_data[1][0]))
-    pl2 = ax.hist(day_stat.stat_data[1][0], weights=weights, bins=day_stat.stat_data[1][-1],
-                  alpha=0.7, facecolor='steelblue', edgecolor='k', label='Observation')
-    ax.set_title(f"{day_stat.title}", fontsize=14)
+    ax.hist(day_stat.stat_data[1][0], weights=weights, bins=day_stat.stat_data[1][-1],
+                  alpha=0.7, facecolor='steelblue', edgecolor='k', label=f"Observation")
+    ax.set_xlabel(variable_info.x_title, fontsize=13)
     ax.set_ylabel('Relative frequency %', fontsize=13)
     ax.yaxis.grid(True, 'major')
-    ax.legend(loc='upper right', fontsize=14, bbox_to_anchor=(1.08, 1.1))
+    ax.set_title(f"{day_stat.title[0]}", fontsize=14)
 
 
-def plot_histogram_vertical(ax, day_stat, variable_info):
-    weights = np.ones_like(day_stat.stat_data[0]) / float(len(day_stat.stat_data[0]))
-    pl1 = ax.hist(day_stat.stat_data[0], weights=weights,
-                  alpha=0.7, facecolor='khaki', edgecolor='k', orientation='horizontal')
+def plot_vertical_profile(ax, day_stat, axes, variable_info):
+    def rolling_mean(data, n=4):
+        mmr = []
+        for i in range(len(data)):
+            if not data[i:i+n].mask.all():
+                mmr.append(np.nanmean(data[i:i+n]))
+            else:
+                mmr.append(np.nan)
+        return np.asarray(mmr)
 
-    weights = np.ones_like(day_stat.stat_data[1]) / float(len(day_stat.stat_data[1]))
-    pl2 = ax.hist(day_stat.stat_data[1], weights=weights,
-                  alpha=0.7, facecolor='steelblue', edgecolor='k', orientation='horizontal')
-    ax.xaxis.set_ticks(np.arange(0.0, 1.1, 0.1))
-    ax.yaxis.set_ticks(np.arange(0, 12, 1))
-    ax.set_xlabel('Relative frequency %', fontsize=13)
+    mrm = rolling_mean(day_stat.stat_data[0])
+    orm = rolling_mean(day_stat.stat_data[-1])
 
-    ax.xaxis.grid(True, 'major')
+    ax.plot(day_stat.stat_data[0], axes[-1][0], 'o', markersize=5.5, color='k')
+    ax.plot(day_stat.stat_data[-1], axes[-1][0], 'o', markersize=5.5, color='k')
+    ax.plot(day_stat.stat_data[0], axes[-1][0], 'o', markersize=4.5,
+            color='orange', label=f"{day_stat.title[-1]}")
+    ax.plot(day_stat.stat_data[-1], axes[-1][0], 'o', markersize=4.5,
+            color='green', label='Observation')
+
+    ax.plot(mrm, axes[-1][0], '-', color='k', lw=2.5)
+    ax.plot(orm, axes[-1][0], '-', color='k', lw=2.5)
+    ax.plot(mrm, axes[-1][0], '-', color='orange', lw=2,
+            label=f'Mean of {day_stat.title[-1]}')
+    ax.plot(orm, axes[-1][0], '-', color='green', lw=2, label=f'Mean of observation')
+
+    ax.set_title(f"{day_stat.title[0]}", fontsize=14)
+    ax.set_xlabel(variable_info.x_title, fontsize=13)
     ax.yaxis.grid(True, 'major')
+    ax.xaxis.grid(True, 'major')
 
 
 <<<<<<< HEAD
@@ -428,9 +453,23 @@ def plot_histogram_vertical(ax, day_stat, variable_info):
 def initialize_figure(n_subplots, stat=''):
     """ Set up fig and ax object, if subplot"""
     fig, axes = plt.subplots(n_subplots, 1, figsize=(16, 4 + (n_subplots - 1) * 4.8))
+    fig.subplots_adjust(left=0.06, right=0.73, hspace=0.31)
+    if stat == 'cov':
+        fig.subplots_adjust(left=0.06, right=0.73, hspace=0.33)
     if stat == 'hist':
-        fig, axes = plt.subplots(n_subplots, figsize=(16, 10))
-    fig.subplots_adjust(left=0.06, right=0.73, hspace=0.3)
+        fig, axes = plt.subplots(int(n_subplots/2), 2,
+                                 figsize=(12 + (n_subplots - (n_subplots/2 + 1)) * 1,
+                                          6 + (n_subplots - (n_subplots/2 + 1)) * 6))
+        fig.subplots_adjust(top=0.82 + (n_subplots - (n_subplots/2 + 1)) * 0.025,
+                            bottom=0.1, left=0.08, right=0.75, hspace=0.2)
+        axes = axes.flatten()
+    if stat == 'vertical':
+        fig, axes = plt.subplots(int(n_subplots/2), 2,
+                                 figsize=(12 + (n_subplots - (n_subplots/2 + 1)) * 1.2,
+                                          7 + (n_subplots - (n_subplots/2 + 1)) * 7.3))
+        fig.subplots_adjust(top=0.842 + (n_subplots - (n_subplots/2 + 1)) * 0.012,
+                            bottom=0.1, left=0.08, right=0.75, hspace=0.16)
+        axes = axes.flatten()
     if n_subplots == 1:
         axes = [axes]
     return fig, axes

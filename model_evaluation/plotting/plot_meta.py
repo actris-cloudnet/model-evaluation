@@ -14,8 +14,12 @@ FIELDS = ('name',
           'plot_type',
           'hist_bin',
           'hist_limits',
+<<<<<<< HEAD
           'hist_x_title')
 >>>>>>> fed6cde... Fix histogram bins for plot
+=======
+          'x_title')
+>>>>>>> 26c037e... All statistic visualizations done
 
 PlotMeta = namedtuple('PlotMeta', FIELDS)
 PlotMeta.__new__.__defaults__ = (None,) * len(FIELDS)
@@ -131,7 +135,7 @@ ATTRIBUTES = {
         plot_type='model',
         hist_bin=10,
         hist_limits=(0.0, 1.1, 0.1),
-        hist_x_title=''
+        x_title=''
     ),
 >>>>>>> fed6cde... Fix histogram bins for plot
     'iwc': PlotMeta(
@@ -146,8 +150,12 @@ ATTRIBUTES = {
         plot_type='mesh',
         hist_bin=11,
         hist_limits=(0.0, 3.4e-5, 0.3e-5),
+<<<<<<< HEAD
         hist_x_title='g/kg'
 >>>>>>> fed6cde... Fix histogram bins for plot
+=======
+        x_title='g/kg'
+>>>>>>> 26c037e... All statistic visualizations done
     ),
     'lwc': PlotMeta(
         name='Liquid water content',
@@ -161,7 +169,11 @@ ATTRIBUTES = {
         plot_type='mesh',
         hist_bin=10,
         hist_limits=(0.0, 3.4e-5, 0.3e-5),
+<<<<<<< HEAD
         hist_x_title='g/kg'
 >>>>>>> fed6cde... Fix histogram bins for plot
+=======
+        x_title='g/kg'
+>>>>>>> 26c037e... All statistic visualizations done
     )
 }
