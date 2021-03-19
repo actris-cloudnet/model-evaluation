@@ -101,7 +101,7 @@ class ObservationManager(DataSource):
         """Leaves only data of reliable data and corrected liquid attenuation"""
         iwc_mask = ma.copy(iwc)
         iwc_mask[np.bitwise_and(iwc_status != 1, iwc_status != 2)] = ma.masked
-        self.append_data(iwc, 'iwc')
+        self.append_data(iwc_mask, 'iwc')
 
     def _mask_iwc_att(self, iwc: np.ma.MaskedArray, iwc_status:np.ma.MaskedArray):
         """Leaves only data where is reliable data, corrected liquid attenuation
