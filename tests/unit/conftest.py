@@ -36,6 +36,7 @@ def model_file(tmpdir_factory, file_metadata):
     var[:] = 9
     var = root_grp.createVariable('height', 'f8', ('time', 'level'))
     var[:] = np.array([[10, 14], [8, 14], [9, 15]])
+    var.units = 'km'
     var = root_grp.createVariable('forecast_time', 'f8', 'time')
     var[:] = np.array([1, 5, 10])
     var = root_grp.createVariable('cloud_fraction', 'f8', ('time', 'level'))
@@ -69,6 +70,7 @@ def obs_file(tmpdir_factory, file_metadata):
     var[:] = np.array([0, 2, 4, 6, 8, 10])
     var = root_grp.createVariable('height', 'f8', 'height')
     var[:] = np.array([8, 9, 12, 15])
+    var.units = 'km'
     var = root_grp.createVariable('latitude', 'f8')
     var[:] = 1
     var = root_grp.createVariable('longitude', 'f8')
