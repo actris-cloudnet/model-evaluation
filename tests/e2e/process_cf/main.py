@@ -7,9 +7,11 @@ import argparse
 from tempfile import TemporaryDirectory
 
 ROOT_PATH = os.path.abspath(os.curdir)
+print(ROOT_PATH)
 sys.path.append(f'{ROOT_PATH}/model_evaluation/products')
 process_day_evaluation = __import__("product_resampling")
 SCRIPT_PATH = path.dirname(path.realpath(__file__))
+print(SCRIPT_PATH)
 test_file_model = f'{ROOT_PATH}/test_files/20190517_mace-head_ecmwf.nc'
 test_file_product = f'{ROOT_PATH}/test_files/categorize.nc'
 

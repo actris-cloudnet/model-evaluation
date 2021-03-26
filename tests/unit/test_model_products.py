@@ -15,10 +15,10 @@ OUTPUT_FILE = ''
 PRODUCT = 'iwc'
 
 
-@pytest.mark.parametrize("cycle, answer", [
-    ('test_file_0-11', '_0-11'), ('test_file', '')])
-def test_read_cycle_name(cycle, answer, model_file):
-    obj = ModelManager(str(model_file), MODEL, OUTPUT_FILE, PRODUCT)
+@pytest.mark.parametrize("cycle, model, answer", [
+    ('test_file_12-23', 'icon', '_12-23'), ('test_file', 'ecmwf', '')])
+def test_read_cycle_name(cycle, model, answer, model_file):
+    obj = ModelManager(str(model_file), model, OUTPUT_FILE, PRODUCT)
     x = obj._read_cycle_name(cycle)
     assert x == answer
 

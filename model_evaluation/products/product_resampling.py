@@ -145,12 +145,15 @@ def process_observation_resample2model(model, obs, model_files, product_file, ou
             model_files (list): List of files from model to be generated
             product_file (str): observation to be regrided
             output_file (str): name of model output file
+
         Raises:
             RuntimeError: Failed to create the resampled product file.
+
         Notes:
             Model files are given as list to make all different cycles to be at same nc-file.
             If list have only one element, nc-file is created, with more elements -> data is added to
             same file.
+
         Examples:
             >>> from model_evaluation.products.product_resampling import process_observation_resample2model
             >>> product = 'cf'

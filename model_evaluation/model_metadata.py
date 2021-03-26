@@ -14,15 +14,15 @@ Model_metaData.__new__.__defaults__ = (None,) * len(Model_metaData._fields)
 MODELS = {
     'ecmwf': Model_metaData(
         model_name='ECMWF',
-        long_name='European central of mid-range weather forecast'
+        long_name='European Centre for Medium-Range Weather Forecasts'
     ),
     'icon': Model_metaData(
         model_name='ICON-Iglo',
-        long_name='Icosahedral Nonhydrostatic model',
+        long_name='Icosahedral Nonhydrostatic Model',
         cycle='12-23, 24-35, 36-47',
     ),
     'era5': Model_metaData(
         model_name='ERA5',
-        long_name=''
+        long_name='Earth Re-Analysis System'
     )
 }

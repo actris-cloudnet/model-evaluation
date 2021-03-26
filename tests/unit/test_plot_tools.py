@@ -1,19 +1,19 @@
 import numpy as np
 import numpy.testing as testing
-import pytest
 
 
 def test_parse_wanted_names(regrid_file):
     from model_evaluation.plotting.plot_tools import parse_wanted_names
     compare = ['ecmwf_cf', 'cf_ecmwf']
-    x, x_adv = parse_wanted_names(regrid_file, 'cf')
+    x, x_adv = parse_wanted_names(regrid_file, 'cf', 'ecmwf')
+    print(x)
     assert x == compare
 
 
 def test_parse_wanted_names_adv(regrid_file):
     from model_evaluation.plotting.plot_tools import parse_wanted_names
     compare = ['ecmwf_cf', 'cf_adv_ecmwf']
-    x, x_adv = parse_wanted_names(regrid_file, 'cf')
+    x, x_adv = parse_wanted_names(regrid_file, 'cf', 'ecmwf')
     assert x_adv == compare
 
 
@@ -37,3 +37,51 @@ def test_reshape_1d2nd():
     x = reshape_1d2nd(oned, twod)
     testing.assert_array_almost_equal(x, compare)
 
+
+def test_create_segment_values():
+    from model_evaluation.plotting.plot_tools import create_segment_values
+    model_mask = np.array([[0, 1, 1, 0],
+                           [0, 0, 1, 0],
+                           [1, 0, 0, 0]], dtype=bool)
+    obs_mask = np.array([[0, 0, 0, 0],
+                         [0, 0, 1, 0],
+                         [1, 0, 1, 1]], dtype=bool)
+    x, y = create_segment_values((model_mask, obs_mask))
+    compare = np.array([[2, 3, 3, 2],
+                        [2, 2, 0, 2],
+                        [0, 2, 1, 1]])
+    testing.assert_array_almost_equal(x, compare)
+
+
+def test_rolling_mean():
+    from model_evaluation.plotting.plot_tools import rolling_mean
+    data = np.ma.array([1, 2, 7, 4, 2, 3, 8, 5])
+    x = rolling_mean(data, 2)
+    compare = np.array([1.5, 4.5, 5.5, 3, 2.5, 5.5, 6.5, 5])
+    testing.assert_array_almost_equal(x, compare)
+
+
+def test_rolling_mean_nan():
+    from model_evaluation.plotting.plot_tools import rolling_mean
+    data = np.ma.array([1, 2, np.nan, 4, 2, np.nan, 8, 5])
+    x = rolling_mean(data, 2)
+    compare = np.array([1.5, 2, 4, 3, 2, 8, 6.5, 5])
+    testing.assert_array_almost_equal(x, compare)
+
+
+def test_rolling_mean_mask():
+    from model_evaluation.plotting.plot_tools import rolling_mean
+    data = np.ma.array([1, 2, 7, 4, 2, 3, 8, 5])
+    data.mask = np.array([0, 0, 1, 0, 1, 0, 0, 1])
+    x = rolling_mean(data, 2)
+    compare = np.array([1.5, 2, 4, 4, 3, 5.5, 8, np.nan])
+    testing.assert_array_almost_equal(x, compare)
+
+
+def test_rolling_mean_all_mask():
+    from model_evaluation.plotting.plot_tools import rolling_mean
+    data = np.ma.array([1, 2, 7, 4, 2, 3, 8, 5])
+    data.mask = np.array([0, 1, 1, 1, 1, 0, 0, 1])
+    x = rolling_mean(data, 2)
+    compare = np.array([1, np.nan, np.nan, np.nan, 3, 5.5, 8, np.nan])
+    testing.assert_array_almost_equal(x, compare)

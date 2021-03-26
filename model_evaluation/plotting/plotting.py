@@ -15,19 +15,54 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 def generate_L3_day_plots(nc_file, site, product, model, fig_type='group',
                           stats=['error', 'cov', 'hist', 'vertical'],
-                          save_path=None, show=False):
-    """ Subplot visualization for both standard and advection downsampling.
+                          save_path=None, show=True):
+    """ Generate visualizations for level 3 dayscale products.
 
-        Generates subplot visualization of standard product and advection
-        product with model data and all different downsampling methods.
+        With figure type visualizations can be subplot in group, pair, single or
+        statistic of given product. In group fig_type all different methods are plot
+        in same figure but standard timegrid is separated from advection timegrid.
+        In pair fig_type upper subplot is always model product and below one is
+        product method. All product method in given file will be plotted in loop.
+        Single fig_type will plot each product variable in a own figure.
+        Statistical fig_type will plot select statistical method of all product method
+        in same fig.
 
         Args:
             nc_file (str): Path to source file
+            site (str): Name of site
             product (str): Name of product wanted to plot
             model (str): Name of model which downsampling was done with
+            fig_type (str, optional): Type of figure wanted to produce. Options
+                                      are 'group', 'pair', 'single' and 'statistical'.
+                                      Default value is 'group'
+            stats (list, optional): List of statistical methods to visualize in
+                                    'statistical' fig_type generation. Default is
+                                    all types, but methods can be called individually.
             save_path (str, optional): If not None, visualization is saved
                                        to path location
             show (bool, optional): If True, shows visualization
+
+        Notes:
+            In case of 'group' and 'statistical' fig_type advection timegrid is
+            separated from standard timegrid to their own figures.
+            In case of model cycles, cycles are visualized in their on figures same
+            way as a individual model run would be visualized in its own in a group
+            figure.
+
+        Examples:
+            >>> from model_evaluation.plotting.plotting import generate_L3_day_plots
+            >>> l3_day_file = 'cf_ecmwf.nc'
+            >>> product = 'cf'
+            >>> site = 'bucharest'
+            >>> model = 'ecmwf'
+            >>> generate_L3_day_plots(l3_day_file, site, product, model)
+
+            >>> l3_day_file = 'cf_ecmwf.nc'
+            >>> product = 'cf'
+            >>> site = 'bucharest'
+            >>> model = 'ecmwf'
+            >>> generate_L3_day_plots(l3_day_file, site, product, model,
+            >>>                       fig_type='statistical', stats=['error'])
     """
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -91,19 +126,26 @@ def generate_day_group_plots(nc_file, site, product, model, save_path=None, show
 >>>>>>> 6d55dac... Plotting cycles and no cycles functioning
 =======
 def get_group_plots(product, names, nc_file, model, site, save_path, show, cycle=''):
+<<<<<<< HEAD
 >>>>>>> 1855b30... Fix general_L3_day plotting system and code cleaning
     """ Subplot visualization for both standard and advection downsampling.
+=======
+    """ Group subplot visualization for both standard and advection downsampling.
+>>>>>>> 524ede0... Improve documentation and function names
 
-        Generates subplot visualization of standard product and advection
-        product with model data and all different downsampling methods.
+        Generates group subplot figure for product with model and all different
+        downsampling methods. Generates separated figures for standard and advection
+        timegrids. All model cycles if any will be generates to their own figures.
 
         Args:
-            nc_file (str): Path to source file
-            product (str): Name of product wanted to plot
-            model (str): Name of model which downsampling was done with
-            save_path (str, optional): If not None, visualization is saved
-                                       to path location
-            show (bool, optional): If True, shows visualization
+            product (str): Name of the product
+            names (list): List of variables to be visualized to same fig
+            nc_file (str): Path to a source file
+            model (str): Name of used model in a downsampling process
+            site (str): Name of site in current case
+            save_path (str): Path for saving figures
+            show (bool): Show figure before saving if True
+            cycle (str): Name of cycle if exists
     """
     fig, ax = initialize_figure(len(names))
     for j, name in enumerate(names):
@@ -124,20 +166,21 @@ def get_group_plots(product, names, nc_file, model, site, save_path, show, cycle
 
 
 def get_pair_plots(product, names, nc_file, model, site, save_path, show, cycle=''):
-    """Generates visualization of model and product method pairs.
+    """ Pair subplots of model and product method.
 
-        In upper subplot is presenting model output and lower subplot one of the
+        In upper subplot is model product and lower subplot one of the
         downsampled method of select product. Function generates all product methods
-        in a given nc-file.
+        in a given nc-file in loop.
 
         Args:
-            nc_file (str): Path to source file
             product (str): Name of the product
-            site (str): Name of the site
-            model (str): Name of model which downsampling was done with
-            save_path (str, optional): If not None, visualization is saved
-                                       to path location
-            show (bool, optional): If True, shows visualization
+            names (list): List of variables to be visualized to same fig
+            nc_file (str): Path to a source file
+            model (str): Name of used model in a downsampling process
+            site (str): Name of site in current case
+            save_path (str): Path for saving figures
+            show (bool): Show figure before saving if True
+            cycle (str): Name of cycle if exists
     """
     variable_info = ATTRIBUTES[product]
     model_ax = names[0]
@@ -161,6 +204,7 @@ def get_pair_plots(product, names, nc_file, model, site, save_path, show, cycle=
 
 
 def get_single_plots(product, names, nc_file, model, site, save_path, show, cycle=''):
+<<<<<<< HEAD
     """Generates visualization of a select product method.
 
         In upper subplot is presenting model output and lower subplot one of the
@@ -296,15 +340,19 @@ def get_single_plots(product, names, nc_file, model, site, save_path, show, cycl
         In upper subplot is presenting model output and lower subplot one of the
         downsampled method of select product. Function generates all product methods
         in a given nc-file.
+=======
+    """ Generates figures of a each product variable from given file in loop.
+>>>>>>> 524ede0... Improve documentation and function names
 
         Args:
-            nc_file (str): Path to source file
             product (str): Name of the product
-            site (str): Name of the site
-            model (str): Name of model which downsampling was done with
-            save_path (str, optional): If not None, visualization is saved
-                                       to path location
-            show (bool, optional): If True, shows visualization
+            names (list): List of variables to be visualized to same fig
+            nc_file (str): Path to a source file
+            model (str): Name of used model in a downsampling process
+            site (str): Name of site in current case
+            save_path (str): Path for saving figures
+            show (bool): Show figure before saving if True
+            cycle (str): Name of cycle if exists
     """
     variable_info = ATTRIBUTES[product]
     for i, name in enumerate(names):
@@ -376,6 +424,7 @@ def generate_day_statistics(nc_file, product, model, site, save_path=None, show=
 =======
 def get_statistic_plots(product, names, nc_file, model, site, model_name, stats,
                         save_path, show, cycle=""):
+<<<<<<< HEAD
 >>>>>>> 575313f... Fix histogram bins for plot
     """ Subplots statistical analysis for day scale products.
 >>>>>>> 8deb5b8... Plotting cycles and no cycles functioning
@@ -393,7 +442,27 @@ def get_statistic_plots(product, names, nc_file, model, site, model_name, stats,
 <<<<<<< HEAD
 =======
     Returns:
+=======
+    """ Statistical subplots for day scale products.
 
+    Statistical analysis can be done by day scale with relative error ('error'),
+    total coverage area analysis ('cov'), histogram ('hist') or vertical profiles ('vertical').
+    Each given stats are looped through and generated as one figure per statistical method
+    for a select product. All different downsampled method are in a same fig. Standard and
+    advection timegrids are separated to own figs as well as different cycle runs.
+>>>>>>> 524ede0... Improve documentation and function names
+
+    Args:
+        product (str): Name of the product
+        names (list): List of variables to be visualized to same fig
+        nc_file (str): Path to a source file
+        model (str): Name of used model in a downsampling process
+        site (str): Name of site in current case
+        model_name (str): Official name of used model
+        stats (list): List of statistical method to process analysis with
+        save_path (str): Path for saving figures
+        show (bool): Show figure before saving if True
+        cycle (str): Name of cycle if exists
     """
 <<<<<<< HEAD
     names = p_tools.select_vars2stats(nc_file, product)
@@ -723,17 +792,8 @@ def plot_histogram(ax, day_stat, variable_info):
 
 
 def plot_vertical_profile(ax, day_stat, axes, variable_info):
-    def rolling_mean(data, n=4):
-        mmr = []
-        for i in range(len(data)):
-            if not data[i:i+n].mask.all():
-                mmr.append(np.nanmean(data[i:i+n]))
-            else:
-                mmr.append(np.nan)
-        return np.asarray(mmr)
-
-    mrm = rolling_mean(day_stat.stat_data[0])
-    orm = rolling_mean(day_stat.stat_data[-1])
+    mrm = p_tools.rolling_mean(day_stat.stat_data[0])
+    orm = p_tools.rolling_mean(day_stat.stat_data[-1])
 
     ax.plot(day_stat.stat_data[0], axes[-1][0], 'o', markersize=5.5, color='k')
     ax.plot(day_stat.stat_data[-1], axes[-1][0], 'o', markersize=5.5, color='k')

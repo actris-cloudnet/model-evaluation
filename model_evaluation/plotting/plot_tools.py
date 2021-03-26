@@ -74,3 +74,13 @@ def create_segment_values(arrays):
 def set_yaxis(ax, max_y, min_y: float = 0.0):
     ax.set_ylim(min_y, max_y)
     ax.set_ylabel('Height (km)', fontsize=13)
+
+
+def rolling_mean(data, n=4):
+    mmr = []
+    for i in range(len(data)):
+        if not data[i:i+n].mask.all():
+            mmr.append(np.nanmean(data[i:i+n]))
+        else:
+            mmr.append(np.nan)
+    return np.asarray(mmr)

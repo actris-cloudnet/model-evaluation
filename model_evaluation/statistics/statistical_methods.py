@@ -8,20 +8,36 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 
 class DayStatistics:
-    def __init__(self, method, product, model_array, obs_array):
-        """
-        Class that generates statistical analysis for day scale products.
-        The point is to analyze and point out the best simulation-observation
-        combination. So which is the best resampled observations match with simulations?
+    def __init__(self, method, product_into, model_array, obs_array):
+        """ Class for calculating statistical analysis of day scale products
+
+        Class generates one statistical method at the time with given model data
+        and observation data of wanted product.
 
         Args:
-            product (list): A list including observed product name, model variable
-                            name and observation variable name
+            method (str): Name on statistical method to be calculated
+            product_into (list): List of information of statistical ananlysis is
+                                 done with. A list includes observed product name (str),
+                                 model variable (str) name and observation variable name (str)
             model_array (MaskedArray): Ndarray of product model simulation
             obs_array (MaskedArray): Ndarray of product resampled observation
+
+        Raises:
+            RuntimeError: Not found function by given method
+
+        Returns:
+            day_statistic (object): The :class:'DayStatistic' object.
+
+        Examples:
+            >>> from model_evaluation.products.product_resampling import process_observation_resample2model
+            >>> method = 'error'
+            >>> product_info = ['cf', 'European Centre for Medium-Range Weather Forecasts', 'ecmwf']
+            >>> model_array = np.array([[1,1,1],[1,1,1],[1,1,1]])
+            >>> obs_array = np.array([[1,1,1],[1,1,1],[1,1,1]])
+            >>> day_stat = DayStatistics(method, product_into, model_array, obs_array)
         """
         self.method = method
-        self.product = product
+        self.product = product_into
         self.model_array = model_array
         self.obs_array = obs_array
         self._generate_day_statistics()
@@ -33,7 +49,7 @@ class DayStatistics:
         if self.method == 'aerror':
             full_name = 'absolute_error'
         if self.method == 'cov':
-            full_name = 'coverage_mask'
+            full_name = 'calc_common_ind_sum'
         if self.method == 'hist':
             full_name = 'histogram'
         if self.method == 'vertical':
@@ -50,59 +66,39 @@ class DayStatistics:
             print(error)
 
 
-class MonthStatistics:
-    # TODO: Finish this at some point when needed
-    # Longer time series will use file generating this way
-    def __init__(self, product, data_obj):
-        """
-        Class that generates statistical analysis for day scale products.
-        The point is to analyze and point out the best simulation-observation
-        combination. So which is the best resampled observations match with simulations?
-
-        Args:
-            product (str): the name of observed product
-            data_obj (object): The :class:'DataManager' object
-        """
-        self.product = product
-        self.data_obj = data_obj
-        self.model_run = data_obj.group.keys()
-        self.group = data_obj.group
-
-    def generate_day_statistics(self):
-        for run in self.model_run:
-            data_group = self.group[run]
-
-
 def relative_error(product, model, observation):
-    model, observation = combine_array_mask(model, observation)
+    model, observation = combine_mask_indices(model, observation)
     error = ((model - observation) / observation) * 100
     title = f"{product[1]} vs {product[-1]}"
-    return error, title
+    return np.round(error, 2), title
 
 
 def absolute_error(product, model, observation):
-    model, observation = combine_array_mask(model, observation)
+    model, observation = combine_mask_indices(model, observation)
     error = (observation - model) * 100
     title = f"{product[1]} vs {product[-1]}"
-    return error, title
+    return np.round(error, 2), title
 
 
-def combine_array_mask(model, observation):
+def combine_mask_indices(model, observation):
+    """ Connects two array masked indices to one and add in two array same mask """
+    observation[np.where(np.isnan(observation))] = ma.masked
     unity_mask = model.mask + observation.mask
     model[unity_mask] = ma.masked
     observation[unity_mask] = ma.masked
     return model, observation
 
 
-def coverage_mask(product, model, observation):
-    def _area_of_array_mask():
+def calc_common_ind_sum(product, model, observation):
+    def _indices_of_mask_sum():
+        # Calculate percentage value of common value indices of two array from
+        # total number of value indices
         observation[np.where(np.isnan(observation))] = ma.masked
         unity_mask = model.mask + observation.mask
         total_mask = np.bitwise_and(model.mask == True, observation.mask == True)
         match = sum(sum(~unity_mask)) / sum(sum(~total_mask)) * 100
         return np.round(match, 2)
-    # Calculates how well two masked areas covers each other
-    match = _area_of_array_mask()
+    match = _indices_of_mask_sum()
     title = f"{product[1]} vs {product[-1]}"
     return match, title
 
@@ -110,7 +106,7 @@ def coverage_mask(product, model, observation):
 def histogram(product, model, observation):
     if 'cf' in product:
         model = ma.round(model[~model.mask].data, decimals=1).flatten()
-        observation = ma.round(observation[[~observation.mask]].data,
+        observation = ma.round(observation[~observation.mask].data,
                                decimals=1).flatten()
     else:
         model = ma.round(model[~model.mask].data, decimals=6).flatten()
@@ -129,20 +125,3 @@ def vertical_profile(product, model, observation):
     title = f"{product[-1]}"
     return (model_vertical, obs_vertical), (title, product[1])
 
-
-def verification():
-    print("")
-
-
-def scatter():
-    print("")
-
-
-def timeseries():
-    print("")
-    # Voi olla, että tästä tulee oma luokka tai tällä on submetodeja
-
-
-def correlation():
-    print("")
-    # Voidaan ehkä hyödyntää vasta climatologia vaiheessa
