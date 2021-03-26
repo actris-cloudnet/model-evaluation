@@ -12,6 +12,7 @@ import configparser
 from model_evaluation.products.observation_products import ObservationManager
 from model_evaluation.products.model_products import ModelManager
 import model_evaluation.products.tools as tl
+<<<<<<< HEAD
 from model_evaluation.file_handler import update_attributes, save_modelfile, add_var2ncfile
 from model_evaluation.products.grid_methods import ProductGrid
 from model_evaluation.plotting.plotting import generate_quick_plot, generate_single_plot
@@ -102,6 +103,12 @@ import model_evaluation.products.tools as tl
 from model_evaluation.file_handler import update_attributes, save_modelfile, add_var2ncfile
 from model_evaluation.products.grid_methods import ProductGrid
 >>>>>>> edbb462... Fixes process_all script and bug in standard product downsampling
+=======
+from model_evaluation.products.observation_products import ObservationManager
+from model_evaluation.products.model_products import ModelManager
+from model_evaluation.file_handler import update_attributes, save_downsampled_file, add_var2ncfile
+from model_evaluation.products.grid_methods import ProductGrid
+>>>>>>> 765cc6a... Fix e2e bugs
 
 
 <<<<<<< HEAD

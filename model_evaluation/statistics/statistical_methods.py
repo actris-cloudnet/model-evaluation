@@ -2,7 +2,6 @@ import sys
 import os
 import numpy as np
 import numpy.ma as ma
-import cloudnetpy.utils as utils
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
