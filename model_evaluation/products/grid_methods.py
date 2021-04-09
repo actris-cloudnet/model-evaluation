@@ -5,11 +5,9 @@ from cloudnetpy import utils
 
 class ProductGrid:
     """Class which calculates downsampled grid from observations.
-
         Args:
             model_obj (object): The :class:'ModelManager' object.
             obs_obj (object): The :class:'ObservationManager' object.
-
         Notes:
             Functions _generate_regrid_product() generates processing of
             downsampling and adds data to model_obj which is used for writing
@@ -31,7 +29,6 @@ class ProductGrid:
 
     def _generate_regrid_product(self):
         """Generates average values for product with different methods
-
             Loops through time and height steps of model grid and generates
             average observation value for each grid point.
         """
@@ -136,32 +133,13 @@ class ProductGrid:
 
     def _regrid_product(self, storage: dict, i: int, j: int, ind: np.ndarray):
         """Calculates average of standard product value to grid point"""
-<<<<<<< HEAD
-<<<<<<< HEAD
-        for key in array_dict.keys():
-            storage = array_dict[key]
-<<<<<<< HEAD
-            storage[i, j] = np.nanmean(self._obs_data[ind])
-=======
-            storage[i, j] = np.nan
-            if not self._obs_data[ind].mask.all() and ind.any():
-                storage[i, j] = np.nanmean(self._obs_data[ind])
->>>>>>> 122b8aa... Fixes process_all script and bug in standard product downsampling
-            array_dict[key] = storage
-        return array_dict
-=======
-        for key in storage.keys():
-            downsample = storage[key]
-=======
         for key, downsample in storage.items():
->>>>>>> 575313f... Fix histogram bins for plot
             if not self._obs_data[ind].mask.all() and ind.any():
                 downsample[i, j] = np.nanmean(self._obs_data[ind])
             else:
                 downsample[i, j] = np.nan
             storage[key] = downsample
         return storage
->>>>>>> d46ee4a... Adds type hints for attributes of functions
 
     def _append_data2object(self, data_storage: list):
         for storage in data_storage:

@@ -2,12 +2,16 @@ import sys
 import os
 import numpy as np
 import numpy.ma as ma
+from typing import Tuple
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 
 class DayStatistics:
-    def __init__(self, method, product_into, model_array, obs_array):
+    def __init__(self, method: str,
+                 product_into: list,
+                 model: np.array,
+                 observation: np.array):
         """ Class for calculating statistical analysis of day scale products
 
         Class generates one statistical method at the time with given model data
@@ -37,8 +41,8 @@ class DayStatistics:
         """
         self.method = method
         self.product = product_into
-        self.model_array = model_array
-        self.obs_array = obs_array
+        self.model_array = model
+        self.obs_array = observation
         self._generate_day_statistics()
 
     def _get_method_attr(self):
@@ -65,21 +69,21 @@ class DayStatistics:
             print(error)
 
 
-def relative_error(product, model, observation):
+def relative_error(product: list, model: ma.array, observation: ma.array) -> Tuple:
     model, observation = combine_mask_indices(model, observation)
     error = ((model - observation) / observation) * 100
     title = f"{product[1]} vs {product[-1]}"
     return np.round(error, 2), title
 
 
-def absolute_error(product, model, observation):
+def absolute_error(product: list, model: ma.array, observation: ma.array) -> Tuple:
     model, observation = combine_mask_indices(model, observation)
     error = (observation - model) * 100
     title = f"{product[1]} vs {product[-1]}"
     return np.round(error, 2), title
 
 
-def combine_mask_indices(model, observation):
+def combine_mask_indices(model: ma.array, observation: ma.array):
     """ Connects two array masked indices to one and add in two array same mask """
     observation[np.where(np.isnan(observation))] = ma.masked
     unity_mask = model.mask + observation.mask
@@ -88,7 +92,7 @@ def combine_mask_indices(model, observation):
     return model, observation
 
 
-def calc_common_ind_sum(product, model, observation):
+def calc_common_ind_sum(product: list, model: ma.array, observation: ma.array) -> Tuple:
     def _indices_of_mask_sum():
         # Calculate percentage value of common value indices of two array from
         # total number of value indices
@@ -102,7 +106,7 @@ def calc_common_ind_sum(product, model, observation):
     return match, title
 
 
-def histogram(product, model, observation):
+def histogram(product: list, model: ma.array, observation: ma.array) -> Tuple:
     if 'cf' in product:
         model = ma.round(model[~model.mask].data, decimals=1).flatten()
         observation = ma.round(observation[~observation.mask].data,
@@ -118,9 +122,8 @@ def histogram(product, model, observation):
     return ((model, hist_bins), (observation, hist_bins)), (title, product[1])
 
 
-def vertical_profile(product, model, observation):
+def vertical_profile(product: list, model: ma.array, observation: ma.array) -> Tuple:
     model_vertical = ma.mean(model, axis=0)
     obs_vertical = np.nanmean(observation, axis=0)
     title = f"{product[-1]}"
     return (model_vertical, obs_vertical), (title, product[1])
-

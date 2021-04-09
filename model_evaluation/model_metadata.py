@@ -23,6 +23,12 @@ MODELS = {
     ),
     'era5': Model_metaData(
         model_name='ERA5',
-        long_name='Earth Re-Analysis System'
+        long_name='Earth Re-Analysis System',
+        cycle='1-12, 7-18'
+    ),
+    'harmonie': Model_metaData(
+        model_name='HARMONIE-AROME',
+        long_name='the HIRLAM–ALADIN Research on Mesoscale Operational NWP in Euromed',
+        cycle='6-11'
     )
 }

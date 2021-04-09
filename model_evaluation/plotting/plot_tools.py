@@ -2,11 +2,12 @@ import numpy as np
 import numpy.ma as ma
 import netCDF4
 from matplotlib import cm
+from typing import Tuple
 from matplotlib.colors import ListedColormap
 from model_evaluation.model_metadata import MODELS
 
 
-def parse_wanted_names(nc_file, name, model):
+def parse_wanted_names(nc_file: str, name: str, model: str) -> Tuple:
     """Returns standard and advection lists of product types to plot"""
     names = netCDF4.Dataset(nc_file).variables.keys()
     standard_n = [n for n in names if name in n and 'adv' not in n]
@@ -17,7 +18,7 @@ def parse_wanted_names(nc_file, name, model):
     return standard_n, advection_n
 
 
-def parce_cycles(names, model):
+def parce_cycles(names: list, model: str) -> list:
     model_info = MODELS[model]
     cycles = model_info.cycle
     cycles = [x.strip() for x in cycles.split(',')]
@@ -25,12 +26,12 @@ def parce_cycles(names, model):
     return cycles_names
 
 
-def select_vars2stats(nc_file, name):
+def select_vars2stats(nc_file, name) -> list:
     names = netCDF4.Dataset(nc_file).variables.keys()
     return [n for n in names if name in n]
 
 
-def read_data_characters(nc_file, name, model):
+def read_data_characters(nc_file: str, name: str, model: str) -> Tuple:
     """Gets dimensions and data for plotting"""
     nc = netCDF4.Dataset(nc_file)
     data = nc.variables[name][:]
@@ -49,14 +50,14 @@ def read_data_characters(nc_file, name, model):
     return data, x, y
 
 
-def reshape_1d2nd(one_d, two_d):
+def reshape_1d2nd(one_d:  np.ndarray, two_d:  np.ndarray) -> np.ndarray:
     new_arr = np.zeros(two_d.shape)
     for i in range(len(two_d[0])):
         new_arr[:, i] = one_d
     return new_arr
 
 
-def create_segment_values(arrays):
+def create_segment_values(arrays: list) -> Tuple:
     # 0=no data, 1=model, 2=intersection, 3=observation
     new_array = np.zeros(arrays[0].shape, dtype=int)
     for i, array in enumerate(arrays):
@@ -71,12 +72,12 @@ def create_segment_values(arrays):
     return new_array, cmap
 
 
-def set_yaxis(ax, max_y, min_y: float = 0.0):
+def set_yaxis(ax, max_y: float, min_y: float = 0.0):
     ax.set_ylim(min_y, max_y)
     ax.set_ylabel('Height (km)', fontsize=13)
 
 
-def rolling_mean(data, n=4):
+def rolling_mean(data: np.ndarray, n: int = 4) -> np.ndarray:
     mmr = []
     for i in range(len(data)):
         if not data[i:i+n].mask.all():

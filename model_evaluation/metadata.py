@@ -5,7 +5,9 @@ FIELDS = (
     'long_name',
     'units',
     'comment',
-    'standard_name')
+    'standard_name',
+    'axis',
+    'positive')
 
 MetaData = namedtuple('MetaData', FIELDS)
 MetaData.__new__.__defaults__ = (None,) * len(MetaData._fields)
@@ -14,8 +16,8 @@ MetaData.__new__.__defaults__ = (None,) * len(MetaData._fields)
 MODEL_ATTRIBUTES = {
     'time': MetaData(
         long_name='Time UTC',
-        units='decimal hours since midnight',
-        comment='Starting time of control run + cycle'
+        comment='Starting time of control run + cycle',
+        axis='T',
     ),
     'latitude': MetaData(
         long_name='Latitude of grid point',
@@ -33,7 +35,9 @@ MODEL_ATTRIBUTES = {
     'level': MetaData(
         long_name='Model level',
         units='1',
-        comment='Level 1 describes the highest height from ground.'
+        comment='Level 1 describes the highest height from ground.',
+        axis='Z',
+        positive='down'
     )
 }
 
@@ -47,7 +51,8 @@ CYCLE_ATTRIBUTES = {
     'height': MetaData(
         long_name='Height above ground',
         units='m',
-        comment='Height have been calculated using pressure, temperature and specific humidity.'
+        comment='Height have been calculated using pressure, temperature and specific humidity.',
+        positive='up'
     ),
     'pressure': MetaData(
         long_name='Pressure',

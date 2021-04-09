@@ -1,25 +1,26 @@
 import os
 import netCDF4
+from datetime import datetime
 from cloudnetpy import utils, output
 from model_evaluation import version
-from model_evaluation.metadata import MODEL_ATTRIBUTES, CYCLE_ATTRIBUTES, MODEL_L3_ATTRIBUTES, REGRID_PRODUCT_ATTRIBUTES
+from model_evaluation.metadata import MetaData, MODEL_ATTRIBUTES, CYCLE_ATTRIBUTES, MODEL_L3_ATTRIBUTES, \
+    REGRID_PRODUCT_ATTRIBUTES
 
 
-def update_attributes(model_downsample_variables: dict):
+def update_attributes(model_downsample_variables: dict, attributes: dict):
     """Overrides existing CloudnetArray-attributes.
-
     Overrides existing attributes using hard-coded values.
     New attributes are added.
-
     Args:
-        model_downsample_variables (dict): CloudnetArray instances.
+        model_downsample_variables (dict): Array instances.
         attributes (dict): Product-specific attributes.
-
     """
     # TODO: Change name order: model_cycle_product_method
     for key in model_downsample_variables:
         x = len(key.split('_')) - 1
         key_parts = key.split('_', x)
+        if key in list(attributes.keys()):
+            model_downsample_variables[key].set_attributes(attributes[key])
         if key in MODEL_ATTRIBUTES:
             model_downsample_variables[key].set_attributes(MODEL_ATTRIBUTES[key])
         elif '_'.join(key_parts[0:-1]) in REGRID_PRODUCT_ATTRIBUTES:
@@ -39,7 +40,7 @@ def save_downsampled_file(id_mark: str,
                           objects: tuple,
                           files: tuple):
     """Saves a standard downsampled product file.
-    
+
     Args:
         id_mark (str): File identifier, format "(product name)_(model name)"
         file_name (str): Name of the output file to be generated
@@ -65,14 +66,15 @@ def save_downsampled_file(id_mark: str,
     root_group.close()
 
 
-def add_var2ncfile(obj, file_name):
+def add_var2ncfile(obj: object, file_name: str):
     nc_file = netCDF4.Dataset(file_name, 'r+', format='NETCDF4_CLASSIC')
     _write_vars2nc(nc_file, obj.data)
     nc_file.close()
 
 
-def _write_vars2nc(rootgrp, cloudnet_variables):
+def _write_vars2nc(rootgrp: netCDF4.Dataset, cloudnet_variables: dict):
     """Iterates over Cloudnet instances and write to given rootgrp."""
+
     def _get_dimensions(array):
         """Finds correct dimensions for a variable."""
         if utils.isscalar(array):
@@ -99,44 +101,35 @@ def _write_vars2nc(rootgrp, cloudnet_variables):
             continue
 
 
-def _add_standard_global_attributes(root_group):
+def _add_standard_global_attributes(root_group: netCDF4.Dataset):
     root_group.Conventions = 'CF-1.7'
     root_group.model_evaluation_version = version.__version__
     root_group.file_uuid = utils.get_uuid()
 
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-def _add_source(root_ground, obj, model_files):
-    """generates source multiple files is existing"""
-<<<<<<< HEAD
-    source = f"{obj._model} file(s): "
-=======
-    source = f"{obj.model} file(s): "
->>>>>>> 4f8ca63... Testcase processing setup ready
-=======
-=======
->>>>>>> 4b00ebd... Improve documentation
-def _add_source(root_ground, objects, files):
+def _add_source(root_ground: netCDF4.Dataset, objects: tuple, files: tuple):
     """generates source info for multiple files"""
     model, obs = objects
     model_files, obs_file = files
     source = f"Observation file: {os.path.basename(obs_file)}"
     source += f"\n"
     source += f"{model.model} file(s): "
-<<<<<<< HEAD
->>>>>>> 79ae918... Fix merge issues and improve documentation
-=======
-def _add_source(root_ground, obj, model_files):
-    """generates source multiple files is existing"""
-    source = f"{obj.model} file(s): "
->>>>>>> a109d5e... Testcase processing setup ready
-=======
->>>>>>> 4b00ebd... Improve documentation
     for i, f in enumerate(model_files):
         source += f"{os.path.basename(f)}"
         if i < len(model_files) - 1:
             source += f"\n"
     root_ground.source = source
 
+
+def add_time_attribute(date: datetime) -> dict:
+    """"Adds time attribute with correct units.
+    Args:
+        attributes: Attributes of variables.
+        date: Date as Y M D 0 0 0.
+    Returns:
+        dict: Same attributes with 'time' attribute added.
+    """
+    d = date.strftime('%y.%m.%d')
+    attributes = {}
+    attributes['time'] = MetaData(units=f'hours since {d} 00:00:00')
+    return attributes
