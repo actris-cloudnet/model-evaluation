@@ -594,7 +594,7 @@ def test_regrid_product(model_file, obs_file):
                               [3, 3, 3, 3],
                               [4, 4, 4, 4]])
     dict = {'lwc': np.zeros((1, 1))}
-    ind = np.array([[0, 1, 1, 1],
+    ind = ma.array([[0, 1, 1, 1],
                     [0, 0, 1, 1],
                     [0, 0, 0, 0],
                     [0, 0, 0, 0]], dtype=bool)
@@ -612,7 +612,7 @@ def test_regrid_product_nan(model_file, obs_file):
                               [3, 3, np.nan, 3],
                               [4, np.nan, 4, 4]])
     dict = {'lwc': np.zeros((1, 1))}
-    ind = np.array([[0, 1, 1, 1],
+    ind = ma.array([[0, 1, 1, 1],
                     [0, 0, 1, 1],
                     [0, 0, 0, 0],
                     [0, 0, 0, 0]], dtype=bool)

@@ -11,11 +11,20 @@ def parse_wanted_names(nc_file: str, name: str, model: str) -> Tuple:
     """Returns standard and advection lists of product types to plot"""
     names = netCDF4.Dataset(nc_file).variables.keys()
     standard_n = [n for n in names if name in n and 'adv' not in n]
+    standard_n = sort_model2first_element(standard_n, model)
     advection_n = [n for n in names if name in n and 'adv' in n]
     model_names = [n for n in names if f'{model}_{name}' in n]
     for i, model_n in enumerate(model_names):
-        advection_n.insert(len(model_names)*i, model_names[i])
+        advection_n.insert(0+i, model_n)
     return standard_n, advection_n
+
+
+def sort_model2first_element(a: list, model: str) -> list:
+    mm = [n for n in a if f"{model}_" in n and f"_{model}_" not in n]
+    for i, m in enumerate(mm):
+        a.remove(m)
+        a.insert(0+i, m)
+    return a
 
 
 def parce_cycles(names: list, model: str) -> list:
@@ -23,6 +32,7 @@ def parce_cycles(names: list, model: str) -> list:
     cycles = model_info.cycle
     cycles = [x.strip() for x in cycles.split(',')]
     cycles_names = [[name for name in names if cycle in name] for cycle in cycles]
+    cycles_names.sort()
     return cycles_names
 
 
@@ -47,6 +57,7 @@ def read_data_characters(nc_file: str, name: str, model: str) -> Tuple:
         cycle = [cycle for cycle in cycles if cycle in name]
         y = nc.variables[f'{model}_height_{cycle[0]}'][:]
     y = y / 1000
+    x, y, data = change2one_dim_axes(x, y, data)
     return data, x, y
 
 
@@ -85,3 +96,17 @@ def rolling_mean(data: np.ndarray, n: int = 4) -> np.ndarray:
         else:
             mmr.append(np.nan)
     return np.asarray(mmr)
+
+
+def change2one_dim_axes(x: np.ndarray, y: np.ndarray, data: np.ndarray) -> Tuple:
+    # If any mask in x or y change to one dimensional axes values
+    # Common shape need to match 2d data.
+    for ax in [x, y]:
+        try:
+           mask = ax.mask
+           if mask.any():
+               y = [y[i] for i in range(len(y[:])) if not y[i].mask.all()]
+               return x[:,0], y[0], data.T
+        except AttributeError:
+            continue
+    return x, y, data

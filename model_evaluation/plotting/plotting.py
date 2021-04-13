@@ -19,7 +19,7 @@ def generate_L3_day_plots(nc_file: str,
                           product: str,
                           model: str,
                           fig_type: str = 'group',
-                          stats: list = ['error', 'cov', 'hist', 'vertical'],
+                          stats: list = ['error', 'area', 'hist', 'vertical'],
                           save_path: str = None,
                           show: bool = True):
     """ Generate visualizations for level 3 dayscale products.
@@ -29,7 +29,7 @@ def generate_L3_day_plots(nc_file: str,
         In pair fig_type upper subplot is always model product and below one is
         product method. All product method in given file will be plotted in loop.
         Single fig_type will plot each product variable in a own figure.
-        Statistical fig_type will plot select statistical method of all product method
+        Statistic fig_type will plot select statistical method of all product method
         in same fig.
         Args:
             nc_file (str): Path to source file
@@ -37,16 +37,16 @@ def generate_L3_day_plots(nc_file: str,
             product (str): Name of product wanted to plot
             model (str): Name of model which downsampling was done with
             fig_type (str, optional): Type of figure wanted to produce. Options
-                                      are 'group', 'pair', 'single' and 'statistical'.
+                                      are 'group', 'pair', 'single' and 'statistic'.
                                       Default value is 'group'
             stats (list, optional): List of statistical methods to visualize in
-                                    'statistical' fig_type generation. Default is
+                                    'statistic' fig_type generation. Default is
                                     all types, but methods can be called individually.
             save_path (str, optional): If not None, visualization is saved
                                        to path location
             show (bool, optional): If True, shows visualization
         Notes:
-            In case of 'group' and 'statistical' fig_type advection timegrid is
+            In case of 'group' and 'statistic' fig_type advection timegrid is
             separated from standard timegrid to their own figures.
             In case of model cycles, cycles are visualized in their on figures same
             way as a individual model run would be visualized in its own in a group
@@ -63,7 +63,7 @@ def generate_L3_day_plots(nc_file: str,
             >>> site = 'bucharest'
             >>> model = 'ecmwf'
             >>> generate_L3_day_plots(l3_day_file, site, product, model,
-            >>>                       fig_type='statistical', stats=['error'])
+            >>>                       fig_type='statistic', stats=['error'])
     """
     cls = __import__("plotting")
     model_info = MODELS[model]
@@ -76,11 +76,12 @@ def generate_L3_day_plots(nc_file: str,
                 cycles = [x.strip() for x in cycles.split(',')]
                 cycle_names = p_tools.parce_cycles(names, model)
                 for i, c_names in enumerate(cycle_names):
-                    params = [product, c_names, nc_file, model, site, save_path,
-                              show, cycles[i]]
+                    params = [product, c_names, nc_file, model, site, model_name,
+                              save_path, show, cycles[i]]
                     getattr(cls, f"get_{fig_type}_plots")(*params)
             except AttributeError:
-                params = [product, names, nc_file, model, site, save_path, show]
+                params = [product, names, nc_file, model, site, model_name,
+                          save_path, show]
                 getattr(cls, f"get_{fig_type}_plots")(*params)
     else:
         names = p_tools.select_vars2stats(nc_file, product)
@@ -89,14 +90,15 @@ def generate_L3_day_plots(nc_file: str,
             cycles = [x.strip() for x in cycles.split(',')]
             cycle_names = p_tools.parce_cycles(names, model)
             for i, c_names in enumerate(cycle_names):
-                params = [product, c_names, nc_file, model, site, save_path,
-                          show, cycles[i]]
+                params = [product, c_names, nc_file, model, site, model_name,
+                          save_path, show, cycles[i]]
                 if fig_type == 'statistic':
                     params = [product, c_names, nc_file, model, site, model_name,
                               stats, save_path, show, cycles[i]]
                 getattr(cls, f"get_{fig_type}_plots")(*params)
         except AttributeError:
-            params = [product, names, nc_file, model, site, save_path, show]
+            params = [product, names, nc_file, model, site, model_name,
+                      save_path, show]
             if fig_type == 'statistic':
                 params = [product, names, nc_file, model, site, model_name,
                           stats, save_path, show]
@@ -104,7 +106,7 @@ def generate_L3_day_plots(nc_file: str,
 
 
 def get_group_plots(product: str, names: list, nc_file: str, model: str, site: str,
-                    save_path: str, show: bool, cycle: str = ''):
+                    model_name: str, save_path: str, show: bool, cycle: str = ''):
     """ Group subplot visualization for both standard and advection downsampling.
         Generates group subplot figure for product with model and all different
         downsampling methods. Generates separated figures for standard and advection
@@ -125,7 +127,7 @@ def get_group_plots(product: str, names: list, nc_file: str, model: str, site: s
         cloud_plt._set_ax(ax[j], 12)
         _set_title(ax[j], name, product, variable_info)
         if j == 0:
-            _set_title(ax[j], model, product, variable_info)
+            _set_title(ax[j], model, product, variable_info, model_name)
         data, x, y = p_tools.read_data_characters(nc_file, name, model)
         plot_colormesh(ax[j], data, (x, y), variable_info)
     casedate = cloud_plt._set_labels(fig, ax[j], nc_file)
@@ -138,7 +140,7 @@ def get_group_plots(product: str, names: list, nc_file: str, model: str, site: s
 
 
 def get_pair_plots(product: str, names: list, nc_file: str, model: str, site: str,
-                    save_path: str, show: bool, cycle: str = ''):
+                   model_name: str, save_path: str, show: bool, cycle: str = ''):
     """ Pair subplots of model and product method.
         In upper subplot is model product and lower subplot one of the
         downsampled method of select product. Function generates all product methods
@@ -161,7 +163,7 @@ def get_pair_plots(product: str, names: list, nc_file: str, model: str, site: st
         fig, ax = initialize_figure(2)
         cloud_plt._set_ax(ax[0], 12)
         cloud_plt._set_ax(ax[-1], 12)
-        _set_title(ax[0], model, product, variable_info)
+        _set_title(ax[0], model, product, variable_info, model_name)
         _set_title(ax[-1], name, product, variable_info)
         model_data, mx, my = p_tools.read_data_characters(nc_file, model_ax, model)
         data, x, y = p_tools.read_data_characters(nc_file, name, model)
@@ -175,7 +177,7 @@ def get_pair_plots(product: str, names: list, nc_file: str, model: str, site: st
 
 
 def get_single_plots(product: str, names: list, nc_file: str, model: str, site: str,
-                    save_path: str, show: bool, cycle: str = ''):
+                     model_name: str, save_path: str, show: bool, cycle: str = ''):
     """ Generates figures of a each product variable from given file in loop.
         Args:
             product (str): Name of the product
@@ -191,12 +193,12 @@ def get_single_plots(product: str, names: list, nc_file: str, model: str, site: 
     for i, name in enumerate(names):
         fig, ax = initialize_figure(1)
         cloud_plt._set_ax(ax[0], 12)
-        _set_title(ax[0], model, product, variable_info)
+        _set_title(ax[0], name, product, variable_info)
         data, x, y = p_tools.read_data_characters(nc_file, name, model)
         plot_colormesh(ax[0], data, (x, y), variable_info)
         casedate = cloud_plt._set_labels(fig, ax[0], nc_file)
         if len(cycle) > 1:
-            fig.text(0.64, 0.9, f"Cycle: {cycle}", fontsize=13)
+            fig.text(0.64, 0.9, f"{model_name} cycle: {cycle}", fontsize=13)
         cloud_plt._handle_saving(None, save_path, show, 200, casedate,
                                  [site, name, model, cycle, 'single'])
 
@@ -206,6 +208,7 @@ def plot_colormesh(ax, data: np.array, axes: tuple, variable_info: namedtuple):
     if variable_info.plot_scale == 'logarithmic':
         data, vmin, vmax = cloud_plt._lin2log(data, vmin, vmax)
     cmap = plt.get_cmap(variable_info.cbar, 22)
+    data[data < vmin] = ma.masked
     pl = ax.pcolormesh(*axes, data, vmin=vmin, vmax=vmax, cmap=cmap)
     colorbar = init_colorbar(pl, ax)
     if variable_info.plot_scale == 'logarithmic':
@@ -221,7 +224,7 @@ def get_statistic_plots(product: str, names: list, nc_file: str, model: str,
                         show: bool, cycle: str = ""):
     """ Statistical subplots for day scale products.
     Statistical analysis can be done by day scale with relative error ('error'),
-    total coverage area analysis ('cov'), histogram ('hist') or vertical profiles ('vertical').
+    total data area analysis ('area'), histogram ('hist') or vertical profiles ('vertical').
     Each given stats are looped through and generated as one figure per statistical method
     for a select product. All different downsampled method are in a same fig. Standard and
     advection timegrids are separated to own figs as well as different cycle runs.
@@ -232,7 +235,8 @@ def get_statistic_plots(product: str, names: list, nc_file: str, model: str,
         model (str): Name of used model in a downsampling process
         site (str): Name of site in current case
         model_name (str): Official name of used model
-        stats (list): List of statistical method to process analysis with
+        stats (list): List of statistical method to process analysis with.
+                      Options are ['error', 'area', 'hist', 'vertical']
         save_path (str): Path for saving figures
         show (bool): Show figure before saving if True
         cycle (str): Name of cycle if exists
@@ -240,7 +244,7 @@ def get_statistic_plots(product: str, names: list, nc_file: str, model: str,
     for stat in stats:
         variable_info = ATTRIBUTES[product]
         fig, ax = initialize_figure(len(names) - 1, stat)
-        model_data, axes = p_tools.read_data_characters(nc_file, names[0], model)
+        model_data, *axes = p_tools.read_data_characters(nc_file, names[0], model)
         for j, name in enumerate(names):
             data, x, y = p_tools.read_data_characters(nc_file, name, model)
             if product == 'cf' and stat == 'error':
@@ -270,9 +274,9 @@ def initialize_statistic_plots(j: int, max_len: int, ax, method: str,
         plot_relative_error(ax, day_stat.stat_data.T, args, method)
         ax.set_title(day_stat.title, fontsize=14)
         cloud_plt._set_ax(ax, 12)
-    if method == 'cov':
-        plot_mask_coverage(ax, day_stat, model, obs, args)
-        ax.text(0.9, -0.17, f"Common coverage: {day_stat.stat_data} %",
+    if method == 'area':
+        plot_data_area(ax, day_stat, model, obs, args)
+        ax.text(0.9, -0.17, f"Common area: {day_stat.stat_data} %",
                 size=12, ha="center", transform=ax.transAxes)
         cloud_plt._set_ax(ax, 12)
     if method == 'hist':
@@ -302,8 +306,8 @@ def plot_relative_error(ax, error: np.array, axes: tuple, method: str):
                 transform=ax.transAxes)
 
 
-def plot_mask_coverage(ax, day_stat: object, model: ma.array, obs: ma.array,
-                       axes: tuple):
+def plot_data_area(ax, day_stat: object, model: ma.array, obs: ma.array,
+                   axes: tuple):
     data, cmap = p_tools.create_segment_values([model.mask, obs.mask])
     pl = ax.pcolormesh(*axes, data, cmap=cmap)
     colorbar = init_colorbar(pl, ax)
@@ -358,7 +362,7 @@ def initialize_figure(n_subplots: int, stat: str = ''):
     """ Set up fig and ax object, if subplot"""
     fig, axes = plt.subplots(n_subplots, 1, figsize=(16, 4 + (n_subplots - 1) * 4.8))
     fig.subplots_adjust(left=0.06, right=0.73, hspace=0.31)
-    if stat == 'cov':
+    if stat == 'area':
         fig.subplots_adjust(left=0.06, right=0.73, hspace=0.33)
     if stat == 'hist':
         fig, axes = plt.subplots(int(n_subplots/2), 2,
@@ -386,11 +390,11 @@ def init_colorbar(plot, axis):
 
 
 def _set_title(ax, field_name: str, product: str,
-               variable_info: namedtuple):
+               variable_info: namedtuple, model_name: str = ''):
     """Generates subtitles for different product types"""
     parts = field_name.split('_')
     if parts[0] == product:
-        title = _get_product_title(field_name, variable_info)
+        title = _get_product_title(variable_info)
         if product == 'cf':
             title = _get_cf_title(field_name, variable_info)
         if product == 'iwc':
@@ -402,60 +406,32 @@ def _set_title(ax, field_name: str, product: str,
         ax.set_title(title, fontsize=14)
     else:
         name = variable_info.name
-        model = parts[0]
-        if len(parts) > 3:
-            model = f"{parts[0]} cycle {parts[-1]}"
-        ax.set_title(f"{name} of {model}", fontsize=14)
+        if len(model_name) > 1:
+            ax.set_title(f"{name} of {model_name}", fontsize=14)
+        else:
+            ax.set_title(f"Simulated {name}")
 
 
 def _get_cf_title(field_name: str, variable_info: namedtuple) -> str:
-    parts = field_name.split('_')
-    name = variable_info.name
-    model = parts[-1]
-    if len(parts) > 3 and 'adv' not in field_name:
-        model = f"{parts[-2]} cycle {parts[-1]}"
-    if len(parts) > 4 and 'adv' in field_name:
-        model = f"{parts[-2]} cycle {parts[-1]}"
-    title = f'{name}, downsampled by area from {model}'
+    title = f'{variable_info.name}, Area'
     if 'V' in field_name:
-        title = f'{name}, downsampled by volume from {model}'
+        title = f'{variable_info.name}, Volume'
     return title
 
 
 def _get_iwc_title(field_name: str, variable_info: namedtuple) -> str:
-    parts = field_name.split('_')
     name = variable_info.name
-    model = parts[-1]
     if 'att' in field_name:
-        if len(parts) > 3 and 'adv' not in field_name:
-            model = f"{parts[-2]} cycle {parts[-1]}"
-        if len(parts) > 4 and 'adv' in field_name:
-            model = f"{parts[-2]} cycle {parts[-1]}"
-        title = f'{name} with good attenuation, downsampled from {model}'
+        title = f'{name} with good attenuation'
     elif 'rain' in field_name:
-        if len(parts) > 3 and 'adv' not in field_name:
-            model = f"{parts[-2]} cycle {parts[-1]}"
-        if len(parts) > 4 and 'adv' in field_name:
-            model = f"{parts[-2]} cycle {parts[-1]}"
-        title = f'{name} with rain, downsampled from {model}'
+        title = f'{name} with rain'
     else:
-        if len(parts) > 2 and 'adv' not in field_name:
-            model = f"{parts[-2]} cycle {parts[-1]}"
-        if len(parts) > 3 and 'adv' in field_name:
-            model = f"{parts[-2]} cycle {parts[-1]}"
-        title = f'{name} downsampled from {model}'
+        title = f'{name}'
     return title
 
 
-def _get_product_title(field_name: str, variable_info: namedtuple) -> str:
-    parts = field_name.split('_')
-    name = variable_info.name
-    model = parts[-1]
-    if len(parts) > 2 and 'adv' not in field_name:
-        model = f"{parts[-2]} cycle {parts[-1]}"
-    if len(parts) > 3 and 'adv' in field_name:
-        model = f"{parts[-2]} cycle {parts[-1]}"
-    title = f'{name} downsampled from {model}'
+def _get_product_title(variable_info: namedtuple) -> str:
+    title = f'{variable_info.name}'
     return title
 
 

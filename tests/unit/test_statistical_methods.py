@@ -86,19 +86,35 @@ def test_absolute_error_mask():
     testing.assert_array_almost_equal(x, compare)
 
 
-def test_combine_mask_indices():
-    from model_evaluation.statistics.statistical_methods import combine_mask_indices
+def test_combine_masked_indices():
+    from model_evaluation.statistics.statistical_methods import combine_masked_indices
     model = ma.array([[1, 2, 2, 3],
                       [2, 4, 10, 1]])
     observation = ma.array([[3, 2, 5, 4],
                             [4, 6, 8, 4]])
-    x, y = combine_mask_indices(model, observation)
-    testing.assert_array_almost_equal(x, model)
-    testing.assert_array_almost_equal(y, observation)
+    x, y = combine_masked_indices(model, observation)
+    compare_m = ma.array([[4, 2, 2, 3], [2, 4, 10, 6]])
+    compare_o = ma.array([[3, 2, 5, 4], [4, 6, 8, 4]])
+    testing.assert_array_almost_equal(x, compare_m)
+    testing.assert_array_almost_equal(y, compare_o)
 
 
-def test_combine_mask_indices_mask():
-    from model_evaluation.statistics.statistical_methods import combine_mask_indices
+
+def test_combine_masked_indices_min():
+    from model_evaluation.statistics.statistical_methods import combine_masked_indices
+    model = ma.array([[1, 2, 2, 3],
+                      [2, 4, 10, 1]])
+    observation = ma.array([[3, 2, 5, 4],
+                            [4, 6, 8, 4]])
+    x, y = combine_masked_indices(model, observation)
+    compare_m = ma.array([[ma.masked, 2, 2, 3], [2, 4, 10, ma.masked]])
+    compare_o = ma.array([[ma.masked, 2, 5, 4], [4, 6, 8, ma.masked]])
+    testing.assert_array_almost_equal(x, compare_m)
+    testing.assert_array_almost_equal(y, compare_o)
+
+
+def test_combine_masked_indices_mask():
+    from model_evaluation.statistics.statistical_methods import combine_masked_indices
     model = ma.array([[1, 2, 2, 3],
                       [2, 4, 10, 1]])
     model.mask = ma.array([[1, 0, 0, 0],
@@ -107,7 +123,7 @@ def test_combine_mask_indices_mask():
                             [4, 6, 8, 4]])
     observation.mask = ma.array([[0, 1, 1, 0],
                            [1, 0, 0, 0]])
-    x, y = combine_mask_indices(model, observation)
+    x, y = combine_masked_indices(model, observation)
     model = ma.array([[ma.masked, ma.masked, ma.masked, 3],
                       [ma.masked, 4, 10, ma.masked]])
     observation = ma.array([[ma.masked, ma.masked, ma.masked, 4],
@@ -116,21 +132,31 @@ def test_combine_mask_indices_mask():
     testing.assert_array_almost_equal(y, observation)
 
 
-def test_combine_mask_indices_nan():
-    from model_evaluation.statistics.statistical_methods import combine_mask_indices
+def test_combine_masked_indices_nan():
+    from model_evaluation.statistics.statistical_methods import combine_masked_indices
     model = ma.array([[1, 2, 2, 3],
                       [2, 4, 10, 1]])
     observation = ma.array([[np.nan, 2, 5, 4],
                             [4, 6, np.nan, 4]])
-    x, y = combine_mask_indices(model, observation)
+    x, y = combine_masked_indices(model, observation)
     model = ma.array([[ma.masked, 2, 2, 3],
                       [2, 4, ma.masked, 1]])
     testing.assert_array_almost_equal(x, model)
     testing.assert_array_almost_equal(y, observation)
 
 
-def test_calc_common_ind_sum():
-    from model_evaluation.statistics.statistical_methods import calc_common_ind_sum
+def test_calc_common_area_sum():
+    from model_evaluation.statistics.statistical_methods import calc_common_area_sum
+    model = ma.array([[1, 2, 2, 3],
+                      [2, 4, 10, 1]])
+    observation = ma.array([[3, 2, 1, 4],
+                            [4, 6, 8, 4]])
+    x, y = calc_common_area_sum(PRODUCT_iwc, model, observation)
+    testing.assert_almost_equal(x, 100)
+
+
+def test_calc_common_area_sum_min():
+    from model_evaluation.statistics.statistical_methods import calc_common_area_sum
     model = ma.array([[1, 2, 2, 3],
                       [2, 4, 10, 1]])
     model.mask = ma.array([[1, 0, 0, 0],
@@ -139,8 +165,36 @@ def test_calc_common_ind_sum():
                             [4, 6, 8, 4]])
     observation.mask = ma.array([[0, 1, 1, 0],
                            [1, 0, 0, 0]])
-    x, y = calc_common_ind_sum(PRODUCT_iwc, model, observation)
-    testing.assert_almost_equal(x, 37.5)
+    x, y = calc_common_area_sum(PRODUCT_iwc, model, observation)
+    testing.assert_almost_equal(x, 60.0)
+
+
+def test_calc_common_area_sum_nan():
+    from model_evaluation.statistics.statistical_methods import calc_common_area_sum
+    model = ma.array([[1, 2, 2, 3],
+                      [2, np.nan, 10, 1]])
+    model.mask = ma.array([[1, 0, 0, 0],
+                           [0, 0, 0, 1]])
+    observation = ma.array([[3, 2, 1, 4],
+                            [4, 6, np.nan, 4]])
+    observation.mask = ma.array([[0, 0, 1, 0],
+                           [1, 0, 0, 0]])
+    x, y = calc_common_area_sum(PRODUCT_iwc, model, observation)
+    testing.assert_almost_equal(x, 25.0)
+
+
+def test_calc_common_area_sum_mask():
+    from model_evaluation.statistics.statistical_methods import calc_common_area_sum
+    model = ma.array([[1, 2, 2, 3],
+                      [2, 4, 10, 1]])
+    model.mask = ma.array([[1, 0, 0, 0],
+                           [0, 0, 0, 0]])
+    observation = ma.array([[3, 2, 1, 4],
+                            [4, 6, 8, 4]])
+    observation.mask = ma.array([[0, 0, 1, 0],
+                           [1, 0, 0, 0]])
+    x, y = calc_common_area_sum(PRODUCT_iwc, model, observation)
+    testing.assert_almost_equal(x, 50.0)
 
 
 def test_histogram():

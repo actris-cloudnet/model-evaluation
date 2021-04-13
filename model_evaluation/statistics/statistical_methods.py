@@ -51,8 +51,8 @@ class DayStatistics:
             full_name = 'relative_error'
         if self.method == 'aerror':
             full_name = 'absolute_error'
-        if self.method == 'cov':
-            full_name = 'calc_common_ind_sum'
+        if self.method == 'area':
+            full_name = 'calc_common_area_sum'
         if self.method == 'hist':
             full_name = 'histogram'
         if self.method == 'vertical':
@@ -70,36 +70,39 @@ class DayStatistics:
 
 
 def relative_error(product: list, model: ma.array, observation: ma.array) -> Tuple:
-    model, observation = combine_mask_indices(model, observation)
+    model, observation = combine_masked_indices(model, observation)
     error = ((model - observation) / observation) * 100
     title = f"{product[1]} vs {product[-1]}"
     return np.round(error, 2), title
 
 
 def absolute_error(product: list, model: ma.array, observation: ma.array) -> Tuple:
-    model, observation = combine_mask_indices(model, observation)
+    model, observation = combine_masked_indices(model, observation)
     error = (observation - model) * 100
     title = f"{product[1]} vs {product[-1]}"
     return np.round(error, 2), title
 
 
-def combine_mask_indices(model: ma.array, observation: ma.array):
+def combine_masked_indices(model: ma.array, observation: ma.array):
     """ Connects two array masked indices to one and add in two array same mask """
     observation[np.where(np.isnan(observation))] = ma.masked
-    unity_mask = model.mask + observation.mask
-    model[unity_mask] = ma.masked
-    observation[unity_mask] = ma.masked
+    model[model < np.min(observation)] = ma.masked
+    combine_mask = model.mask + observation.mask
+    model[combine_mask] = ma.masked
+    observation[combine_mask] = ma.masked
     return model, observation
 
 
-def calc_common_ind_sum(product: list, model: ma.array, observation: ma.array) -> Tuple:
+def calc_common_area_sum(product: list, model: ma.array, observation: ma.array) -> Tuple:
     def _indices_of_mask_sum():
-        # Calculate percentage value of common value indices of two array from
-        # total number of value indices
+        # Calculate percentage value of common area of indices from two arrays.
+        # Results is total number of common indices with value
         observation[np.where(np.isnan(observation))] = ma.masked
-        unity_mask = model.mask + observation.mask
-        total_mask = np.bitwise_and(model.mask == True, observation.mask == True)
-        match = sum(sum(~unity_mask)) / sum(sum(~total_mask)) * 100
+        model[np.where(np.isnan(model))] = ma.masked
+        model[model < np.min(observation)] = ma.masked
+        combine_mask = model.mask + observation.mask
+        common_mask = np.bitwise_and(model.mask == True, observation.mask == True)
+        match = np.sum(~combine_mask) / np.sum(~common_mask) * 100
         return np.round(match, 2)
     match = _indices_of_mask_sum()
     title = f"{product[1]} vs {product[-1]}"
