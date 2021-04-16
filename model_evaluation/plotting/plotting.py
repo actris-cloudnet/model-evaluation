@@ -261,7 +261,7 @@ def get_statistic_plots(product: str, names: list, nc_file: str, model: str,
         else:
             casedate = cloud_plt._read_date(nc_file)
             site_name = cloud_plt._read_location(nc_file)
-            cloud_plt._add_subtitle(fig, casedate, site_name)
+            cloud_plt._add_subtitle(fig, casedate, site_name.capitalize())
         if len(cycle) > 1:
             fig.text(0.64, 0.885, f"Cycle: {cycle}", fontsize=13)
         cloud_plt._handle_saving(None, save_path, show, 200, casedate, [site, product, stat, model, cycle])
@@ -329,6 +329,8 @@ def plot_histogram(ax, day_stat: object, variable_info: namedtuple):
     ax.hist(day_stat.stat_data[1][0], weights=weights, bins=day_stat.stat_data[1][-1],
                   alpha=0.7, facecolor='steelblue', edgecolor='k', label=f"Observation")
     ax.set_xlabel(variable_info.x_title, fontsize=13)
+    if variable_info.plot_scale == 'logarithmic':
+        ax.ticklabel_format(axis="x", style="sci", scilimits=(0,0))
     ax.set_ylabel('Relative frequency %', fontsize=13)
     ax.yaxis.grid(True, 'major')
     ax.set_title(f"{day_stat.title[0]}", fontsize=14)
@@ -354,6 +356,8 @@ def plot_vertical_profile(ax, day_stat: object, axes: tuple,
 
     ax.set_title(f"{day_stat.title[0]}", fontsize=14)
     ax.set_xlabel(variable_info.x_title, fontsize=13)
+    if variable_info.plot_scale == 'logarithmic':
+        ax.ticklabel_format(axis="x", style="sci", scilimits=(0, 0))
     ax.yaxis.grid(True, 'major')
     ax.xaxis.grid(True, 'major')
 
