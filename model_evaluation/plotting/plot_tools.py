@@ -57,7 +57,12 @@ def read_data_characters(nc_file: str, name: str, model: str) -> Tuple:
         cycle = [cycle for cycle in cycles if cycle in name]
         y = nc.variables[f'{model}_height_{cycle[0]}'][:]
     y = y / 1000
-    x, y, data = change2one_dim_axes(x, y, data)
+    try:
+        mask = y.mask
+        if mask.any():
+            x, y, data = change2one_dim_axes(x, y, data)
+    except AttributeError:
+        return data, x, y
     return data, x, y
 
 
@@ -106,7 +111,7 @@ def change2one_dim_axes(x: np.ndarray, y: np.ndarray, data: np.ndarray) -> Tuple
            mask = ax.mask
            if mask.any():
                y = [y[i] for i in range(len(y[:])) if not y[i].mask.all()]
-               return x[:,0], y[0], data.T
+               return x[:, 0], y[0], data.T
         except AttributeError:
             continue
     return x, y, data

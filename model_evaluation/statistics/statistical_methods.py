@@ -126,6 +126,9 @@ def histogram(product: list, model: ma.array, observation: ma.array) -> Tuple:
 
 
 def vertical_profile(product: list, model: ma.array, observation: ma.array) -> Tuple:
+    if model.shape[0] > 25:
+        model = model.T
+        observation = observation.T
     model_vertical = ma.mean(model, axis=0)
     obs_vertical = np.nanmean(observation, axis=0)
     title = f"{product[-1]}"

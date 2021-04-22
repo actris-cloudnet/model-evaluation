@@ -76,6 +76,8 @@ def generate_L3_day_plots(nc_file: str,
                 cycles = [x.strip() for x in cycles.split(',')]
                 cycle_names = p_tools.parce_cycles(names, model)
                 for i, c_names in enumerate(cycle_names):
+                    if not c_names:
+                        raise AttributeError
                     params = [product, c_names, nc_file, model, site, model_name,
                               save_path, show, cycles[i]]
                     getattr(cls, f"get_{fig_type}_plots")(*params)
@@ -90,6 +92,8 @@ def generate_L3_day_plots(nc_file: str,
             cycles = [x.strip() for x in cycles.split(',')]
             cycle_names = p_tools.parce_cycles(names, model)
             for i, c_names in enumerate(cycle_names):
+                if not c_names:
+                    raise AttributeError
                 params = [product, c_names, nc_file, model, site, model_name,
                           save_path, show, cycles[i]]
                 if fig_type == 'statistic':
@@ -340,19 +344,22 @@ def plot_vertical_profile(ax, day_stat: object, axes: tuple,
                           variable_info: namedtuple):
     mrm = p_tools.rolling_mean(day_stat.stat_data[0])
     orm = p_tools.rolling_mean(day_stat.stat_data[-1])
-
-    ax.plot(day_stat.stat_data[0], axes[-1][0], 'o', markersize=5.5, color='k')
-    ax.plot(day_stat.stat_data[-1], axes[-1][0], 'o', markersize=5.5, color='k')
-    ax.plot(day_stat.stat_data[0], axes[-1][0], 'o', markersize=4.5,
+    if len(axes[-1].shape) > 1:
+        axes = axes[-1][0]
+    else:
+        axes = axes[-1]
+    ax.plot(day_stat.stat_data[0], axes, 'o', markersize=5.5, color='k')
+    ax.plot(day_stat.stat_data[-1], axes, 'o', markersize=5.5, color='k')
+    ax.plot(day_stat.stat_data[0], axes, 'o', markersize=4.5,
             color='orange', label=f"{day_stat.title[-1]}")
-    ax.plot(day_stat.stat_data[-1], axes[-1][0], 'o', markersize=4.5,
+    ax.plot(day_stat.stat_data[-1], axes, 'o', markersize=4.5,
             color='green', label='Observation')
 
-    ax.plot(mrm, axes[-1][0], '-', color='k', lw=2.5)
-    ax.plot(orm, axes[-1][0], '-', color='k', lw=2.5)
-    ax.plot(mrm, axes[-1][0], '-', color='orange', lw=2,
+    ax.plot(mrm, axes, '-', color='k', lw=2.5)
+    ax.plot(orm, axes, '-', color='k', lw=2.5)
+    ax.plot(mrm, axes, '-', color='orange', lw=2,
             label=f'Mean of {day_stat.title[-1]}')
-    ax.plot(orm, axes[-1][0], '-', color='green', lw=2, label=f'Mean of observation')
+    ax.plot(orm, axes, '-', color='green', lw=2, label=f'Mean of observation')
 
     ax.set_title(f"{day_stat.title[0]}", fontsize=14)
     ax.set_xlabel(variable_info.x_title, fontsize=13)
