@@ -28,7 +28,7 @@ class ProductGrid:
         self._generate_regrid_product()
 
     def _generate_regrid_product(self):
-        """Generates average values for product with different methods
+        """Generates average values for product with different methods.
             Loops through time and height steps of model grid and generates
             average observation value for each grid point.
         """

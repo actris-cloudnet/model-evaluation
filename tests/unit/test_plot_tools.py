@@ -85,3 +85,70 @@ def test_rolling_mean_all_mask():
     x = rolling_mean(data, 2)
     compare = np.array([1, np.nan, np.nan, np.nan, 3, 5.5, 8, np.nan])
     testing.assert_array_almost_equal(x, compare)
+
+
+def test_change2one_dim_axes_maskY():
+    from model_evaluation.plotting.plot_tools import change2one_dim_axes
+    x = np.ma.array([[1, 1, 1, 1, 1],
+                     [2, 2, 2, 2, 2],
+                     [3, 3, 3, 3, 3],
+                     [4, 4, 4, 4, 4]])
+    y = np.ma.array([[1, 2, 3, 4, 5],
+                     [1, 2, 3, 4, 5],
+                     [1, 2, 3, 4, 5],
+                     [1, 2, 3, 4, 5]])
+    y[1] = np.ma.masked
+    data = np.ma.array([[1, 1, 1, 1, 1],
+                        [1, 1, 1, 1, 1],
+                        [1, 1, 1, 1, 1],
+                        [1, 1, 1, 1, 1]])
+    x, y, data = change2one_dim_axes(x, y, data)
+    compare_x = np.array([1, 2, 3, 4])
+    compare_y = np.array([1, 2, 3, 4, 5])
+    testing.assert_array_almost_equal(x, compare_x)
+    testing.assert_array_almost_equal(y, compare_y)
+
+
+def test_change2one_dim_axes_maskX():
+    from model_evaluation.plotting.plot_tools import change2one_dim_axes
+    x = np.ma.array([[1, 1, 1, 1, 1],
+                     [2, 2, 2, 2, 2],
+                     [3, 3, 3, 3, 3],
+                     [4, 4, 4, 4, 4]])
+    y = np.ma.array([[1, 2, 3, 4, 5],
+                     [1, 2, 3, 4, 5],
+                     [1, 2, 3, 4, 5],
+                     [1, 2, 3, 4, 5]])
+    x[1] = np.ma.masked
+    data = np.ma.array([[1, 1, 1, 1, 1],
+                        [1, 1, 1, 1, 1],
+                        [1, 1, 1, 1, 1],
+                        [1, 1, 1, 1, 1]])
+    x, y, data = change2one_dim_axes(x, y, data)
+    compare_x = np.array([1, 2, 3, 4])
+    compare_y = np.array([1, 2, 3, 4, 5])
+    testing.assert_array_almost_equal(x, compare_x)
+    testing.assert_array_almost_equal(y, compare_y)
+    assert True
+
+
+def test_change2one_dim_axes():
+    from model_evaluation.plotting.plot_tools import change2one_dim_axes
+    x = np.ma.array([[1, 1, 1, 1, 1],
+                     [2, 2, 2, 2, 2],
+                     [3, 3, 3, 3, 3],
+                     [4, 4, 4, 4, 4]])
+    compare_x = np.copy(x)
+    y = np.ma.array([[1, 2, 3, 4, 5],
+                     [1, 2, 3, 4, 5],
+                     [1, 2, 3, 4, 5],
+                     [1, 2, 3, 4, 5]])
+    compare_y = np.copy(y)
+    data = np.ma.array([[1, 1, 1, 1, 1],
+                        [1, 1, 1, 1, 1],
+                        [1, 1, 1, 1, 1],
+                        [1, 1, 1, 1, 1]])
+    x, y, data = change2one_dim_axes(x, y, data)
+    testing.assert_array_almost_equal(x, compare_x)
+    testing.assert_array_almost_equal(y, compare_y)
+    assert True

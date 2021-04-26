@@ -104,14 +104,14 @@ def rolling_mean(data: np.ndarray, n: int = 4) -> np.ndarray:
 
 
 def change2one_dim_axes(x: np.ndarray, y: np.ndarray, data: np.ndarray) -> Tuple:
-    # If any mask in x or y change to one dimensional axes values
+    # If any mask in x or y, change 2d to 1d axes values
     # Common shape need to match 2d data.
     for ax in [x, y]:
         try:
-           mask = ax.mask
-           if mask.any():
-               y = [y[i] for i in range(len(y[:])) if not y[i].mask.all()]
-               return x[:, 0], y[0], data.T
+            mask = ax.mask
+            if mask.any():
+                y = [y[i] for i in range(len(y[:])) if not y[i].mask.all()]
+                return x[:, 0], y[0], data.T
         except AttributeError:
             continue
     return x, y, data
