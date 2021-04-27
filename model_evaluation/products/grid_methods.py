@@ -1,6 +1,8 @@
 import numpy as np
 from model_evaluation.products import tools as tl
 from cloudnetpy import utils
+from model_evaluation.products.observation_products import ObservationManager
+from model_evaluation.products.model_products import ModelManager
 
 
 class ProductGrid:
@@ -13,7 +15,8 @@ class ProductGrid:
             downsampling and adds data to model_obj which is used for writing
             nc-file
     """
-    def __init__(self, model_obj: object, obs_obj: object):
+    def __init__(self, model_obj: ModelManager,
+                 obs_obj: ObservationManager):
         self._obs_obj = obs_obj
         self._date = obs_obj.date
         self._obs_time = tl.time2datetime(obs_obj.time, self._date)
@@ -93,7 +96,7 @@ class ProductGrid:
         return product_dict, product_adv_dict
 
     @staticmethod
-    def _regrid_cf(storage: dict, i: int, j: int, data: np.ma.MaskedArray):
+    def _regrid_cf(storage: dict, i: int, j: int, data: np.ma.array):
         """Calculates average cloud fraction value to grid point"""
         for key, downsample in storage.items():
             if data is not None:
@@ -113,7 +116,7 @@ class ProductGrid:
         return window_size
 
     def _regrid_iwc(self, storage: dict, i: int, j: int,
-                    ind_rain: np.ma.MaskedArray, ind_no_rain: np.ma.MaskedArray):
+                    ind_rain: np.ma.MaskedArray, ind_no_rain: np.ma.array):
         """Calculates average iwc value for grid point"""
         for key, downsample in storage.items():
             if not self._obs_data[ind_no_rain].mask.all():

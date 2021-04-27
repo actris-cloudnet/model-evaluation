@@ -27,7 +27,7 @@ def sort_model2first_element(a: list, model: str) -> list:
     return a
 
 
-def parce_cycles(names: list, model: str) -> list:
+def sort_cycles(names: list, model: str) -> list:
     model_info = MODELS[model]
     cycles = model_info.cycle
     cycles = [x.strip() for x in cycles.split(',')]
@@ -93,7 +93,7 @@ def set_yaxis(ax, max_y: float, min_y: float = 0.0):
     ax.set_ylabel('Height (km)', fontsize=13)
 
 
-def rolling_mean(data: np.ndarray, n: int = 4) -> np.ndarray:
+def rolling_mean(data: ma.array, n: int = 4) -> np.ndarray:
     mmr = []
     for i in range(len(data)):
         if not data[i:i+n].mask.all():
@@ -103,7 +103,7 @@ def rolling_mean(data: np.ndarray, n: int = 4) -> np.ndarray:
     return np.asarray(mmr)
 
 
-def change2one_dim_axes(x: np.ndarray, y: np.ndarray, data: np.ndarray) -> Tuple:
+def change2one_dim_axes(x: ma.array, y: ma.array, data: ma.array) -> Tuple:
     # If any mask in x or y, change 2d to 1d axes values
     # Common shape need to match 2d data.
     for ax in [x, y]:

@@ -74,7 +74,7 @@ def generate_L3_day_plots(nc_file: str,
             try:
                 cycles = model_info.cycle
                 cycles = [x.strip() for x in cycles.split(',')]
-                cycle_names = p_tools.parce_cycles(names, model)
+                cycle_names = p_tools.sort_cycles(names, model)
                 for i, c_names in enumerate(cycle_names):
                     if not c_names:
                         raise AttributeError
@@ -90,7 +90,7 @@ def generate_L3_day_plots(nc_file: str,
         try:
             cycles = model_info.cycle
             cycles = [x.strip() for x in cycles.split(',')]
-            cycle_names = p_tools.parce_cycles(names, model)
+            cycle_names = p_tools.sort_cycles(names, model)
             for i, c_names in enumerate(cycle_names):
                 if not c_names:
                     raise AttributeError
@@ -272,7 +272,7 @@ def get_statistic_plots(product: str, names: list, nc_file: str, model: str,
 
 
 def initialize_statistic_plots(j: int, max_len: int, ax, method: str,
-                               day_stat: object, model: np.array, obs: np.array,
+                               day_stat: DayStatistics, model: np.array, obs: np.array,
                                args: tuple, variable_info: namedtuple):
     if method == 'error' or method == 'aerror':
         plot_relative_error(ax, day_stat.stat_data.T, args, method)
@@ -310,7 +310,7 @@ def plot_relative_error(ax, error: np.array, axes: tuple, method: str):
                 transform=ax.transAxes)
 
 
-def plot_data_area(ax, day_stat: object, model: ma.array, obs: ma.array,
+def plot_data_area(ax, day_stat: DayStatistics, model: ma.array, obs: ma.array,
                    axes: tuple):
     data, cmap = p_tools.create_segment_values([model.mask, obs.mask])
     pl = ax.pcolormesh(*axes, data, cmap=cmap)
@@ -324,7 +324,7 @@ def plot_data_area(ax, day_stat: object, model: ma.array, obs: ma.array,
     ax.legend(handles=legend_elements, loc='lower left', ncol=3, fontsize=12, bbox_to_anchor=(-0.005, -0.25))
 
 
-def plot_histogram(ax, day_stat: object, variable_info: namedtuple):
+def plot_histogram(ax, day_stat: DayStatistics, variable_info: namedtuple):
     weights = np.ones_like(day_stat.stat_data[0][0]) / float(len(day_stat.stat_data[0][0]))
     ax.hist(day_stat.stat_data[0][0], weights=weights, bins=day_stat.stat_data[0][-1],
                   alpha=0.7, facecolor='khaki', edgecolor='k', label=f'Model: {day_stat.title[-1]}')
@@ -340,7 +340,7 @@ def plot_histogram(ax, day_stat: object, variable_info: namedtuple):
     ax.set_title(f"{day_stat.title[0]}", fontsize=14)
 
 
-def plot_vertical_profile(ax, day_stat: object, axes: tuple,
+def plot_vertical_profile(ax, day_stat: DayStatistics, axes: tuple,
                           variable_info: namedtuple):
     mrm = p_tools.rolling_mean(day_stat.stat_data[0])
     orm = p_tools.rolling_mean(day_stat.stat_data[-1])

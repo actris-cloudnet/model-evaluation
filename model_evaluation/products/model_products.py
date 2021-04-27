@@ -93,7 +93,7 @@ class ModelManager(DataSource):
         self.keys[self._product] = f'{self.model}_lwc{self._cycle}'
 
     @staticmethod
-    def _read_config(*args: str):
+    def _read_config(*args: str) -> list:
         var = []
         for arg in args:
             var.append(CONF['model_quantity'][arg])
@@ -110,7 +110,7 @@ class ModelManager(DataSource):
         return var
 
     @staticmethod
-    def _calc_water_content(q: float, p: float, T: float):
+    def _calc_water_content(q: np.array, p: np.array, T: np.array) -> np.array:
         return q * p / (287 * T)
 
     def _add_variables(self):
@@ -140,7 +140,7 @@ class ModelManager(DataSource):
             _add_common_variables()
         _add_cycle_variables()
 
-    def _cut_off_extra_levels(self, data: np.ndarray):
+    def _cut_off_extra_levels(self, data: np.ndarray) -> np.array:
         """ Remove unused levels from model data"""
         try:
             level = int(CONF[self.model]['level'])
@@ -153,7 +153,7 @@ class ModelManager(DataSource):
             data = data[:level]
         return data
 
-    def _calculate_wind_speed(self):
+    def _calculate_wind_speed(self) -> np.array:
         """Real wind from x- and y-components"""
         u = self._set_variables('uwind')
         v = self._set_variables('vwind')
@@ -161,7 +161,7 @@ class ModelManager(DataSource):
         v = self._cut_off_extra_levels(v)
         return np.sqrt(u.data**2 + v.data**2)
 
-    def _get_horizontal_resolution(self):
+    def _get_horizontal_resolution(self) -> float:
         h_res = self._set_variables('horizontal_resolution')
-        # Maybe requires to be same size as time array
+        # Maybe requires to be same shape as time array
         return np.unique(h_res.data)[0]

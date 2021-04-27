@@ -45,7 +45,7 @@ class DayStatistics:
         self.obs_array = observation
         self._generate_day_statistics()
 
-    def _get_method_attr(self):
+    def _get_method_attr(self) -> Tuple:
         full_name = ""
         if self.method == 'error':
             full_name = 'relative_error'
