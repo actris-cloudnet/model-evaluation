@@ -126,6 +126,7 @@ def get_group_plots(product: str, names: list, nc_file: str, model: str, site: s
             cycle (str): Name of cycle if exists
     """
     fig, ax = initialize_figure(len(names))
+    model_run = model
     for j, name in enumerate(names):
         variable_info = ATTRIBUTES[product]
         cloud_plt._set_ax(ax[j], 12)
@@ -139,8 +140,9 @@ def get_group_plots(product: str, names: list, nc_file: str, model: str, site: s
         product = product + '_adv'
     if len(cycle) > 1:
         fig.text(0.64, 0.885, f"Cycle: {cycle}", fontsize=13)
-    cloud_plt._handle_saving(None, save_path, show, 200, casedate,
-                             [site, product, model, cycle, 'group'])
+        model_run = f"{model}_{cycle}"
+    cloud_plt._handle_saving('', save_path, show, 200, casedate,
+                             [site, product, model_run, 'group'])
 
 
 def get_pair_plots(product: str, names: list, nc_file: str, model: str, site: str,
@@ -161,6 +163,7 @@ def get_pair_plots(product: str, names: list, nc_file: str, model: str, site: st
     """
     variable_info = ATTRIBUTES[product]
     model_ax = names[0]
+    model_run = model
     for i, name in enumerate(names):
         if i == 0:
             continue
@@ -176,8 +179,9 @@ def get_pair_plots(product: str, names: list, nc_file: str, model: str, site: st
         casedate = cloud_plt._set_labels(fig, ax[-1], nc_file)
         if len(cycle) > 1:
             fig.text(0.64, 0.889, f"Cycle: {cycle}", fontsize=13)
-        cloud_plt._handle_saving(None, save_path, show, 200, casedate,
-                                 [site, name, model, cycle, 'pair'])
+            model_run = f"{model}_{cycle}"
+        cloud_plt._handle_saving('', save_path, show, 200, casedate,
+                                 [site, name, model_run, 'pair'])
 
 
 def get_single_plots(product: str, names: list, nc_file: str, model: str, site: str,
@@ -194,6 +198,7 @@ def get_single_plots(product: str, names: list, nc_file: str, model: str, site: 
             cycle (str): Name of cycle if exists
     """
     variable_info = ATTRIBUTES[product]
+    model_run = model
     for i, name in enumerate(names):
         fig, ax = initialize_figure(1)
         cloud_plt._set_ax(ax[0], 12)
@@ -203,8 +208,9 @@ def get_single_plots(product: str, names: list, nc_file: str, model: str, site: 
         casedate = cloud_plt._set_labels(fig, ax[0], nc_file)
         if len(cycle) > 1:
             fig.text(0.64, 0.9, f"{model_name} cycle: {cycle}", fontsize=13)
-        cloud_plt._handle_saving(None, save_path, show, 200, casedate,
-                                 [site, name, model, cycle, 'single'])
+            model_run = f"{model}_{cycle}"
+        cloud_plt._handle_saving('', save_path, show, 200, casedate,
+                                 [site, name, model_run, 'single'])
 
 
 def plot_colormesh(ax, data: np.array, axes: tuple, variable_info: namedtuple):
@@ -245,6 +251,7 @@ def get_statistic_plots(product: str, names: list, nc_file: str, model: str,
         show (bool): Show figure before saving if True
         cycle (str): Name of cycle if exists
     """
+    model_run = model
     for stat in stats:
         variable_info = ATTRIBUTES[product]
         fig, ax = initialize_figure(len(names) - 1, stat)
@@ -268,7 +275,8 @@ def get_statistic_plots(product: str, names: list, nc_file: str, model: str,
             cloud_plt._add_subtitle(fig, casedate, site_name.capitalize())
         if len(cycle) > 1:
             fig.text(0.64, 0.885, f"Cycle: {cycle}", fontsize=13)
-        cloud_plt._handle_saving(None, save_path, show, 200, casedate, [site, product, stat, model, cycle])
+            model_run = f"{model}_{cycle}"
+        cloud_plt._handle_saving('', save_path, show, 200, casedate, [site, product, stat, model_run])
 
 
 def initialize_statistic_plots(j: int, max_len: int, ax, method: str,
