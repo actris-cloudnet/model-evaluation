@@ -17,7 +17,7 @@ MODELS = {
     'ecmwf': Model_metaData(
         model_name='ECMWF',
         long_name='European Centre for Medium-Range Weather Forecasts',
-        level=90
+        level=88
     ),
     'icon': Model_metaData(
         model_name='ICON-Iglo',
@@ -28,7 +28,7 @@ MODELS = {
     'era5': Model_metaData(
         model_name='ERA5',
         long_name='Earth Re-Analysis System',
-        level=90,
+        level=88,
         cycle='1-12, 7-18'
     ),
     'harmonie': Model_metaData(
