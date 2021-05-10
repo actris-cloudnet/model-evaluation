@@ -33,6 +33,7 @@ def sort_cycles(names: list, model: str) -> list:
     cycles = [x.strip() for x in cycles.split(',')]
     cycles_names = [[name for name in names if cycle in name] for cycle in cycles]
     cycles_names.sort()
+    cycles_names = [c for c in cycles_names if c]
     return cycles_names
 
 
