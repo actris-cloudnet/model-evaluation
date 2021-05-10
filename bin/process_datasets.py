@@ -11,26 +11,44 @@ PROCESS_CONF.optionxform = str
 PROCESS_CONF.read(os.path.join(os.getcwd(), 'config.ini'))
 
 
-def split_files_to_dates(test_files, case):
+def select_fileset_with_dates(files, case):
+    start = PROCESS_CONF[case]['start_date']
+    end = PROCESS_CONF[case]['end_date']
+    start_indices = [files.index(f) for f in files if start in f]
+    end_indices = [files.index(f) for f in files if end in f]
+    try:
+        return files[start_indices[0]:end_indices[-1]+1]
+    except IndexError:
+        return files
+
+
+def find_missing_dates(test_files, case, model):
     dates = []
     test_files = [test_files[i].split('/')[-1] for i in range(len(test_files))]
+    test_types = [test_files[i].split('_')[-1] for i in range(len(test_files))]
+    model_files = [test_types[i] for i in range(len(test_types)) if model in test_types[i]]
+    model_files = list(set(model_files))
+    if len(model_files) > 1:
+        for m in model_files[:-1]:
+            for f in test_files:
+                if m in f:
+                    test_files.remove(f)
     test_files = [test_files[i].split('_')[0] for i in range(len(test_files))]
     C = Counter(test_files)
     test_files = [[k, ]*v for k, v in C.items()]
     min_n_files = PROCESS_CONF[case]['min_files']
     for cases in test_files:
-        if len(cases) >= min_n_files:
+        if len(cases) >= int(min_n_files):
             dates.append(cases[0])
     return dates
 
 
-# For running this, loading some testfiles is required!
+# For running this, loading some test files is required!
 def main():
     save_plots = f'{ROOT_PATH}/plots/'
     path = os.path.split(ROOT_PATH)[0]
     cases = PROCESS_CONF.sections()
     for case in cases:
-
         test_case_files = f'{path}/model_evaluation_test_files/{case}/'
         save_files = f'{path}/model_evaluation_processed_files/{case}'
         site = PROCESS_CONF[case]['site']
@@ -39,10 +57,12 @@ def main():
 
         test_files = [os.path.join(test_case_files, i) for i in os.listdir(test_case_files)]
         test_files.sort()
-        case_dates = split_files_to_dates(test_files)
-        test_files = [f for f in test_files for date in case_dates if date in f and site in f]
+        test_files = select_fileset_with_dates(test_files, case)
 
         for model in models:
+            case_dates = find_missing_dates(test_files, case, model)
+            test_files = [f for f in test_files for date in case_dates if date in f and site in f]
+
             model_file_set = [[f for f in test_files if model in f and date in f] for date in case_dates]
             cat_files = [f for f in test_files if 'categorize' in f]
             iwc_files = [f for f in test_files if 'iwc' in f]
