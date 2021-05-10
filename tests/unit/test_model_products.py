@@ -45,7 +45,7 @@ def test_get_lwc(model_file):
     'pressure', 'temperature'])
 def test_read_config(key, model_file):
     obj = ModelManager(str(model_file), MODEL, OUTPUT_FILE, PRODUCT)
-    var = obj._read_config('p', 'T')
+    var = obj._get_model_var_names('p', 'T')
     assert key in var
 
 

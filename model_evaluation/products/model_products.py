@@ -1,20 +1,10 @@
 import os
-import configparser
 import importlib
 import numpy as np
 import numpy.ma as ma
 from cloudnetpy.utils import isscalar
 from cloudnetpy.categorize.datasource import DataSource
-
-PATH = os.path.dirname(os.path.abspath(__file__))
-PATH = os.path.split(PATH)[0]
-CONF = configparser.ConfigParser()
-CONF.optionxform = str
-if os.path.isfile(os.path.join(PATH, 'level3.ini')) is True:
-    CONF.read(os.path.join(PATH, 'level3.ini'))
-else:
-    PATH = os.path.abspath(os.curdir)
-    CONF.read(os.path.join(PATH, 'model_evaluation/level3.ini'))
+from model_evaluation.model_metadata import MODELS, VARIABLES
 
 
 class ModelManager(DataSource):
@@ -37,6 +27,8 @@ class ModelManager(DataSource):
                  output_file: str, product: str):
         super().__init__(model_file)
         self.model = model
+        self.model_info = MODELS[model]
+        self.model_vars = VARIABLES['variables']
         self._product = product
         self.keys = {}
         self._is_file = os.path.isfile(output_file)
@@ -50,12 +42,12 @@ class ModelManager(DataSource):
     def _read_cycle_name(self, model_file: str):
         """Get cycle name from config for saving variable name"""
         try:
-            cycles = CONF[self.model]['cycle']
+            cycles = self.model_info.cycle
             cycles = [x.strip() for x in cycles.split(',')]
             for cycle in cycles:
                 if cycle in model_file:
                     return f"_{cycle}"
-        except KeyError:
+        except AttributeError:
             return ""
 
     def _generate_products(self):
@@ -67,7 +59,7 @@ class ModelManager(DataSource):
 
     def _get_cf(self):
         """Collect cloud fraction straight from model file."""
-        cf_name = self._read_config('cf')
+        cf_name = self._get_model_var_names('cf')
         cf = self._set_variables(cf_name)
         cf = self._cut_off_extra_levels(cf)
         cf[cf < 0.0] = ma.masked
@@ -75,7 +67,7 @@ class ModelManager(DataSource):
         self.keys[self._product] = f'{self.model}_cf{self._cycle}'
 
     def _get_iwc(self):
-        p_name, T_name, iwc_name = self._read_config('p', 'T', 'iwc')
+        p_name, T_name, iwc_name = self._get_model_var_names('p', 'T', 'iwc')
         p, T, qi = self._set_variables(p_name, T_name, iwc_name)
         iwc = self._calc_water_content(qi, p, T)
         iwc = self._cut_off_extra_levels(iwc)
@@ -84,7 +76,7 @@ class ModelManager(DataSource):
         self.keys[self._product] = f'{self.model}_iwc{self._cycle}'
 
     def _get_lwc(self):
-        p_name, T_name, lwc_name = self._read_config('p', 'T', 'lwc')
+        p_name, T_name, lwc_name = self._get_model_var_names('p', 'T', 'lwc')
         p, T, ql = self._set_variables(p_name, T_name, lwc_name)
         lwc = self._calc_water_content(ql, p, T)
         lwc = self._cut_off_extra_levels(lwc)
@@ -93,10 +85,10 @@ class ModelManager(DataSource):
         self.keys[self._product] = f'{self.model}_lwc{self._cycle}'
 
     @staticmethod
-    def _read_config(*args: str) -> list:
+    def _get_model_var_names(*args: str) -> list:
         var = []
         for arg in args:
-            var.append(CONF['model_quantity'][arg])
+            var.append(VARIABLES[arg].long_name)
         if len(var) == 1:
             return var[0]
         return var
@@ -116,7 +108,7 @@ class ModelManager(DataSource):
     def _add_variables(self):
         """Add basic variables off model and cycle"""
         def _add_common_variables():
-            wanted_vars = CONF['model_wanted_vars']['common']
+            wanted_vars = self.model_vars.common_var
             wanted_vars = [x.strip() for x in wanted_vars.split(',')]
             for var in wanted_vars:
                 if var in self.dataset.variables:
@@ -126,7 +118,7 @@ class ModelManager(DataSource):
                     self.append_data(data, f"{var}")
 
         def _add_cycle_variables():
-            wanted_vars = CONF['model_wanted_vars']['cycle']
+            wanted_vars = self.model_vars.cycle_var
             wanted_vars = [x.strip() for x in wanted_vars.split(',')]
             for var in wanted_vars:
                 if var in self.dataset.variables:
@@ -143,7 +135,7 @@ class ModelManager(DataSource):
     def _cut_off_extra_levels(self, data: np.ndarray) -> np.array:
         """ Remove unused levels from model data"""
         try:
-            level = int(CONF[self.model]['level'])
+            level = self.model_info.level
         except KeyError:
             return data
 
