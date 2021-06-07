@@ -50,6 +50,9 @@ VARIABLES = {
     'p': Model_metaData(
         long_name='pressure'
     ),
+    'h': Model_metaData(
+        long_name='height'
+    ),
     'iwc': Model_metaData(
         long_name='qi'
     ),
