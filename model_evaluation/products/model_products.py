@@ -153,7 +153,7 @@ class ModelManager(DataSource):
         v = self._set_variables('vwind')
         u = self._cut_off_extra_levels(u)
         v = self._cut_off_extra_levels(v)
-        return np.sqrt(u.data**2 + v.data**2)
+        return np.sqrt(ma.power(u.data, 2) + ma.power(v.data, 2))
 
     def _get_horizontal_resolution(self) -> float:
         h_res = self._set_variables('horizontal_resolution')
