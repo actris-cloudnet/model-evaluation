@@ -1,5 +1,6 @@
 import os
 import importlib
+from typing import Union
 import numpy as np
 import numpy.ma as ma
 from cloudnetpy.utils import isscalar
@@ -15,6 +16,7 @@ class ModelManager(DataSource):
         model (str): Name of model
         output_file (str): name of output file to save data
         product (str): name of product to generate
+        wband (int or None): Radar frequency
 
     Notes:
         Output_file is given for saving all cycles to same nc-file. Some variables
@@ -67,20 +69,12 @@ class ModelManager(DataSource):
         self.keys[self._product] = f'{self.model}_cf{self._cycle}'
 
     def _get_iwc(self):
-        p_name, T_name, iwc_name = self._get_model_var_names('p', 'T', 'iwc')
-        p, T, qi = self._set_variables(p_name, T_name, iwc_name)
-        iwc = self._calc_water_content(qi, p, T)
-        iwc = self._cut_off_extra_levels(iwc)
-        iwc[iwc < 0.0] = ma.masked
+        iwc = self._get_water_continent('iwc')
         self.append_data(iwc, f'{self.model}_iwc{self._cycle}')
         self.keys[self._product] = f'{self.model}_iwc{self._cycle}'
 
     def _get_lwc(self):
-        p_name, T_name, lwc_name = self._get_model_var_names('p', 'T', 'lwc')
-        p, T, ql = self._set_variables(p_name, T_name, lwc_name)
-        lwc = self._calc_water_content(ql, p, T)
-        lwc = self._cut_off_extra_levels(lwc)
-        lwc[lwc < 0.0] = ma.masked
+        lwc = self._get_water_continent('lwc')
         self.append_data(lwc, f'{self.model}_lwc{self._cycle}')
         self.keys[self._product] = f'{self.model}_lwc{self._cycle}'
 
@@ -100,6 +94,14 @@ class ModelManager(DataSource):
         if len(var) == 1:
             return var[0]
         return var
+
+    def _get_water_continent(self, var: str):
+        p_name, T_name, lwc_name = self._get_model_var_names('p', 'T', var)
+        p, T, q = self._set_variables(p_name, T_name, lwc_name)
+        wc = self._calc_water_content(q, p, T)
+        wc = self._cut_off_extra_levels(wc)
+        wc[wc < 0.0] = ma.masked
+        return wc
 
     @staticmethod
     def _calc_water_content(q: np.array, p: np.array, T: np.array) -> np.array:
