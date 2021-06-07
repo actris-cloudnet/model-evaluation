@@ -25,12 +25,26 @@ class ObservationManager(DataSource):
         self.obs = obs
         self._file = obs_file
         self.date = self._get_date()
+        self.radar_freq = self._get_radar_frequency()
+        self.z_sensit = self._get_z_sensitivity()
         self._generate_product()
 
     def _get_date(self) -> datetime:
         """Returns measurement date as datetime."""
         return datetime(int(self.dataset.year), int(self.dataset.month),
                         int(self.dataset.day), 0, 0, 0)
+
+    def _get_radar_frequency(self):
+        try:
+            return self.getvar('radar_frequency')
+        except KeyError:
+            return None
+
+    def _get_z_sensitivity(self):
+        try:
+            return self.getvar('Z_sensitivity')
+        except KeyError:
+            return None
 
     def _generate_product(self):
         """Add all needed of observations to object"""
@@ -76,7 +90,6 @@ class ObservationManager(DataSource):
             return False
 
     def _get_rainrate_threshold(self):
-        wband = utils.get_wl_band(self.getvar('radar_frequency'))
         rainrate_threshold = 8
         if 90 < wband < 100:
             rainrate_threshold = 2
