@@ -64,7 +64,7 @@ class ModelManager(DataSource):
         cf_name = self._get_model_var_names('cf')
         cf = self._set_variables(cf_name)
         cf = self._cut_off_extra_levels(cf)
-        cf[cf < 0.0] = ma.masked
+        cf[cf < 0.05] = ma.masked
         self.append_data(cf, f'{self.model}_cf{self._cycle}')
         self.keys[self._product] = f'{self.model}_cf{self._cycle}'
 
@@ -87,7 +87,7 @@ class ModelManager(DataSource):
             return var[0]
         return var
 
-    def _set_variables(self, *args: str):
+    def _set_variables(self, *args: Union[str, list]) -> Union[np.array, list]:
         var = []
         for arg in args:
             var.append(self.getvar(arg))
