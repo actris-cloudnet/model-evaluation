@@ -2,6 +2,7 @@ import os
 import model_evaluation.products.tools as tl
 from model_evaluation.products.observation_products import ObservationManager
 from model_evaluation.products.model_products import ModelManager
+from model_evaluation.products.advance_methods import AdvanceProductMethods
 from model_evaluation.file_handler import update_attributes, save_downsampled_file, add_var2ncfile, add_time_attribute
 from model_evaluation.products.grid_methods import ProductGrid
 
@@ -38,6 +39,7 @@ def process_observation_resample2model(model: str,
     product_obj = ObservationManager(obs, product_file)
     for m_file in model_files:
         model_obj = ModelManager(m_file, model, output_file, obs)
+        AdvanceProductMethods(model_obj, m_file, product_obj)
         ProductGrid(model_obj, product_obj)
         attributes = add_time_attribute(product_obj.date)
         update_attributes(model_obj.data, attributes)
