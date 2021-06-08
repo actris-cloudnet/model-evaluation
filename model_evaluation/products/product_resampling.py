@@ -39,7 +39,10 @@ def process_observation_resample2model(model: str,
     product_obj = ObservationManager(obs, product_file)
     for m_file in model_files:
         model_obj = ModelManager(m_file, model, output_file, obs)
-        AdvanceProductMethods(model_obj, m_file, product_obj)
+        try:
+            AdvanceProductMethods(model_obj, m_file, product_obj)
+        except ValueError:
+            pass
         ProductGrid(model_obj, product_obj)
         attributes = add_time_attribute(product_obj.date)
         update_attributes(model_obj.data, attributes)
