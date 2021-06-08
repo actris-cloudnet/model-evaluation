@@ -79,7 +79,7 @@ class ModelManager(DataSource):
         self.keys[self._product] = f'{self.model}_lwc{self._cycle}'
 
     @staticmethod
-    def _get_model_var_names(*args: str) -> list:
+    def _get_model_var_names(*args: Union[str, list]) -> list:
         var = []
         for arg in args:
             var.append(VARIABLES[arg].long_name)
