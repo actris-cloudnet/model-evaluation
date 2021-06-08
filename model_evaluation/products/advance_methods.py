@@ -46,16 +46,22 @@ class AdvanceProductMethods(DataSource):
         cf, h = self.getvar_from_object('cf', 'h')
         T = self._model_obj._set_variables('temperature')
         T = self.remove_extra_levels(T - 273.15)
-        iwc = self._model_obj._get_water_continent('iwc')
-        k2liquid0, tZT, tT, tZ, t = self.set_frequency_parameters()
-        z_fac, z_sen, z_err = self.set_z_factor_parameters(k2liquid0, h)
-        cf_filtered, cloud_iwc, ice_ind, f_variance_iwc = \
-            self.filter_high_iwc_low_cf(cf, iwc, h)
+        iwc, lwc = [self._model_obj._get_water_continent(var) for var in ['iwc', 'lwc']]
+
+        tZT, tT, tZ, t = self.set_frequency_parameters()
+        z_sen = self.fit_z_sensitivity(h)
+        cf_filtered = self.filter_high_iwc_low_cf(cf, iwc, lwc)
+        cloud_iwc, ice_ind = self.find_ice_in_clouds(cf_filtered, iwc, lwc)
+        variance_iwc = self.iwc_variance(h, ice_ind)
         for i, ind in enumerate(zip(ice_ind[0], ice_ind[-1])):
-            p_iwc, iwc_dist = self.calculate_iwc_distribution(i, cloud_iwc, f_variance_iwc)
+            iwc_dist = self.calculate_iwc_distribution(cloud_iwc[i], variance_iwc[i])
+            # TODO: parempi nimi tälle funktiolle
+            p_iwc = self.gamma_distribution(iwc_dist, variance_iwc[i], cloud_iwc[i])
+
             if np.sum(p_iwc) == 0 or p_iwc[-1] > 0.01*np.sum(p_iwc):
                 cf_filtered[ind] = np.nan
                 continue
+
             obs_index = self.get_observation_index(iwc_dist, tZT, tT, tZ, t, T[ind], z_sen[ind])
             cf_filtered[ind] = self.filter_cirrus(p_iwc, obs_index, cf_filtered[ind])
         cf_filtered[cf_filtered < 0.05] = ma.masked
@@ -82,38 +88,45 @@ class AdvanceProductMethods(DataSource):
 
     def set_frequency_parameters(self):
         if 30 <= self._obs_obj.radar_freq <= 40:
-            return 0.878, 0.000242, -0.0186, 0.0699, -1.63
+            return 0.000242, -0.0186, 0.0699, -1.63
         if 90 <= float(self._obs_obj.radar_freq) <= 100:
-            return 0.669, 0.00058, -0.00706, 0.0923, -0.992
+            return 0.00058, -0.00706, 0.0923, -0.992
 
-    def set_z_factor_parameters(self, k2liquid0, h):
-        z_factor = k2liquid0 / 0.93
-        z_sensit = [cl_tools.rebin_1d(self._obs_obj.height, self._obs_obj.z_sensit, h[i])
-                    for i in range(len(h))]
-        return z_factor, np.asarray(z_sensit), 3
+    def fit_z_sensitivity(self, h):
+        z_sen = [cl_tools.rebin_1d(self._obs_obj.height, self._obs_obj.z_sensit, h[i])
+                 for i in range(len(h))]
+        return np.asarray(z_sen)
 
-    def filter_high_iwc_low_cf(self, cf, iwc, h):
+    def filter_high_iwc_low_cf(self, cf, iwc, lwc):
+        cf_filtered = self.mask_weird_indices(cf, iwc, lwc)
+        if np.sum((iwc > 0) & (lwc < iwc/10) & (cf_filtered > 0)) == 0:
+            raise ValueError('No ice cloud input data')
+        return cf_filtered
+
+    def mask_weird_indices(self, cf, iwc, lwc):
         cf_filtered = np.copy(cf)
-        iwc_filtered = np.copy(iwc)
-        lwc = self._model_obj._get_water_continent('lwc')
-        weird_ind = (iwc/cf > 0.5e-3) & (cf < 0.001)
+        weird_ind = (iwc / cf > 0.5e-3) & (cf < 0.001)
         weird_ind = weird_ind | (iwc == 0) & (lwc == 0) & (cf == 0)
         cf_filtered[weird_ind] = ma.masked
-        if np.sum((iwc_filtered > 0) & (lwc < iwc_filtered/10) & (cf_filtered > 0)) == 0:
-            raise ValueError('No ice cloud input data')
-        cloud_iwc, ice_ind, f_variance_iwc = self.iwc_constants(cf_filtered, iwc_filtered, lwc, h)
-        return cf_filtered, cloud_iwc, ice_ind, f_variance_iwc
+        return cf_filtered
 
-    def iwc_constants(self, cf_filt, iwc_filt, lwc, h):
+    def find_ice_in_clouds(self, cf_filtered, iwc, lwc):
+        ice_ind = self.get_ice_indices(cf_filtered, iwc, lwc)
+        cloud_iwc = iwc[ice_ind] / cf_filtered[ice_ind] * 1e3
+        return cloud_iwc, ice_ind
+
+    def get_ice_indices(self, cf_filtered, iwc, lwc):
+        return np.where((cf_filtered > 0) & (iwc > 0) & (lwc < iwc/10))
+
+    def iwc_variance(self, h, ice_ind):
         u, v = self._model_obj._set_variables('uwind', 'vwind')
         u, v = self.remove_extra_levels(u, v)
         w_shear = self.calculate_wind_shear(self._model_obj.wind, u, v, h)
+        variance_iwc = self.calculate_variance_iwc(w_shear, ice_ind)
+        return variance_iwc
 
-        ice_ind = np.where((cf_filt > 0) & (iwc_filt > 0) & (lwc < iwc_filt/10))
-        cloud_iwc = iwc_filt[ice_ind] / cf_filt[ice_ind] * 1e3
-        f_variance_iwc = 10**(0.3*np.log10(self._model_obj.resolution_h)
-                              - 0.04*w_shear[ice_ind] - 1.03)
-        return cloud_iwc, ice_ind, f_variance_iwc
+    def calculate_variance_iwc(self, w_shear, ice_ind):
+        return 10**(0.3*np.log10(self._model_obj.resolution_h) - 0.04*w_shear[ice_ind] - 1.03)
 
     def calculate_wind_shear(self, wind, u, v, height):
         u = self._model_obj._cut_off_extra_levels(u)
@@ -132,16 +145,15 @@ class AdvanceProductMethods(DataSource):
         w_shear[grand_winds[0] < 0] = 0 - w_shear[grand_winds[0] < 0]
         return w_shear
 
-    def calculate_iwc_distribution(self, i, cloud_iwc, f_variance_iwc):
+    def calculate_iwc_distribution(self, cloud_iwc, f_variance_iwc):
         n_std = 5
         n_dist = 250
-        finish = cloud_iwc[i] + n_std*(np.sqrt(f_variance_iwc[i]) * cloud_iwc[i])
+        finish = cloud_iwc + n_std*(np.sqrt(f_variance_iwc) * cloud_iwc)
         iwc_dist = np.arange(0, finish, finish/(n_dist-1))
-        if cloud_iwc[i] < iwc_dist[2]:
-            finish = cloud_iwc[i] * 10
+        if cloud_iwc < iwc_dist[2]:
+            finish = cloud_iwc * 10
             iwc_dist = np.arange(0, finish, finish / n_dist - 1)
-        p_iwc = self.gamma_distribution(iwc_dist, f_variance_iwc[i], cloud_iwc[i])
-        return p_iwc, iwc_dist
+        return iwc_dist
 
     @staticmethod
     def gamma_distribution(iwc_dist, f_variance_iwc, cloud_iwc):
@@ -167,5 +179,4 @@ class AdvanceProductMethods(DataSource):
         return obs_index
 
     def filter_cirrus(self, p_iwc, obs_index, cf_filtered):
-        x = (np.sum(p_iwc*obs_index)/np.sum(p_iwc))*cf_filtered
         return (np.sum(p_iwc*obs_index)/np.sum(p_iwc))*cf_filtered
