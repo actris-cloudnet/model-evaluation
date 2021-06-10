@@ -11,12 +11,18 @@ OUTPUT_FILE = ''
 PRODUCT = 'iwc'
 
 
-def test_generate_regrid_product(model_file, obs_file):
-    # Voi testaa, tuleeko kaikki halutut tuotteet olioon
-    obs = ObservationManager(PRODUCT, str(obs_file))
-    model = ModelManager(str(model_file), MODEL, OUTPUT_FILE, PRODUCT)
-    obj = ProductGrid(model, obs)
-    assert True
+@pytest.mark.parametrize("product, variables", [
+    ("iwc", ("ecmwf_iwc", "iwc_ecmwf", "iwc_att_ecmwf", "iwc_rain_ecmwf",
+             "iwc_adv_ecmwf", "iwc_att_adv_ecmwf", "iwc_rain_adv_ecmwf")),
+    ("cf", ("ecmwf_cf", "cf_A_ecmwf", "cf_V_ecmwf", "cf_A_adv_ecmwf",
+            "cf_V_adv_ecmwf")),
+    ("lwc", ("lwc_ecmwf", "lwc_ecmwf", "lwc_adv_ecmwf"))])
+def test_generate_regrid_product(model_file, obs_file, product, variables):
+    obs = ObservationManager(product, str(obs_file))
+    model = ModelManager(str(model_file), MODEL, OUTPUT_FILE, product)
+    ProductGrid(model, obs)
+    for var in variables:
+        assert var in model.data.keys()
 
 
 @pytest.mark.parametrize("key, value",[
@@ -701,23 +707,23 @@ def test_regrid_product_none(model_file, obs_file):
 def test_append_data2object_cf(product, model_file, obs_file):
     obs = ObservationManager('cf', str(obs_file))
     model = ModelManager(str(model_file), MODEL, OUTPUT_FILE, 'cf')
-    ProductGrid(model, obs, MODEL, 'cf')
+    ProductGrid(model, obs)
     assert product + '_' + MODEL in model.data.keys()
 
 
 @pytest.mark.parametrize("product", [
-    "iwc", "iwc_mask", "iwc_att", "iwc_rain",
-    "iwc_adv", "iwc_mask_adv", "iwc_att_adv", "iwc_rain_adv"])
-def test_append_data2object_cf(product, model_file, obs_file):
+    "iwc", "iwc_att", "iwc_rain",
+    "iwc_adv", "iwc_att_adv", "iwc_rain_adv"])
+def test_append_data2object_iwc(product, model_file, obs_file):
     obs = ObservationManager('iwc', str(obs_file))
     model = ModelManager(str(model_file), MODEL, OUTPUT_FILE, 'iwc')
-    ProductGrid(model, obs, MODEL, 'iwc')
+    ProductGrid(model, obs)
     assert product + '_' + MODEL in model.data.keys()
 
 
 @pytest.mark.parametrize("product", [
     "lwc", "lwc_adv"])
-def test_append_data2object_cf(product, model_file, obs_file):
+def test_append_data2object_lwc(product, model_file, obs_file):
     obs = ObservationManager('lwc', str(obs_file))
     model = ModelManager(str(model_file), MODEL, OUTPUT_FILE, 'lwc')
     ProductGrid(model, obs)
