@@ -103,7 +103,8 @@ class AdvanceProductMethods(DataSource):
             raise ValueError('No ice cloud input data')
         return cf_filtered
 
-    def mask_weird_indices(self, cf, iwc, lwc):
+    @staticmethod
+    def mask_weird_indices(cf, iwc, lwc):
         cf_filtered = np.copy(cf)
         weird_ind = (iwc / cf > 0.5e-3) & (cf < 0.001)
         weird_ind = weird_ind | (iwc == 0) & (lwc == 0) & (cf == 0)
@@ -115,7 +116,8 @@ class AdvanceProductMethods(DataSource):
         cloud_iwc = iwc[ice_ind] / cf_filtered[ice_ind] * 1e3
         return cloud_iwc, ice_ind
 
-    def get_ice_indices(self, cf_filtered, iwc, lwc):
+    @staticmethod
+    def get_ice_indices(cf_filtered, iwc, lwc):
         return np.where((cf_filtered > 0) & (iwc > 0) & (lwc < iwc/10))
 
     def iwc_variance(self, h, ice_ind):
@@ -128,10 +130,8 @@ class AdvanceProductMethods(DataSource):
     def calculate_variance_iwc(self, w_shear, ice_ind):
         return 10**(0.3*np.log10(self._model_obj.resolution_h) - 0.04*w_shear[ice_ind] - 1.03)
 
-    def calculate_wind_shear(self, wind, u, v, height):
-        u = self._model_obj._cut_off_extra_levels(u)
-        v = self._model_obj._cut_off_extra_levels(v)
-        height = self._model_obj._cut_off_extra_levels(height)
+    @staticmethod
+    def calculate_wind_shear(wind, u, v, height):
         grand_winds = []
         for w in (wind, u, v):
             grad_w = np.zeros(w.shape)
@@ -178,5 +178,6 @@ class AdvanceProductMethods(DataSource):
         obs_index = iwc_dist > iwc_min
         return obs_index
 
-    def filter_cirrus(self, p_iwc, obs_index, cf_filtered):
+    @staticmethod
+    def filter_cirrus(p_iwc, obs_index, cf_filtered):
         return (np.sum(p_iwc*obs_index)/np.sum(p_iwc))*cf_filtered
