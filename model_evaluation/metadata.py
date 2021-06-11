@@ -16,7 +16,7 @@ MetaData.__new__.__defaults__ = (None,) * len(MetaData._fields)
 MODEL_ATTRIBUTES = {
     'time': MetaData(
         long_name='Time UTC',
-        comment='Starting time of control run + cycle',
+        comment='Starting time of control run + cycle.',
         axis='T',
     ),
     'latitude': MetaData(
@@ -91,7 +91,7 @@ CYCLE_ATTRIBUTES = {
     'rh': MetaData(
         long_name='Relative humidity',
         units='1',
-        comment='With respect to liquid above 0 degrees C and with respect to ice below 0 degrees C.'
+        comment='With respect to liquid above 0 degrees C and with respect to ice below 0 degrees C'
     )
 }
 
@@ -99,6 +99,12 @@ MODEL_L3_ATTRIBUTES = {
     'cf': MetaData(
         long_name='Cloud fraction of model grid point',
         units='1'
+    ),
+    'cf_cirrus': MetaData(
+            long_name='Cloud fraction of model grid point with filtered cirrus fraction',
+            units='1',
+            comment='High level cirrus fraction is reduce do to lack if a radar capability to observe '
+                    'correctly particles small and high.'
     ),
     'iwc': MetaData(
         long_name='Ice water content of model grid point',
@@ -143,24 +149,24 @@ REGRID_PRODUCT_ATTRIBUTES = {
     'iwc': MetaData(
         long_name='Observed ice water content reshaped to model dimensions by averaging',
         units='kg m-3',
-        comment='Read from iwc-file produce with CloudnetPy'
+        comment='Read from iwc-file produce with CloudnetPy.'
     ),
     'iwc_mask': MetaData(
         long_name='Observed and masked ice water content reshaped to model grid by averaging',
         units='kg m-3',
         comment='Read from iwc-file  produce with CloudnetPy, but bits other than retrieval status of '
-                'Reliable retrieval and Uncorrected liquid attenuation is masked away'
+                'Reliable retrieval and Uncorrected liquid attenuation is masked away.'
     ),
     'iwc_att': MetaData(
         long_name='Observed ice water content with attenuation reshaped to model grid by averaging',
         units='kg m-3',
         comment='Read from iwc-file produce with CloudnetPy. By Masking data bit from retrieval status with '
-                'attenuation is remain'
+                'attenuation is remain.'
     ),
     'iwc_rain': MetaData(
         long_name='Observed ice water content with raining reshaped to model grid by averaging',
         units='kg m-3',
-        comment='Read from iwc-file produce with CloudnetPy'
+        comment='Read from iwc-file produce with CloudnetPy.'
     ),
     'iwc_adv': MetaData(
         long_name='Observed ice water content reshaped to model advection grid by averaging',
@@ -173,8 +179,7 @@ REGRID_PRODUCT_ATTRIBUTES = {
         units='kg m-3',
         comment='Read from iwc-file  produce with CloudnetPy, but bits other than retrieval status of '
                 'Reliable retrieval and Uncorrected liquid attenuation is masked away. '
-                'Regriding produce take notice of '
-                'mass advection cross grid area.'
+                'Regriding produce take notice of mass advection cross grid area.'
     ),
     'iwc_att_adv': MetaData(
         long_name='Observed ice water content with attenuation reshaped to model advection grid by averaging',
