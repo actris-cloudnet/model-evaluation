@@ -41,7 +41,8 @@ def process_observation_resample2model(model: str,
         model_obj = ModelManager(m_file, model, output_file, obs)
         try:
             AdvanceProductMethods(model_obj, m_file, product_obj)
-        except ValueError:
+        except ValueError as e:
+            print("Warning: {0}".format(e))
             pass
         ProductGrid(model_obj, product_obj)
         attributes = add_time_attribute(product_obj.date)

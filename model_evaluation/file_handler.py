@@ -28,7 +28,10 @@ def update_attributes(model_downsample_variables: dict, attributes: dict):
         elif '_'.join(key_parts[0:-2]) in REGRID_PRODUCT_ATTRIBUTES:
             model_downsample_variables[key].set_attributes(REGRID_PRODUCT_ATTRIBUTES['_'.join(key_parts[0:-2])])
         elif key_parts[1] in MODEL_L3_ATTRIBUTES:
-            model_downsample_variables[key].set_attributes(MODEL_L3_ATTRIBUTES['_'.join(key_parts[1:])])
+            try:
+                model_downsample_variables[key].set_attributes(MODEL_L3_ATTRIBUTES['_'.join(key_parts[1:])])
+            except KeyError:
+                model_downsample_variables[key].set_attributes(MODEL_L3_ATTRIBUTES[key_parts[1]])
         elif '_'.join(key_parts[1:]) in CYCLE_ATTRIBUTES:
             model_downsample_variables[key].set_attributes(CYCLE_ATTRIBUTES['_'.join(key_parts[1:])])
         elif '_'.join(key_parts[1:-1]) in CYCLE_ATTRIBUTES:
