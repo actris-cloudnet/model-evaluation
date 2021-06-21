@@ -20,8 +20,9 @@ def generate_L3_day_plots(nc_file: str,
                           model: str,
                           fig_type: str = 'group',
                           stats: list = ['error', 'area', 'hist', 'vertical'],
+                          var_list: list = None,
                           save_path: str = None,
-                          show: bool = True):
+                          show: bool = False):
     """ Generate visualizations for level 3 dayscale products.
         With figure type visualizations can be subplot in group, pair, single or
         statistic of given product. In group fig_type all different methods are plot
@@ -42,6 +43,8 @@ def generate_L3_day_plots(nc_file: str,
             stats (list, optional): List of statistical methods to visualize in
                                     'statistic' fig_type generation. Default is
                                     all types, but methods can be called individually.
+            var_list (list, optional): List of variables to be plotted. If None, all product
+                                    variables in file will be plotted
             save_path (str, optional): If not None, visualization is saved
                                        to path location
             show (bool, optional): If True, shows visualization
@@ -69,12 +72,10 @@ def generate_L3_day_plots(nc_file: str,
     model_info = MODELS[model]
     model_name = model_info.model_name
     if fig_type in ['group', 'pair']:
-        name_set = p_tools.parse_wanted_names(nc_file, product, model)
-        for i, names in enumerate(name_set):
+        name_set = p_tools.parse_wanted_names(nc_file, product, model, var_list)
+        for names in name_set:
             try:
-                cycles = model_info.cycle
-                cycles = [x.strip() for x in cycles.split(',')]
-                cycle_names = p_tools.sort_cycles(names, model)
+                cycle_names, cycles = p_tools.sort_cycles(names, model)
                 for i, c_names in enumerate(cycle_names):
                     if not c_names:
                         raise AttributeError
@@ -86,11 +87,9 @@ def generate_L3_day_plots(nc_file: str,
                           save_path, show]
                 getattr(cls, f"get_{fig_type}_plots")(*params)
     else:
-        names = p_tools.select_vars2stats(nc_file, product)
+        names = p_tools.select_vars2stats(nc_file, product, var_list)
         try:
-            cycles = model_info.cycle
-            cycles = [x.strip() for x in cycles.split(',')]
-            cycle_names = p_tools.sort_cycles(names, model)
+            cycle_names, cycles = p_tools.sort_cycles(names, model)
             for i, c_names in enumerate(cycle_names):
                 if not c_names:
                     raise AttributeError
@@ -289,11 +288,13 @@ def initialize_statistic_plots(j: int, max_len: int, ax, method: str,
         cloud_plt._set_ax(ax, 12)
     if method == 'hist':
         plot_histogram(ax, day_stat, variable_info)
+        ax.legend(loc='lower left', ncol=2, fontsize=12, bbox_to_anchor=(-0.03, -0.13))
         if j == max_len - 1 and (max_len % 2) == 0:
             ax.legend(loc='lower left', ncol=4, fontsize=12, bbox_to_anchor=(-0.03, -0.24))
     if method == 'vertical':
         plot_vertical_profile(ax, day_stat, args, variable_info)
         p_tools.set_yaxis(ax, 12)
+        ax.legend(loc='lower left', ncol=2, fontsize=12, bbox_to_anchor=(-0.03, -0.13))
         if j == max_len - 1 and (max_len % 2) == 0:
             ax.legend(loc='lower left', ncol=4, fontsize=12, bbox_to_anchor=(-0.03, -0.2))
 
@@ -325,6 +326,9 @@ def plot_data_area(ax, day_stat: DayStatistics, model: ma.array, obs: ma.array,
     legend_elements = [Patch(facecolor='khaki', edgecolor='k', label='Model'),
                        Patch(facecolor=cmap(0.5), edgecolor='k', label='Common'),
                        Patch(facecolor=cmap(1.), edgecolor='k', label='Observation')]
+    if len(np.unique(data)) < 4:
+        legend_elements = [Patch(facecolor='khaki', edgecolor='k', label='Original model'),
+                           Patch(facecolor=cmap(1.), edgecolor='k', label='Filtered model')]
     ax.legend(handles=legend_elements, loc='lower left', ncol=3, fontsize=12, bbox_to_anchor=(-0.005, -0.25))
 
 
@@ -379,20 +383,22 @@ def initialize_figure(n_subplots: int, stat: str = ''):
     fig.subplots_adjust(left=0.06, right=0.73, hspace=0.31)
     if stat == 'area':
         fig.subplots_adjust(left=0.06, right=0.73, hspace=0.33)
-    if stat == 'hist':
-        fig, axes = plt.subplots(int(n_subplots/2), 2,
-                                 figsize=(12 + (n_subplots - (n_subplots/2 + 1)) * 1,
-                                          6 + (n_subplots - (n_subplots/2 + 1)) * 6))
-        fig.subplots_adjust(top=0.82 + (n_subplots - (n_subplots/2 + 1)) * 0.025,
-                            bottom=0.1, left=0.08, right=0.75, hspace=0.2)
-        axes = axes.flatten()
-    if stat == 'vertical':
+    if stat == 'hist' or stat == 'vertical':
+        fig, axes = plt.subplots(1, 1, figsize=(6, 10))
+        fig.subplots_adjust(top=0.85, left=0.08, right=0.75)
+        if n_subplots > 1:
+            fig, axes = plt.subplots(int(n_subplots/2), 2,
+                                     figsize=(12 + (n_subplots - (n_subplots/2 + 1)) * 1,
+                                              6 + (n_subplots - (n_subplots/2 + 1)) * 6))
+            fig.subplots_adjust(top=0.82 + (n_subplots - (n_subplots/2 + 1)) * 0.025,
+                                bottom=0.1, left=0.08, right=0.75, hspace=0.2)
+            axes = axes.flatten()
+    if stat == 'vertical' and n_subplots > 1:
         fig, axes = plt.subplots(int(n_subplots/2), 2,
                                  figsize=(12 + (n_subplots - (n_subplots/2 + 1)) * 1.2,
                                           7 + (n_subplots - (n_subplots/2 + 1)) * 7.3))
         fig.subplots_adjust(top=0.842 + (n_subplots - (n_subplots/2 + 1)) * 0.012,
                             bottom=0.1, left=0.08, right=0.75, hspace=0.16)
-        axes = axes.flatten()
     if n_subplots == 1:
         axes = [axes]
     return fig, axes

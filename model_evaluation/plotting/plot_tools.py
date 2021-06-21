@@ -4,12 +4,16 @@ import netCDF4
 from matplotlib import cm
 from typing import Tuple
 from matplotlib.colors import ListedColormap
+from typing import Union
 from model_evaluation.model_metadata import MODELS
 
 
-def parse_wanted_names(nc_file: str, name: str, model: str) -> Tuple:
+def parse_wanted_names(nc_file: str, name: str, model: str, vars: Union[list, None]) -> Tuple:
     """Returns standard and advection lists of product types to plot"""
-    names = netCDF4.Dataset(nc_file).variables.keys()
+    if vars:
+        names = vars
+    else:
+        names = netCDF4.Dataset(nc_file).variables.keys()
     standard_n = [n for n in names if name in n and 'adv' not in n]
     standard_n = sort_model2first_element(standard_n, model)
     advection_n = [n for n in names if name in n and 'adv' in n]
@@ -27,18 +31,22 @@ def sort_model2first_element(a: list, model: str) -> list:
     return a
 
 
-def sort_cycles(names: list, model: str) -> list:
+def sort_cycles(names: list, model: str) -> Tuple:
     model_info = MODELS[model]
     cycles = model_info.cycle
     cycles = [x.strip() for x in cycles.split(',')]
     cycles_names = [[name for name in names if cycle in name] for cycle in cycles]
     cycles_names.sort()
     cycles_names = [c for c in cycles_names if c]
-    return cycles_names
+    cycles = [c for c in cycles for name in cycles_names if c in name[0]]
+    return cycles_names, cycles
 
 
-def select_vars2stats(nc_file, name) -> list:
-    names = netCDF4.Dataset(nc_file).variables.keys()
+def select_vars2stats(nc_file: str, name: str, vars: Union[list, None]) -> list:
+    if vars:
+        names = vars
+    else:
+        names = netCDF4.Dataset(nc_file).variables.keys()
     return [n for n in names if name in n]
 
 
@@ -85,7 +93,10 @@ def create_segment_values(arrays: list) -> Tuple:
 
     colors = cm.get_cmap('YlGnBu', 256)
     newcolors = colors(np.linspace(0, 1, 256))
+    # No data, model, both, observation
     cmap = ListedColormap(['whitesmoke', 'khaki', newcolors[90], newcolors[140]])
+    if len(np.unique(new_array) < 4):
+        cmap = ListedColormap(['whitesmoke', 'khaki', newcolors[90]])
     return new_array, cmap
 
 
