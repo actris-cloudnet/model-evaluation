@@ -119,6 +119,17 @@ ATTRIBUTES = {
         hist_limits=(0.0, 1.1, 0.1),
         x_title=''
     ),
+    'cf_cirrus': PlotMeta(
+        name='Cloud fraction with filtered Cirrus',
+        cbar='Blues',
+        clabel='',
+        plot_range=(0, 1),
+        plot_scale=_LIN,
+        plot_type='model',
+        hist_bin=10,
+        hist_limits=(0.0, 1.1, 0.1),
+        x_title=''
+    ),
     'iwc': PlotMeta(
         name='Ice water content',
         cbar='viridis',
