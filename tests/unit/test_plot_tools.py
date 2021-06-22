@@ -6,7 +6,6 @@ def test_parse_wanted_names(regrid_file):
     from model_evaluation.plotting.plot_tools import parse_wanted_names
     compare = ['ecmwf_cf', 'cf_ecmwf']
     x, x_adv = parse_wanted_names(regrid_file, 'cf', 'ecmwf')
-    print(x)
     assert x == compare
 
 
@@ -15,6 +14,100 @@ def test_parse_wanted_names_adv(regrid_file):
     compare = ['ecmwf_cf', 'cf_adv_ecmwf']
     x, x_adv = parse_wanted_names(regrid_file, 'cf', 'ecmwf')
     assert x_adv == compare
+
+
+def test_parse_wanted_names_advance(regrid_file):
+    from model_evaluation.plotting.plot_tools import parse_wanted_names
+    compare = ['ecmwf_cf_cirrus', 'cf_ecmwf']
+    x, x_adv = parse_wanted_names(regrid_file, 'cf', 'ecmwf', advance='cirrus')
+    assert x == compare
+
+
+def test_parse_wanted_names_adv_advance(regrid_file):
+    from model_evaluation.plotting.plot_tools import parse_wanted_names
+    compare = ['ecmwf_cf_snow', 'cf_adv_ecmwf']
+    x, x_adv = parse_wanted_names(regrid_file, 'cf', 'ecmwf', advance='snow')
+    assert x_adv == compare
+
+
+def test_parse_wanted_names_fixed_list(regrid_file):
+    from model_evaluation.plotting.plot_tools import parse_wanted_names
+    compare = ['ecmwf_cf', 'ecmwf_cf_cirrus']
+    x, x_adv = parse_wanted_names(regrid_file, 'cf', 'ecmwf', vars=compare)
+    assert x == compare
+
+
+def test_parse_wanted_names_adv_fixed_list(regrid_file):
+    from model_evaluation.plotting.plot_tools import parse_wanted_names
+    compare = ['ecmwf_cf_cirrus', 'cf_adv_ecmwf']
+    x, x_adv = parse_wanted_names(regrid_file, 'cf', 'ecmwf', vars=compare)
+    assert x_adv == compare
+
+
+def test_sort_model2first_element():
+    from model_evaluation.plotting.plot_tools import sort_model2first_element
+    a = ['ec_i', 'cf_ec_i', 'cf_ec_ii', 'ec_ii']
+    e = 'ec'
+    compare = ['ec_i', 'ec_ii', 'cf_ec_i', 'cf_ec_ii']
+    x = sort_model2first_element(a, e)
+    assert x == compare
+
+
+def test_sort_cycles_vars():
+    from model_evaluation.plotting.plot_tools import sort_cycles
+    a = ['era5_cf_1-12', 'era5_cf_7-18', 'cf_era5_1-12', 'cf_era5_7-18']
+    e = 'era5'
+    compare = [['era5_cf_1-12', 'cf_era5_1-12'], ['era5_cf_7-18', 'cf_era5_7-18']]
+    x, y = sort_cycles(a, e)
+    assert x == compare
+
+
+def test_sort_cycles_cycles():
+    from model_evaluation.plotting.plot_tools import sort_cycles
+    a = ['era5_cf_1-12', 'era5_cf_7-18', 'cf_era5_1-12', 'cf_era5_7-18']
+    e = 'era5'
+    compare = ['1-12', '7-18']
+    x, y = sort_cycles(a, e)
+    assert y == compare
+
+
+def test_sort_cycles_vars_missing():
+    from model_evaluation.plotting.plot_tools import sort_cycles
+    a = ['icon_cf_12-23', 'icon_cf_36-47', 'cf_icon_12-23', 'cf_icon_36-47']
+    e = 'icon'
+    compare = [['icon_cf_12-23', 'cf_icon_12-23'], ['icon_cf_36-47', 'cf_icon_36-47']]
+    x, y = sort_cycles(a, e)
+    assert x == compare
+
+
+def test_sort_cycles_cycles_missing():
+    from model_evaluation.plotting.plot_tools import sort_cycles
+    a = ['icon_cf_12-23', 'icon_cf_36-47', 'cf_icon_12-23', 'cf_icon_36-47']
+    e = 'icon'
+    compare = ['12-23', '36-47']
+    x, y = sort_cycles(a, e)
+    assert y == compare
+
+
+def test_select_vars2stats(regrid_file):
+    from model_evaluation.plotting.plot_tools import select_vars2stats
+    compare = ['ecmwf_cf', 'cf_ecmwf', 'cf_adv_ecmwf']
+    x = select_vars2stats(regrid_file, 'cf')
+    assert x == compare
+
+
+def test_select_vars2stats_advance(regrid_file):
+    from model_evaluation.plotting.plot_tools import select_vars2stats
+    compare = ['ecmwf_cf_cirrus', 'cf_ecmwf', 'cf_adv_ecmwf']
+    x = select_vars2stats(regrid_file, 'cf', advance='cirrus')
+    assert x == compare
+
+
+def test_select_vars2stats_fixed_list(regrid_file):
+    from model_evaluation.plotting.plot_tools import select_vars2stats
+    compare = ['ecmwf_cf', 'ecmwf_cf_cirrus', 'cf_adv_ecmwf']
+    x = select_vars2stats(regrid_file, 'cf', vars=compare)
+    assert x == compare
 
 
 def test_read_data_characters(regrid_file):
@@ -46,7 +139,7 @@ def test_create_segment_values():
     obs_mask = np.array([[0, 0, 0, 0],
                          [0, 0, 1, 0],
                          [1, 0, 1, 1]], dtype=bool)
-    x, y = create_segment_values((model_mask, obs_mask))
+    x, y = create_segment_values([model_mask, obs_mask])
     compare = np.array([[2, 3, 3, 2],
                         [2, 2, 0, 2],
                         [0, 2, 1, 1]])
