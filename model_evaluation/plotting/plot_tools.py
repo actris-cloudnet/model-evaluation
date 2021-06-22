@@ -13,7 +13,7 @@ def parse_wanted_names(nc_file: str, name: str, model: str, vars: Union[list, No
     if vars:
         names = vars
     else:
-        names = netCDF4.Dataset(nc_file).variables.keys()
+        names = parse_dataset_keys(nc_file, name, advance, model)
     standard_n = [n for n in names if name in n and 'adv' not in n]
     standard_n = sort_model2first_element(standard_n, model)
     advection_n = [n for n in names if name in n and 'adv' in n]
@@ -31,7 +31,7 @@ def sort_model2first_element(a: list, model: str) -> list:
     return a
 
 
-def sort_cycles(names: list, model: str) -> Tuple:
+def sort_cycles(names: list, model: str) -> Tuple[list, list]:
     model_info = MODELS[model]
     cycles = model_info.cycle
     cycles = [x.strip() for x in cycles.split(',')]
@@ -42,7 +42,8 @@ def sort_cycles(names: list, model: str) -> Tuple:
     return cycles_names, cycles
 
 
-def select_vars2stats(nc_file: str, name: str, vars: Union[list, None]) -> list:
+def select_vars2stats(nc_file: str, name: str, vars: Union[list, None] = None,
+                      advance: Union[str, None] = None) -> list:
     if vars:
         names = vars
     else:
@@ -75,7 +76,7 @@ def read_data_characters(nc_file: str, name: str, model: str) -> Tuple:
     return data, x, y
 
 
-def reshape_1d2nd(one_d:  np.ndarray, two_d:  np.ndarray) -> np.ndarray:
+def reshape_1d2nd(one_d:  np.array, two_d:  np.array) -> np.array:
     new_arr = np.zeros(two_d.shape)
     for i in range(len(two_d[0])):
         new_arr[:, i] = one_d
@@ -105,7 +106,7 @@ def set_yaxis(ax, max_y: float, min_y: float = 0.0):
     ax.set_ylabel('Height (km)', fontsize=13)
 
 
-def rolling_mean(data: ma.array, n: int = 4) -> np.ndarray:
+def rolling_mean(data: np.array, n: int = 4) -> np.array:
     mmr = []
     for i in range(len(data)):
         if not data[i:i+n].mask.all():
@@ -115,7 +116,7 @@ def rolling_mean(data: ma.array, n: int = 4) -> np.ndarray:
     return np.asarray(mmr)
 
 
-def change2one_dim_axes(x: ma.array, y: ma.array, data: ma.array) -> Tuple:
+def change2one_dim_axes(x: np.array, y: np.array, data: np.array) -> Tuple:
     # If any mask in x or y, change 2d to 1d axes values
     # Common shape need to match 2d data.
     for ax in [x, y]:

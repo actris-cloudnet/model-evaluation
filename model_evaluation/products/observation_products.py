@@ -1,6 +1,7 @@
 import numpy as np
 import numpy.ma as ma
 from datetime import datetime
+from typing import Union
 from cloudnetpy import utils
 from cloudnetpy.categorize.datasource import DataSource
 from cloudnetpy.products.product_tools import CategorizeBits
@@ -34,13 +35,13 @@ class ObservationManager(DataSource):
         return datetime(int(self.dataset.year), int(self.dataset.month),
                         int(self.dataset.day), 0, 0, 0)
 
-    def _get_radar_frequency(self):
+    def _get_radar_frequency(self) -> Union[np.array, None]:
         try:
             return self.getvar('radar_frequency')
         except KeyError:
             return None
 
-    def _get_z_sensitivity(self):
+    def _get_z_sensitivity(self) -> Union[np.array, None]:
         try:
             return self.getvar('Z_sensitivity')
         except KeyError:
@@ -56,7 +57,7 @@ class ObservationManager(DataSource):
                 self._generate_iwc_masks()
         self.append_data(self.getvar('height'), 'height')
 
-    def _generate_cf(self) -> ma.array:
+    def _generate_cf(self) -> np.array:
         """Generates cloud fractions using categorize bits and masking conditions"""
         categorize_bits = CategorizeBits(self._file)
         cloud_mask = self._classify_basic_mask(categorize_bits.category_bits)
@@ -65,7 +66,7 @@ class ObservationManager(DataSource):
         #    cloud_mask[~self._rain_index(), :] = ma.masked
         return cloud_mask
 
-    def _classify_basic_mask(self, bits: dict) -> ma.array:
+    def _classify_basic_mask(self, bits: dict) -> np.array:
         cloud_mask = bits['droplet'] + bits['falling'] * 2
         cloud_mask[bits['falling'] & bits['cold']] = cloud_mask[bits['falling'] & bits['cold']] + 2
         cloud_mask[bits['aerosol']] = 6
@@ -73,7 +74,7 @@ class ObservationManager(DataSource):
         cloud_mask[bits['aerosol'] & bits['insect']] = 8
         return cloud_mask
 
-    def _mask_cloud_bits(self, cloud_mask: ma.array) -> ma.array:
+    def _mask_cloud_bits(self, cloud_mask: np.array) -> np.array:
         """Creates cloud fraction"""
         for i in [1, 3, 4, 5]:
             cloud_mask[cloud_mask == i] = 1
@@ -89,14 +90,14 @@ class ObservationManager(DataSource):
         except RuntimeError:
             return False
 
-    def _get_rainrate_threshold(self):
+    def _get_rainrate_threshold(self) -> int:
         wband = utils.get_wl_band(self.radar_freq)
         rainrate_threshold = 8
         if 90 < wband < 100:
             rainrate_threshold = 2
         return rainrate_threshold
 
-    def _rain_index(self):
+    def _rain_index(self) -> np.array:
         rainrate = self.getvar('rainrate')
         rainrate_threshold = self._get_rainrate_threshold()
         return rainrate > rainrate_threshold
@@ -110,20 +111,20 @@ class ObservationManager(DataSource):
         self._get_rain_iwc(iwc_status.data)
         self._mask_iwc(iwc, iwc_status)
 
-    def _mask_iwc(self, iwc: ma.array, iwc_status: ma.array):
+    def _mask_iwc(self, iwc: np.array, iwc_status: np.array):
         """Leaves only data of reliable data and corrected liquid attenuation"""
         iwc_mask = ma.copy(iwc)
         iwc_mask[np.bitwise_and(iwc_status != 1, iwc_status != 2)] = ma.masked
         self.append_data(iwc_mask, 'iwc')
 
-    def _mask_iwc_att(self, iwc: ma.array, iwc_status: ma.array):
+    def _mask_iwc_att(self, iwc: np.array, iwc_status: np.array):
         """Leaves only data where is reliable data, corrected liquid attenuation
         and uncorrected liquid attenuation"""
         iwc_att = ma.copy(iwc)
         iwc_att[iwc_status > 3] = ma.masked
         self.append_data(iwc_att, 'iwc_att')
 
-    def _get_rain_iwc(self, iwc_status: ma.array):
+    def _get_rain_iwc(self, iwc_status: np.array):
         """Finds columns where is rain, return boolean of x-axis shape"""
         iwc_rain = np.zeros(iwc_status.shape, dtype=bool)
         iwc_rain[iwc_status == 5] = 1

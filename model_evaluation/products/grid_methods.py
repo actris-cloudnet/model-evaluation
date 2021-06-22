@@ -1,4 +1,5 @@
 import numpy as np
+from typing import Tuple
 from model_evaluation.products import tools as tl
 from cloudnetpy import utils
 from model_evaluation.products.observation_products import ObservationManager
@@ -74,14 +75,14 @@ class ProductGrid:
             return self._iwc_method_storage()
         return self._product_method_storage()
 
-    def _cf_method_storage(self):
+    def _cf_method_storage(self) -> Tuple[dict, dict]:
         cf_dict = {'cf_V': np.zeros(self._model_height.shape),
                    'cf_A': np.zeros(self._model_height.shape)}
         cf_adv_dict = {'cf_V_adv': np.zeros(self._model_height.shape),
                        'cf_A_adv': np.zeros(self._model_height.shape)}
         return cf_dict, cf_adv_dict
 
-    def _iwc_method_storage(self):
+    def _iwc_method_storage(self) -> Tuple[dict, dict]:
         iwc_dict = {'iwc': np.zeros(self._model_height.shape),
                     'iwc_att': np.zeros(self._model_height.shape),
                     'iwc_rain': np.zeros(self._model_height.shape)}
@@ -90,13 +91,13 @@ class ProductGrid:
                         'iwc_rain_adv': np.zeros(self._model_height.shape)}
         return iwc_dict, iwc_adv_dict
 
-    def _product_method_storage(self):
+    def _product_method_storage(self) -> Tuple[dict, dict]:
         product_dict = {f'{self._obs_obj.obs}': np.zeros(self._model_height.shape)}
         product_adv_dict = {f'{self._obs_obj.obs}_adv': np.zeros(self._model_height.shape)}
         return product_dict, product_adv_dict
 
     @staticmethod
-    def _regrid_cf(storage: dict, i: int, j: int, data: np.ma.array):
+    def _regrid_cf(storage: dict, i: int, j: int, data: np.array) -> dict:
         """Calculates average cloud fraction value to grid point"""
         for key, downsample in storage.items():
             if data is not None:
@@ -108,7 +109,7 @@ class ProductGrid:
             storage[key] = downsample
         return storage
 
-    def _reshape_data_to_window(self, ind: np.ndarray, x_ind: np.ndarray, y_ind: np.ndarray):
+    def _reshape_data_to_window(self, ind: np.array, x_ind: np.array, y_ind: np.array) -> np.array:
         """Reshapes True observation values to windows shape"""
         window_size = tl.get_obs_window_size(x_ind, y_ind)
         if window_size is not None:
@@ -116,7 +117,7 @@ class ProductGrid:
         return window_size
 
     def _regrid_iwc(self, storage: dict, i: int, j: int,
-                    ind_rain: np.ma.MaskedArray, ind_no_rain: np.ma.array):
+                    ind_rain: np.array, ind_no_rain: np.array) -> dict:
         """Calculates average iwc value for grid point"""
         for key, downsample in storage.items():
             if not self._obs_data[ind_no_rain].mask.all():
@@ -134,7 +135,7 @@ class ProductGrid:
             storage[key] = downsample
         return storage
 
-    def _regrid_product(self, storage: dict, i: int, j: int, ind: np.ndarray):
+    def _regrid_product(self, storage: dict, i: int, j: int, ind: np.array) -> dict:
         """Calculates average of standard product value to grid point"""
         for key, downsample in storage.items():
             if not self._obs_data[ind].mask.all() and ind.any():

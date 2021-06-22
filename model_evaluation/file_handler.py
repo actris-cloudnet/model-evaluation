@@ -3,6 +3,7 @@ import netCDF4
 from datetime import datetime
 from cloudnetpy import utils, output
 from model_evaluation import version
+from model_evaluation.products.model_products import ModelManager
 from model_evaluation.metadata import MetaData, MODEL_ATTRIBUTES, CYCLE_ATTRIBUTES, MODEL_L3_ATTRIBUTES, \
     REGRID_PRODUCT_ATTRIBUTES
 
@@ -58,7 +59,7 @@ def save_downsampled_file(id_mark: str,
     root_group = output.init_file(file_name, dimensions, obj.data)
     _add_standard_global_attributes(root_group)
     output.add_file_type(root_group, id_mark)
-    root_group.title = f"Resampled {id_mark.capitalize().replace('_', ' of ')} from {obj.dataset.location}"
+    root_group.title = f"Downsampled {id_mark.capitalize().replace('_', ' of ')} from {obj.dataset.location}"
     _add_source(root_group, objects, files)
     output.copy_global(obj.dataset, root_group, ('location', 'day', 'month', 'year'))
     try:
@@ -69,7 +70,7 @@ def save_downsampled_file(id_mark: str,
     root_group.close()
 
 
-def add_var2ncfile(obj: object, file_name: str):
+def add_var2ncfile(obj: ModelManager, file_name: str):
     nc_file = netCDF4.Dataset(file_name, 'r+', format='NETCDF4_CLASSIC')
     _write_vars2nc(nc_file, obj.data)
     nc_file.close()

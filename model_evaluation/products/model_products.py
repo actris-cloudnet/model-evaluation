@@ -95,7 +95,7 @@ class ModelManager(DataSource):
             return var[0]
         return var
 
-    def _get_water_continent(self, var: str):
+    def _get_water_continent(self, var: str) -> np.array:
         p_name, T_name, lwc_name = self._get_model_var_names('p', 'T', var)
         p, T, q = self._set_variables(p_name, T_name, lwc_name)
         wc = self._calc_water_content(q, p, T)

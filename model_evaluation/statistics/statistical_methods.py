@@ -45,7 +45,7 @@ class DayStatistics:
         self.obs_array = observation
         self._generate_day_statistics()
 
-    def _get_method_attr(self) -> Tuple:
+    def _get_method_attr(self) -> Tuple[str, tuple]:
         full_name = ""
         if self.method == 'error':
             full_name = 'relative_error'
@@ -69,21 +69,21 @@ class DayStatistics:
             print(error)
 
 
-def relative_error(product: list, model: ma.array, observation: ma.array) -> Tuple:
+def relative_error(product: list, model: ma.array, observation: ma.array) -> Tuple[float, str]:
     model, observation = combine_masked_indices(model, observation)
     error = ((model - observation) / observation) * 100
     title = f"{product[1]} vs {product[-1]}"
     return np.round(error, 2), title
 
 
-def absolute_error(product: list, model: ma.array, observation: ma.array) -> Tuple:
+def absolute_error(product: list, model: ma.array, observation: ma.array) -> Tuple[float, str]:
     model, observation = combine_masked_indices(model, observation)
     error = (observation - model) * 100
     title = f"{product[1]} vs {product[-1]}"
     return np.round(error, 2), title
 
 
-def combine_masked_indices(model: ma.array, observation: ma.array):
+def combine_masked_indices(model: ma.array, observation: ma.array) -> Tuple[np.array, np.array]:
     """ Connects two array masked indices to one and add in two array same mask """
     observation[np.where(np.isnan(observation))] = ma.masked
     model[model < np.min(observation)] = ma.masked
@@ -93,7 +93,7 @@ def combine_masked_indices(model: ma.array, observation: ma.array):
     return model, observation
 
 
-def calc_common_area_sum(product: list, model: ma.array, observation: ma.array) -> Tuple:
+def calc_common_area_sum(product: list, model: ma.array, observation: ma.array) -> Tuple[float, str]:
     def _indices_of_mask_sum():
         # Calculate percentage value of common area of indices from two arrays.
         # Results is total number of common indices with value

@@ -2,6 +2,7 @@ import importlib
 import numpy as np
 import numpy.ma as ma
 import cloudnetpy.utils as cl_tools
+from typing import Union, Tuple
 from scipy.special import gamma
 from cloudnetpy.categorize.datasource import DataSource
 from model_evaluation.products.model_products import ModelManager
@@ -67,7 +68,7 @@ class AdvanceProductMethods(DataSource):
         cf_filtered[cf_filtered < 0.05] = ma.masked
         self._model_obj.append_data(cf_filtered, f'{self._model_obj.model}_cf_cirrus{self._model_obj._cycle}')
 
-    def getvar_from_object(self, *args):
+    def getvar_from_object(self, *args: Union[str, list]) -> list:
         var = []
         for arg in args:
             v_name = self._model_obj._get_model_var_names(arg)
@@ -78,7 +79,7 @@ class AdvanceProductMethods(DataSource):
             return var[0]
         return var
 
-    def remove_extra_levels(self, *args):
+    def remove_extra_levels(self, *args: Union[np.array, list]) -> list:
         var = []
         for arg in args:
             var.append(self._model_obj._cut_off_extra_levels(arg))
@@ -86,52 +87,53 @@ class AdvanceProductMethods(DataSource):
             return var[0]
         return var
 
-    def set_frequency_parameters(self):
+    def set_frequency_parameters(self) -> Tuple:
         if 30 <= self._obs_obj.radar_freq <= 40:
             return 0.000242, -0.0186, 0.0699, -1.63
         if 90 <= float(self._obs_obj.radar_freq) <= 100:
             return 0.00058, -0.00706, 0.0923, -0.992
 
-    def fit_z_sensitivity(self, h):
+    def fit_z_sensitivity(self, h: np.array) -> np.array:
         z_sen = [cl_tools.rebin_1d(self._obs_obj.height, self._obs_obj.z_sensit, h[i])
                  for i in range(len(h))]
         return np.asarray(z_sen)
 
-    def filter_high_iwc_low_cf(self, cf, iwc, lwc):
+    def filter_high_iwc_low_cf(self, cf: np.array, iwc: np.array, lwc: np.array) -> np.array:
         cf_filtered = self.mask_weird_indices(cf, iwc, lwc)
         if np.sum((iwc > 0) & (lwc < iwc/10) & (cf_filtered > 0)) == 0:
             raise ValueError('No ice cloud input data')
         return cf_filtered
 
     @staticmethod
-    def mask_weird_indices(cf, iwc, lwc):
+    def mask_weird_indices(cf: np.array, iwc: np.array, lwc: np.array) -> np.array:
         cf_filtered = np.copy(cf)
         weird_ind = (iwc / cf > 0.5e-3) & (cf < 0.001)
         weird_ind = weird_ind | (iwc == 0) & (lwc == 0) & (cf == 0)
         cf_filtered[weird_ind] = ma.masked
         return cf_filtered
 
-    def find_ice_in_clouds(self, cf_filtered, iwc, lwc):
+    def find_ice_in_clouds(self, cf_filtered: np.array, iwc: np.array,
+                           lwc: np.array) -> Tuple[np.array, np.array]:
         ice_ind = self.get_ice_indices(cf_filtered, iwc, lwc)
         cloud_iwc = iwc[ice_ind] / cf_filtered[ice_ind] * 1e3
         return cloud_iwc, ice_ind
 
     @staticmethod
-    def get_ice_indices(cf_filtered, iwc, lwc):
+    def get_ice_indices(cf_filtered: np.array, iwc: np.array, lwc: np.array) -> np.array:
         return np.where((cf_filtered > 0) & (iwc > 0) & (lwc < iwc/10))
 
-    def iwc_variance(self, h, ice_ind):
+    def iwc_variance(self, h: np.array, ice_ind: np.array) -> np.array:
         u, v = self._model_obj._set_variables('uwind', 'vwind')
         u, v = self.remove_extra_levels(u, v)
         w_shear = self.calculate_wind_shear(self._model_obj.wind, u, v, h)
         variance_iwc = self.calculate_variance_iwc(w_shear, ice_ind)
         return variance_iwc
 
-    def calculate_variance_iwc(self, w_shear, ice_ind):
+    def calculate_variance_iwc(self, w_shear: np.array, ice_ind: np.array) -> float:
         return 10**(0.3*np.log10(self._model_obj.resolution_h) - 0.04*w_shear[ice_ind] - 1.03)
 
     @staticmethod
-    def calculate_wind_shear(wind, u, v, height):
+    def calculate_wind_shear(wind, u: np.array, v: np.array, height: np.array) -> np.array:
         grand_winds = []
         for w in (wind, u, v):
             grad_w = np.zeros(w.shape)
@@ -145,9 +147,9 @@ class AdvanceProductMethods(DataSource):
         w_shear[grand_winds[0] < 0] = 0 - w_shear[grand_winds[0] < 0]
         return w_shear
 
-    def calculate_iwc_distribution(self, cloud_iwc, f_variance_iwc):
-        n_std = 5
-        n_dist = 250
+    @staticmethod
+    def calculate_iwc_distribution(cloud_iwc: float, f_variance_iwc: float,
+                                   n_std: int = 5, n_dist: int = 250) -> np.array:
         finish = cloud_iwc + n_std*(np.sqrt(f_variance_iwc) * cloud_iwc)
         iwc_dist = np.arange(0, finish, finish/(n_dist-1))
         if cloud_iwc < iwc_dist[2]:
@@ -156,12 +158,11 @@ class AdvanceProductMethods(DataSource):
         return iwc_dist
 
     @staticmethod
-    def gamma_distribution(iwc_dist, f_variance_iwc, cloud_iwc):
+    def gamma_distribution(iwc_dist: np.array, f_variance_iwc: float, cloud_iwc: float) -> np.array:
         def calculate_gamma_dist():
             alpha = 1/f_variance_iwc
-            p_iwc = 1/gamma(alpha) * (alpha/cloud_iwc)**alpha * \
+            return 1/gamma(alpha) * (alpha/cloud_iwc)**alpha * \
                        iwc_dist[i]**(alpha-1) * ma.exp(-(alpha*iwc_dist[i]/cloud_iwc))
-            return p_iwc
 
         p_iwc = np.zeros(iwc_dist.shape)
         for i in range(len(iwc_dist)):
@@ -169,7 +170,8 @@ class AdvanceProductMethods(DataSource):
         return p_iwc
 
     @staticmethod
-    def get_observation_index(iwc_dist, tZT, tT, tZ, t, temperature, z_sen):
+    def get_observation_index(iwc_dist: np.array, tZT: float, tT: float, tZ: float,
+                              t: float, temperature: float, z_sen: float) -> np.array:
         def calculate_min_iwc():
             min_iwc = 10**(tZT*z_sen*temperature + tT*temperature + tZ*z_sen + t)
             return min_iwc
@@ -179,5 +181,5 @@ class AdvanceProductMethods(DataSource):
         return obs_index
 
     @staticmethod
-    def filter_cirrus(p_iwc, obs_index, cf_filtered):
+    def filter_cirrus(p_iwc: np.array, obs_index: np.array, cf_filtered: np.array) -> np.array:
         return (np.sum(p_iwc*obs_index)/np.sum(p_iwc))*cf_filtered

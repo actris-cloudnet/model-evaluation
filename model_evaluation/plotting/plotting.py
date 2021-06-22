@@ -2,6 +2,7 @@ import sys, os
 import numpy as np
 import numpy.ma as ma
 import matplotlib.pyplot as plt
+from typing import Tuple
 from collections import namedtuple
 from matplotlib.patches import Patch
 from model_evaluation.statistics.statistical_methods import DayStatistics
@@ -120,6 +121,7 @@ def get_group_plots(product: str, names: list, nc_file: str, model: str, site: s
             nc_file (str): Path to a source file
             model (str): Name of used model in a downsampling process
             site (str): Name of site in current case
+            model_name (str): Long name of a model
             save_path (str): Path for saving figures
             show (bool): Show figure before saving if True
             cycle (str): Name of cycle if exists
@@ -156,6 +158,7 @@ def get_pair_plots(product: str, names: list, nc_file: str, model: str, site: st
             nc_file (str): Path to a source file
             model (str): Name of used model in a downsampling process
             site (str): Name of site in current case
+            model_name (str): Long name of a model
             save_path (str): Path for saving figures
             show (bool): Show figure before saving if True
             cycle (str): Name of cycle if exists
@@ -190,6 +193,7 @@ def get_single_plots(product: str, names: list, nc_file: str, model: str, site: 
             nc_file (str): Path to a source file
             model (str): Name of used model in a downsampling process
             site (str): Name of site in current case
+            model_name (str): Long name of a model
             save_path (str): Path for saving figures
             show (bool): Show figure before saving if True
             cycle (str): Name of cycle if exists
@@ -239,7 +243,7 @@ def get_statistic_plots(product: str, names: list, nc_file: str, model: str,
         nc_file (str): Path to a source file
         model (str): Name of used model in a downsampling process
         site (str): Name of site in current case
-        model_name (str): Official name of used model
+        model_name (str): Long name of a model
         stats (list): List of statistical method to process analysis with.
                       Options are ['error', 'area', 'hist', 'vertical']
         save_path (str): Path for saving figures
@@ -315,7 +319,7 @@ def plot_relative_error(ax, error: np.array, axes: tuple, method: str):
                 transform=ax.transAxes)
 
 
-def plot_data_area(ax, day_stat: DayStatistics, model: ma.array, obs: ma.array,
+def plot_data_area(ax, day_stat: DayStatistics, model: np.array, obs: np.array,
                    axes: tuple):
     data, cmap = p_tools.create_segment_values([model.mask, obs.mask])
     pl = ax.pcolormesh(*axes, data, cmap=cmap)
@@ -377,7 +381,7 @@ def plot_vertical_profile(ax, day_stat: DayStatistics, axes: tuple,
     ax.xaxis.grid(True, 'major')
 
 
-def initialize_figure(n_subplots: int, stat: str = ''):
+def initialize_figure(n_subplots: int, stat: str = '') -> Tuple:
     """ Set up fig and ax object, if subplot"""
     fig, axes = plt.subplots(n_subplots, 1, figsize=(16, 4 + (n_subplots - 1) * 4.8))
     fig.subplots_adjust(left=0.06, right=0.73, hspace=0.31)
