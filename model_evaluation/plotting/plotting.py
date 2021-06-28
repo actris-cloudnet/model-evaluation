@@ -282,12 +282,12 @@ def initialize_statistic_plots(j: int, max_len: int, ax, method: str,
                                day_stat: DayStatistics, model: np.array, obs: np.array,
                                args: tuple, variable_info: namedtuple):
     if method == 'error' or method == 'aerror':
-        plot_relative_error(ax, day_stat.stat_data.T, args, method)
+        plot_relative_error(ax, day_stat.model_stat.T, args, method)
         ax.set_title(day_stat.title, fontsize=14)
         cloud_plt._set_ax(ax, 12)
     if method == 'area':
         plot_data_area(ax, day_stat, model, obs, args)
-        ax.text(0.9, -0.17, f"Common area: {day_stat.stat_data} %",
+        ax.text(0.9, -0.17, f"Common area: {day_stat.model_stat} %",
                 size=12, ha="center", transform=ax.transAxes)
         cloud_plt._set_ax(ax, 12)
     if method == 'hist':
@@ -337,13 +337,14 @@ def plot_data_area(ax, day_stat: DayStatistics, model: np.array, obs: np.array,
 
 
 def plot_histogram(ax, day_stat: DayStatistics, variable_info: namedtuple):
-    weights = np.ones_like(day_stat.stat_data[0][0]) / float(len(day_stat.stat_data[0][0]))
-    ax.hist(day_stat.stat_data[0][0], weights=weights, bins=day_stat.stat_data[0][-1],
-                  alpha=0.7, facecolor='khaki', edgecolor='k', label=f'Model: {day_stat.title[-1]}')
+    weights = np.ones_like(day_stat.model_stat) / float(len(day_stat.model_stat))
+    hist_bins = np.histogram(day_stat.observation_stat, density=True)[-1]
+    ax.hist(day_stat.model_stat, weights=weights, bins=hist_bins, alpha=0.7,
+            facecolor='khaki', edgecolor='k', label=f'Model: {day_stat.title[-1]}')
 
-    weights = np.ones_like(day_stat.stat_data[1][0]) / float(len(day_stat.stat_data[1][0]))
-    ax.hist(day_stat.stat_data[1][0], weights=weights, bins=day_stat.stat_data[1][-1],
-                  alpha=0.7, facecolor='steelblue', edgecolor='k', label=f"Observation")
+    weights = np.ones_like(day_stat.observation_stat) / float(len(day_stat.observation_stat))
+    ax.hist(day_stat.observation_stat, weights=weights, bins=hist_bins, alpha=0.7,
+            facecolor='steelblue', edgecolor='k', label=f"Observation")
     ax.set_xlabel(variable_info.x_title, fontsize=13)
     if variable_info.plot_scale == 'logarithmic':
         ax.ticklabel_format(axis="x", style="sci", scilimits=(0,0))
@@ -354,17 +355,17 @@ def plot_histogram(ax, day_stat: DayStatistics, variable_info: namedtuple):
 
 def plot_vertical_profile(ax, day_stat: DayStatistics, axes: tuple,
                           variable_info: namedtuple):
-    mrm = p_tools.rolling_mean(day_stat.stat_data[0])
-    orm = p_tools.rolling_mean(day_stat.stat_data[-1])
+    mrm = p_tools.rolling_mean(day_stat.model_stat)
+    orm = p_tools.rolling_mean(day_stat.observation_stat)
     if len(axes[-1].shape) > 1:
         axes = axes[-1][0]
     else:
         axes = axes[-1]
-    ax.plot(day_stat.stat_data[0], axes, 'o', markersize=5.5, color='k')
-    ax.plot(day_stat.stat_data[-1], axes, 'o', markersize=5.5, color='k')
-    ax.plot(day_stat.stat_data[0], axes, 'o', markersize=4.5,
+    ax.plot(day_stat.model_stat, axes, 'o', markersize=5.5, color='k')
+    ax.plot(day_stat.observation_stat, axes, 'o', markersize=5.5, color='k')
+    ax.plot(day_stat.model_stat, axes, 'o', markersize=4.5,
             color='orange', label=f"{day_stat.title[-1]}")
-    ax.plot(day_stat.stat_data[-1], axes, 'o', markersize=4.5,
+    ax.plot(day_stat.observation_stat, axes, 'o', markersize=4.5,
             color='green', label='Observation')
 
     ax.plot(mrm, axes, '-', color='k', lw=2.5)

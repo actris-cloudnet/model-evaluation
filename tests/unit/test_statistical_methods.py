@@ -1,9 +1,10 @@
 import numpy as np
+import pytest
 import numpy.ma as ma
 import numpy.testing as testing
 
-PRODUCT_cf = ['cf', 'European Centrum Medium-range waether forecast', 'ecmwf']
-PRODUCT_iwc = ['iwc', 'European Centrum Medium-range waether forecast', 'ecmwf']
+PRODUCT_cf = ['cf', 'ECMWF', 'Cloud fraction']
+PRODUCT_iwc = ['iwc', 'ECMWF', 'Ice water content']
 
 
 def test_relative_error():
@@ -12,7 +13,7 @@ def test_relative_error():
                       [2, 4, 10, 1]])
     observation = ma.array([[3, 2, 5, 4],
                             [4, 6, 8, 4]])
-    x, y = relative_error(PRODUCT_iwc, model, observation)
+    x, y = relative_error(model, observation)
     compare = ma.array([[-66.67, 0.0, -60.0, -25.0],
                         [-50.0, -33.33, 25.0, -75.0]])
     testing.assert_array_almost_equal(x, compare)
@@ -28,7 +29,7 @@ def test_relative_error_mask():
                             [4, 6, 8, 1]])
     observation.mask = np.array([[1, 0, 0, 1],
                            [0, 0, 0, 1]])
-    x, y = relative_error(PRODUCT_iwc, model, observation)
+    x, y = relative_error(model, observation)
     compare = ma.array([[ma.masked, 0.0, -60.0, ma.masked],
                         [-50.0, -83.33, 25.0, ma.masked]])
     testing.assert_array_almost_equal(x, compare)
@@ -40,7 +41,7 @@ def test_relative_error_nan():
                       [2, 4, 10, 1]])
     observation = ma.array([[3, 2, 5, np.nan],
                             [4, np.nan, 8, 4]])
-    x, y = relative_error(PRODUCT_iwc, model, observation)
+    x, y = relative_error(model, observation)
     compare = ma.array([[-66.67, 0.0, -60.0, ma.masked],
                         [-50.0, ma.masked, 25.0, -75.0]])
     testing.assert_array_almost_equal(x, compare)
@@ -52,7 +53,7 @@ def test_absolute_error():
                       [0.2, 0.4, 1.0, 0.0]])
     observation = ma.array([[0.2, 0.2, 0.1, 0.4],
                             [0.4, 0.6, 0.8, 0.2]])
-    x, y = absolute_error(PRODUCT_cf, model, observation)
+    x, y = absolute_error(model, observation)
     compare = ma.array([[10.0, 0.0, -10.0, 10.0],
                         [20.0, 20.0, -20.0, 20.0]])
     testing.assert_array_almost_equal(x, compare)
@@ -64,7 +65,7 @@ def test_absolute_error_nan():
                       [0.2, 0.4, 1.0, 0.0]])
     observation = ma.array([[0.2, np.nan, 0.1, 0.4],
                             [np.nan, 0.6, 0.8, 0.2]])
-    x, y = absolute_error(PRODUCT_cf, model, observation)
+    x, y = absolute_error(model, observation)
     compare = ma.array([[10.0, ma.masked, -10.0, 10.0],
                         [ma.masked, 20.0, -20.0, 20.0]])
     testing.assert_array_almost_equal(x, compare)
@@ -80,7 +81,7 @@ def test_absolute_error_mask():
                             [0.4, 0.6, 0.8, 0.2]])
     observation.mask = np.array([[0, 0, 0, 0],
                            [0, 1, 0, 0]])
-    x, y = absolute_error(PRODUCT_cf, model, observation)
+    x, y = absolute_error(model, observation)
     compare = ma.array([[10.0, 0.0, -10.0, ma.masked],
                         [20.0, ma.masked, -20.0, ma.masked]])
     testing.assert_array_almost_equal(x, compare)
@@ -97,7 +98,6 @@ def test_combine_masked_indices():
     compare_o = ma.array([[3, 2, 5, 4], [4, 6, 8, 4]])
     testing.assert_array_almost_equal(x, compare_m)
     testing.assert_array_almost_equal(y, compare_o)
-
 
 
 def test_combine_masked_indices_min():
@@ -151,7 +151,7 @@ def test_calc_common_area_sum():
                       [2, 4, 10, 1]])
     observation = ma.array([[3, 2, 1, 4],
                             [4, 6, 8, 4]])
-    x, y = calc_common_area_sum(PRODUCT_iwc, model, observation)
+    x, y = calc_common_area_sum(model, observation)
     testing.assert_almost_equal(x, 100)
 
 
@@ -165,7 +165,7 @@ def test_calc_common_area_sum_min():
                             [4, 6, 8, 4]])
     observation.mask = ma.array([[0, 1, 1, 0],
                            [1, 0, 0, 0]])
-    x, y = calc_common_area_sum(PRODUCT_iwc, model, observation)
+    x, y = calc_common_area_sum(model, observation)
     testing.assert_almost_equal(x, 60.0)
 
 
@@ -179,7 +179,7 @@ def test_calc_common_area_sum_nan():
                             [4, 6, np.nan, 4]])
     observation.mask = ma.array([[0, 0, 1, 0],
                            [1, 0, 0, 0]])
-    x, y = calc_common_area_sum(PRODUCT_iwc, model, observation)
+    x, y = calc_common_area_sum(model, observation)
     testing.assert_almost_equal(x, 25.0)
 
 
@@ -193,7 +193,7 @@ def test_calc_common_area_sum_mask():
                             [4, 6, 8, 4]])
     observation.mask = ma.array([[0, 0, 1, 0],
                            [1, 0, 0, 0]])
-    x, y = calc_common_area_sum(PRODUCT_iwc, model, observation)
+    x, y = calc_common_area_sum(model, observation)
     testing.assert_almost_equal(x, 50.0)
 
 
@@ -203,9 +203,14 @@ def test_histogram():
                       [2, 4, 10, 1]])
     observation = ma.array([[3, 2, 1, 4],
                             [4, 6, 8, 4]])
-    compare = np.array([1, 1.7, 2.4, 3.1, 3.8, 4.5, 5.2, 5.9, 6.6, 7.3, 8])
+    compare_x = np.array([1, 2, 2, 3, 2, 4, 8, 1])
+    compare_y = np.array([3, 2, 1, 4, 4, 6, 8, 4])
     x, y = histogram(PRODUCT_iwc, model, observation)
-    testing.assert_array_almost_equal(x[0][-1], compare)
+    print("")
+    print(x)
+    print(y)
+    testing.assert_array_almost_equal(x, compare_x)
+    testing.assert_array_almost_equal(y, compare_y)
 
 
 def test_histogram_mask():
@@ -217,10 +222,12 @@ def test_histogram_mask():
     observation = ma.array([[3, 2, 1, 4],
                             [4, 6, 8, 4]])
     observation.mask = ma.array([[0, 1, 1, 0],
-                           [1, 0, 0, 0]])
-    compare = np.array([3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8])
+                                [1, 0, 0, 0]])
+    compare_x = ma.array([2, 2, 3, 2, 4, 8])
+    compare_y = ma.array([3, 4, 6, 8, 4])
     x, y = histogram(PRODUCT_iwc, model, observation)
-    testing.assert_array_almost_equal(x[0][-1], compare)
+    testing.assert_array_almost_equal(x, compare_x)
+    testing.assert_array_almost_equal(y, compare_y)
 
 
 def test_histogram_nan():
@@ -229,9 +236,11 @@ def test_histogram_nan():
                       [2, 4, 10, 1]])
     observation = ma.array([[3, np.nan, 1, 4],
                             [np.nan, 6, np.nan, 4]])
-    compare = np.array([1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6])
+    compare_x = np.array([1, 2, 2, 3, 2, 4, 6, 1])
+    compare_y = np.array([3, 1, 4, 6, 4])
     x, y = histogram(PRODUCT_iwc, model, observation)
-    testing.assert_array_almost_equal(x[0][-1], compare)
+    testing.assert_array_almost_equal(x, compare_x)
+    testing.assert_array_almost_equal(y, compare_y)
 
 
 def test_vertical_profile():
@@ -242,11 +251,11 @@ def test_vertical_profile():
     observation = ma.array([[3, 1, 1, 4],
                             [4, 3, 8, 0],
                             [5, 5, 3, 2]])
-    x, y = vertical_profile(PRODUCT_iwc, model, observation)
+    x, y = vertical_profile(model, observation)
     model = ma.array([2, 4, 6, 4])
     observation = ma.array([4, 3, 4, 2])
-    testing.assert_array_almost_equal(x[0], model)
-    testing.assert_array_almost_equal(x[-1], observation)
+    testing.assert_array_almost_equal(x, model)
+    testing.assert_array_almost_equal(y, observation)
 
 
 def test_vertical_profile_nan():
@@ -257,11 +266,11 @@ def test_vertical_profile_nan():
     observation = ma.array([[3, 1, 1, np.nan],
                             [np.nan, 3, 8, 0],
                             [5, 5, 3, 2]])
-    x, y = vertical_profile(PRODUCT_iwc, model, observation)
+    x, y = vertical_profile(model, observation)
     model = ma.array([2, 4, 6, 4])
     observation = ma.array([4, 3, 4, 1])
-    testing.assert_array_almost_equal(x[0], model)
-    testing.assert_array_almost_equal(x[-1], observation)
+    testing.assert_array_almost_equal(x, model)
+    testing.assert_array_almost_equal(y, observation)
 
 
 def test_vertical_profile_mask():
@@ -278,10 +287,18 @@ def test_vertical_profile_mask():
     observation.mask = ma.array([[0, 1, 0, 0],
                            [0, 1, 0, 1],
                            [0, 1, 0, 0]])
-    x, y = vertical_profile(PRODUCT_iwc, model, observation)
+    x, y = vertical_profile(model, observation)
     model = ma.array([3, 4, 6, 5.5])
     observation = ma.array([4, ma.masked, 4, 3])
-    testing.assert_array_almost_equal(x[0], model)
-    testing.assert_array_almost_equal(x[-1], observation)
+    testing.assert_array_almost_equal(x, model)
+    testing.assert_array_almost_equal(y, observation)
 
+
+@pytest.mark.parametrize("method, title", [
+    ('error', 'ECMWF vs Cloud fraction'),
+    ('vertical', 'Cloud fraction')])
+def test_day_stat_title(method, title):
+    from model_evaluation.statistics.statistical_methods import day_stat_title
+    x = day_stat_title(method, PRODUCT_cf)
+    assert x == title
 
