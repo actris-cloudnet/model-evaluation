@@ -27,7 +27,7 @@ class ObservationManager(DataSource):
         self._file = obs_file
         self.date = self._get_date()
         self.radar_freq = self._get_radar_frequency()
-        self.z_sensit = self._get_z_sensitivity()
+        self.z_sensitivity = self._get_z_sensitivity()
         self._generate_product()
 
     def _get_date(self) -> datetime:
@@ -48,7 +48,7 @@ class ObservationManager(DataSource):
             return None
 
     def _generate_product(self):
-        """Add all needed of observations to object"""
+        """Process needed data of observation to a ObservationManager object"""
         if self.obs == 'cf':
             self.append_data(self._generate_cf(), 'cf')
         else:
@@ -112,13 +112,13 @@ class ObservationManager(DataSource):
         self._mask_iwc(iwc, iwc_status)
 
     def _mask_iwc(self, iwc: np.array, iwc_status: np.array):
-        """Leaves only data of reliable data and corrected liquid attenuation"""
+        """Leaves only reliable data and corrected liquid attenuation"""
         iwc_mask = ma.copy(iwc)
         iwc_mask[np.bitwise_and(iwc_status != 1, iwc_status != 2)] = ma.masked
         self.append_data(iwc_mask, 'iwc')
 
     def _mask_iwc_att(self, iwc: np.array, iwc_status: np.array):
-        """Leaves only data where is reliable data, corrected liquid attenuation
+        """Leaves only where reliable data, corrected liquid attenuation
         and uncorrected liquid attenuation"""
         iwc_att = ma.copy(iwc)
         iwc_att[iwc_status > 3] = ma.masked

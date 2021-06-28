@@ -7,34 +7,37 @@ from model_evaluation.file_handler import update_attributes, save_downsampled_fi
 from model_evaluation.products.grid_methods import ProductGrid
 
 
-def process_observation_resample2model(model: str,
-                                       obs: str,
-                                       model_files: list,
-                                       product_file: str,
-                                       output_file: str):
-    """ Main function to generate downsampled observations to match model grid.
-        This functio will generate nc-file of a downsampled product included all model and
-        cycles information as well as resampled observations for each model and cycle grid.
+def process_L3_day_product(model: str,
+                           obs: str,
+                           model_files: list,
+                           product_file: str,
+                           output_file: str):
+    """ Main function to generate downsample of observations to match model grid.
+
+        This function will generate a L3 product nc-file. It includes the information of
+        downsampled observation products for each model cycles and model products
+        and other variables of each cycles.
         Args:
-            model (str): name of model
-            obs (str): name of product to generate
-            model_files (list): List of files from model to be generated
-            product_file (str): observation to be regrided
-            output_file (str): name of model output file
+            model (str): Name of model
+            obs (str): Name of product to generate
+            model_files (list): List of model + cycles file path(s) to be generated
+            product_file (str): Source file path of L2 observation product
+            output_file (str): Path and name of L3 day scale product output file
         Raises:
-            RuntimeError: Failed to create the resampled product file.
+            RuntimeError: Failed to create the L3 product file.
+            ValueError (Warning): No ice clouds in model data
         Notes:
-            Model files are given as list to make all different cycles to be at same nc-file.
-            If list have only one element, nc-file is created, with more elements -> data is added to
-            same file.
+            Model file(s) are given as a list to make all different cycles to be at same nc-file.
+            If list includes more than one model file, nc-file is created within the first round.
+            With rest of rounds, downsample observation and model data is added to a same L3 day nc-file.
         Examples:
-            >>> from model_evaluation.products.product_resampling import process_observation_resample2model
+            >>> from model_evaluation.products.product_resampling import process_L3_day_product
             >>> product = 'cf'
             >>> model = 'ecmwf'
             >>> model_file = 'ecmwf.nc'
             >>> input_file = 'categorize.nc'
             >>> output_file = 'cf_ecmwf.nc'
-            >>> process_observation_resample2model(model, product, [model_file], input_file, output_file)
+            >>> process_L3_day_product(model, product, [model_file], input_file, output_file)
     """
     product_obj = ObservationManager(obs, product_file)
     for m_file in model_files:

@@ -14,11 +14,13 @@ class ModelManager(DataSource):
     Args:
         model_file (str): Path to source model file.
         model (str): Name of model
-        output_file (str): name of output file to save data
+        output_file (str): name of output file name and path to save data
         product (str): name of product to generate
-        wband (int or None): Radar frequency
 
     Notes:
+        For this class to work, needed information of model in use should be found in
+        model_metadata.py
+
         Output_file is given for saving all cycles to same nc-file. Some variables
         are same in control run and cycles so checking existence of output-file
         prevents duplicates as well as unnecessary processing.
@@ -42,7 +44,7 @@ class ModelManager(DataSource):
         self.resolution_h = self._get_horizontal_resolution()
 
     def _read_cycle_name(self, model_file: str):
-        """Get cycle name from config for saving variable name"""
+        """Get cycle name from model_metadata.py for saving variable name(s)"""
         try:
             cycles = self.model_info.cycle
             cycles = [x.strip() for x in cycles.split(',')]
@@ -53,6 +55,7 @@ class ModelManager(DataSource):
             return ""
 
     def _generate_products(self):
+        """Process needed data of model to a ModelManager object"""
         cls = getattr(importlib.import_module(__name__), 'ModelManager')
         try:
             getattr(cls, f"_get_{self._product}")(self)
@@ -110,6 +113,7 @@ class ModelManager(DataSource):
     def _add_variables(self):
         """Add basic variables off model and cycle"""
         def _add_common_variables():
+            """Model variables that are always the same within cycles"""
             wanted_vars = self.model_vars.common_var
             wanted_vars = [x.strip() for x in wanted_vars.split(',')]
             for var in wanted_vars:
@@ -120,6 +124,7 @@ class ModelManager(DataSource):
                     self.append_data(data, f"{var}")
 
         def _add_cycle_variables():
+            """Add cycle depending variables"""
             wanted_vars = self.model_vars.cycle_var
             wanted_vars = [x.strip() for x in wanted_vars.split(',')]
             for var in wanted_vars:
@@ -135,7 +140,7 @@ class ModelManager(DataSource):
         _add_cycle_variables()
 
     def _cut_off_extra_levels(self, data: np.ndarray) -> np.array:
-        """ Remove unused levels from model data"""
+        """ Remove unused levels (over 22km) from model data"""
         try:
             level = self.model_info.level
         except KeyError:
@@ -157,5 +162,4 @@ class ModelManager(DataSource):
 
     def _get_horizontal_resolution(self) -> float:
         h_res = self._set_variables('horizontal_resolution')
-        # Maybe requires to be same shape as time array
         return np.unique(h_res.data)[0]

@@ -7,14 +7,14 @@ from model_evaluation.products.model_products import ModelManager
 
 
 class ProductGrid:
-    """Class which calculates downsampled grid from observations.
+    """Class to generate downsampling of observation product to model grid.
+
         Args:
             model_obj (object): The :class:'ModelManager' object.
             obs_obj (object): The :class:'ObservationManager' object.
         Notes:
-            Functions _generate_regrid_product() generates processing of
-            downsampling and adds data to model_obj which is used for writing
-            nc-file
+            Downsampled observation products data is added to a ModelManager
+            object which is used for nc-file creation and writing
     """
     def __init__(self, model_obj: ModelManager,
                  obs_obj: ObservationManager):
@@ -29,12 +29,11 @@ class ProductGrid:
         self._time_adv = tl.calculate_advection_time(model_obj.resolution_h, model_obj.wind, 1)
         time_steps = utils.binvec(self._model_time)
         self._time_steps = tl.time2datetime(time_steps, self._date)
-        self._generate_regrid_product()
+        self._generate_downsample_product()
 
-    def _generate_regrid_product(self):
-        """Generates average values for product with different methods.
-            Loops through time and height steps of model grid and generates
-            average observation value for each grid point.
+    def _generate_downsample_product(self):
+        """Downsampling products are generated with different averaging methods
+        for a selected size of model time-height window.
         """
         product_dict, product_adv_dict = self._get_method_storage()
         model_t = tl.time2datetime(self._model_time, self._date)

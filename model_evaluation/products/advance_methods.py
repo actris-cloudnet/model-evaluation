@@ -94,7 +94,7 @@ class AdvanceProductMethods(DataSource):
             return 0.00058, -0.00706, 0.0923, -0.992
 
     def fit_z_sensitivity(self, h: np.array) -> np.array:
-        z_sen = [cl_tools.rebin_1d(self._obs_obj.height, self._obs_obj.z_sensit, h[i])
+        z_sen = [cl_tools.rebin_1d(self._obs_obj.height, self._obs_obj.z_sensitivity, h[i])
                  for i in range(len(h))]
         return np.asarray(z_sen)
 
