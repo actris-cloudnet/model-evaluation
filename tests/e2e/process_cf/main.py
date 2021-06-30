@@ -17,10 +17,10 @@ test_file_product = f'{ROOT_PATH}/test_files/categorize.nc'
 def _process():
     tmp_dir = TemporaryDirectory()
     temp_file = f'{tmp_dir.name}/xx.nc'
-    process_day_evaluation.process_observation_resample2model('ecmwf', 'cf',
-                                                              [test_file_model],
-                                                              test_file_product,
-                                                              temp_file)
+    process_day_evaluation.process_L3_day_product('ecmwf', 'cf',
+                                                  [test_file_model],
+                                                  test_file_product,
+                                                  temp_file)
 
     try:
         subprocess.call(['pytest', '-v', f'{SCRIPT_PATH}/tests.py', '--full_path',
