@@ -25,30 +25,23 @@ class TestCloudFractionProcessing:
         'cf_V_ecmwf', 'cf_A_ecmwf', 'cf_V_adv_ecmwf', 'cf_A_adv_ecmwf'])
     def test_that_has_correct_product_variables(self, key):
         nc = netCDF4.Dataset(self.full_path)
-        var = nc.variables.keys()
-        for v in var:
-            if v == key:
-                assert True
+        assert key in nc.variables.keys()
         nc.close()
+
 
     @pytest.mark.reprocess
     @pytest.mark.parametrize("key", [
         'time', 'level', 'latitude', 'longitude', 'horizontal_resolution'])
     def test_that_has_correct_model_variables(self, key):
         nc = netCDF4.Dataset(self.full_path)
-        var = nc.variables.keys()
-        for v in var:
-            if v == key:
-                assert True
+        assert key in nc.variables.keys()
         nc.close()
+
 
     @pytest.mark.reprocess
     @pytest.mark.parametrize("key", [
-        'ecmwf_forecast_time', 'ecmwf_height', 'ecmwf_cf'])
+        'ecmwf_forecast_time', 'ecmwf_height', 'ecmwf_cf', 'ecmwf_cf_cirrus'])
     def test_that_has_correct_cycle_variables(self, key):
         nc = netCDF4.Dataset(self.full_path)
-        var = nc.variables.keys()
-        for v in var:
-            if v == key:
-                assert True
+        assert key in nc.variables.keys()
         nc.close()
