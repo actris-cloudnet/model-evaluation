@@ -7,7 +7,6 @@ import argparse
 from tempfile import TemporaryDirectory
 
 ROOT_PATH = os.path.abspath(os.curdir)
-ROOT_PATH = '/home/korpinen/Documents/ACTRIS/model_evaluation'
 sys.path.append(f'{ROOT_PATH}/model_evaluation/products')
 process_day_evaluation = __import__("product_resampling")
 SCRIPT_PATH = path.dirname(path.realpath(__file__))
