@@ -59,7 +59,7 @@ class ModelManager(DataSource):
         cls = getattr(importlib.import_module(__name__), 'ModelManager')
         try:
             getattr(cls, f"_get_{self._product}")(self)
-        except RuntimeError as error:
+        except AttributeError as error:
             print(error)
 
     def _get_cf(self):

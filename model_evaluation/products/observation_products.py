@@ -38,13 +38,13 @@ class ObservationManager(DataSource):
     def _get_radar_frequency(self) -> Union[np.array, None]:
         try:
             return self.getvar('radar_frequency')
-        except KeyError:
+        except KeyError and RuntimeError:
             return None
 
     def _get_z_sensitivity(self) -> Union[np.array, None]:
         try:
             return self.getvar('Z_sensitivity')
-        except KeyError:
+        except KeyError and RuntimeError:
             return None
 
     def _generate_product(self):

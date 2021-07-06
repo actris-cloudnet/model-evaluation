@@ -36,7 +36,7 @@ class AdvanceProductMethods(DataSource):
         cls = getattr(importlib.import_module(__name__), 'AdvanceProductMethods')
         try:
             getattr(cls, f"get_advance_{self.product}")(self)
-        except RuntimeError as error:
+        except AttributeError as error:
             print(error)
 
     def get_advance_cf(self):
