@@ -19,7 +19,7 @@ class TestCloudFractionProcessing:
         assert nc.title == f'Downsampled Lwc of ecmwf from Mace-Head'
         assert nc.cloudnet_file_type == "lwc_ecmwf"
         assert nc.Conventions == 'CF-1.7'
-        assert nc.source == 'Observation file: lwc.nc\necmwf file(s): 20190517_mace-head_ecmwf.nc'
+        assert nc.source == 'Observation file: 20190517_mace-head_lwc-scaled-adiabatic.nc\necmwf file(s): 20190517_mace-head_ecmwf.nc'
         nc.close()
 
     @pytest.mark.reprocess
