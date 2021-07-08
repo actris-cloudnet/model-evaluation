@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 import configparser
 from collections import Counter
-from model_evaluation.products.product_resampling import process_observation_resample2model
+from model_evaluation.products.product_resampling import process_L3_day_product
 from model_evaluation.plotting.plotting import generate_L3_day_plots
 
 ROOT_PATH = os.path.split(Path(__file__).parent)[0]
@@ -44,6 +44,7 @@ def find_missing_dates(test_files, case, model):
 
 
 # For running this, loading some test files is required!
+# Changing Config-files info also required!
 def main():
     save_plots = f'{ROOT_PATH}/plots/'
     path = os.path.split(ROOT_PATH)[0]
@@ -73,9 +74,10 @@ def main():
                     f_name = product_files[i].split('/')[-1]
                     date = [a for a in f_name.split('_') if a.isdigit()]
                     save_name = os.path.join(save_files, f"{date[0]}_{site}_{model}_downsampled_{product}.nc")
-                    process_observation_resample2model(
-                        model, product, model_file_set[i], product_files[i], save_name)
-                    generate_L3_day_plots(save_name, product, site, model, save_path=save_plots)
+                    process_L3_day_product(model, product, model_file_set[i], product_files[i], save_name)
+                    generate_L3_day_plots(save_name, site, product, model, save_path=save_plots, show=False)
+                    generate_L3_day_plots(save_name, site, product, model, fig_type='statistic',
+                                          save_path=save_plots, show=False)
 
 
 if __name__ == "__main__":
