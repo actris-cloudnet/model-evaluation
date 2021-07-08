@@ -113,7 +113,8 @@ def create_segment_values(arrays: list) -> Tuple:
     newcolors = colors(np.linspace(0, 1, 256))
     # No data, model, both, observation
     cmap = ListedColormap(['whitesmoke', 'khaki', newcolors[90], newcolors[140]])
-    if len(np.unique(new_array) < 4):
+    if len(np.unique(new_array)) < 4:
+        # model, both, model comparison
         cmap = ListedColormap(['whitesmoke', 'khaki', newcolors[90]])
     return new_array, cmap
 

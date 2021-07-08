@@ -121,7 +121,7 @@ def get_group_plots(product: str, names: list, nc_file: str, model: str, site: s
             nc_file (str): Path to a source file
             model (str): Name of used model in a downsampling process
             site (str): Name of site in current case
-            model_name (str): Long name of a model
+            model_name (str): Correct name of a model
             save_path (str): Path for saving figures
             show (bool): Show figure before saving if True
             cycle (str): Name of cycle if exists
@@ -158,7 +158,7 @@ def get_pair_plots(product: str, names: list, nc_file: str, model: str, site: st
             nc_file (str): Path to a source file
             model (str): Name of used model in a downsampling process
             site (str): Name of site in current case
-            model_name (str): Long name of a model
+            model_name (str): Correct name of a model
             save_path (str): Path for saving figures
             show (bool): Show figure before saving if True
             cycle (str): Name of cycle if exists
@@ -193,7 +193,7 @@ def get_single_plots(product: str, names: list, nc_file: str, model: str, site: 
             nc_file (str): Path to a source file
             model (str): Name of used model in a downsampling process
             site (str): Name of site in current case
-            model_name (str): Long name of a model
+            model_name (str): Correct name of a model
             save_path (str): Path for saving figures
             show (bool): Show figure before saving if True
             cycle (str): Name of cycle if exists
@@ -208,6 +208,8 @@ def get_single_plots(product: str, names: list, nc_file: str, model: str, site: 
         casedate = cloud_plt._set_labels(fig, ax[0], nc_file)
         if len(cycle) > 1:
             fig.text(0.64, 0.9, f"{model_name} cycle: {cycle}", fontsize=13)
+        else:
+            fig.text(0.64, 0.9, f"{model_name}", fontsize=13)
         cloud_plt._handle_saving('', save_path, show, 200, casedate,
                                  [site, name, 'single'])
 
@@ -243,7 +245,7 @@ def get_statistic_plots(product: str, names: list, nc_file: str, model: str,
         nc_file (str): Path to a source file
         model (str): Name of used model in a downsampling process
         site (str): Name of site in current case
-        model_name (str): Long name of a model
+        model_name (str): Correct name of a model
         stats (list): List of statistical method to process analysis with.
                       Options are ['error', 'area', 'hist', 'vertical']
         save_path (str): Path for saving figures
@@ -292,14 +294,16 @@ def initialize_statistic_plots(j: int, max_len: int, ax, method: str,
         cloud_plt._set_ax(ax, 12)
     if method == 'hist':
         plot_histogram(ax, day_stat, variable_info)
-        ax.legend(loc='lower left', ncol=2, fontsize=12, bbox_to_anchor=(-0.03, -0.13))
         if j == max_len - 1 and (max_len % 2) == 0:
+            ax.legend(loc='lower left', ncol=2, fontsize=12, bbox_to_anchor=(-0.03, -0.13))
+        if j == max_len - 1:
             ax.legend(loc='lower left', ncol=4, fontsize=12, bbox_to_anchor=(-0.03, -0.24))
     if method == 'vertical':
         plot_vertical_profile(ax, day_stat, args, variable_info)
         p_tools.set_yaxis(ax, 12)
-        ax.legend(loc='lower left', ncol=2, fontsize=12, bbox_to_anchor=(-0.03, -0.13))
         if j == max_len - 1 and (max_len % 2) == 0:
+            ax.legend(loc='lower left', ncol=2, fontsize=12, bbox_to_anchor=(-0.03, -0.13))
+        if j == max_len - 1:
             ax.legend(loc='lower left', ncol=4, fontsize=12, bbox_to_anchor=(-0.03, -0.2))
 
 
@@ -340,7 +344,7 @@ def plot_histogram(ax, day_stat: DayStatistics, variable_info: namedtuple):
     weights = np.ones_like(day_stat.model_stat) / float(len(day_stat.model_stat))
     hist_bins = np.histogram(day_stat.observation_stat, density=True)[-1]
     ax.hist(day_stat.model_stat, weights=weights, bins=hist_bins, alpha=0.7,
-            facecolor='khaki', edgecolor='k', label=f'Model: {day_stat.title[-1]}')
+            facecolor='khaki', edgecolor='k', label=f'Model: {day_stat.title[0]}')
 
     weights = np.ones_like(day_stat.observation_stat) / float(len(day_stat.observation_stat))
     ax.hist(day_stat.observation_stat, weights=weights, bins=hist_bins, alpha=0.7,
@@ -350,7 +354,7 @@ def plot_histogram(ax, day_stat: DayStatistics, variable_info: namedtuple):
         ax.ticklabel_format(axis="x", style="sci", scilimits=(0,0))
     ax.set_ylabel('Relative frequency %', fontsize=13)
     ax.yaxis.grid(True, 'major')
-    ax.set_title(f"{day_stat.title[0]}", fontsize=14)
+    ax.set_title(f"{day_stat.title[-1]}", fontsize=14)
 
 
 def plot_vertical_profile(ax, day_stat: DayStatistics, axes: tuple,
@@ -364,17 +368,17 @@ def plot_vertical_profile(ax, day_stat: DayStatistics, axes: tuple,
     ax.plot(day_stat.model_stat, axes, 'o', markersize=5.5, color='k')
     ax.plot(day_stat.observation_stat, axes, 'o', markersize=5.5, color='k')
     ax.plot(day_stat.model_stat, axes, 'o', markersize=4.5,
-            color='orange', label=f"{day_stat.title[-1]}")
+            color='orange', label=f"{day_stat.title[0]}")
     ax.plot(day_stat.observation_stat, axes, 'o', markersize=4.5,
             color='green', label='Observation')
 
     ax.plot(mrm, axes, '-', color='k', lw=2.5)
     ax.plot(orm, axes, '-', color='k', lw=2.5)
     ax.plot(mrm, axes, '-', color='orange', lw=2,
-            label=f'Mean of {day_stat.title[-1]}')
+            label=f'Mean of {day_stat.title[0]}')
     ax.plot(orm, axes, '-', color='green', lw=2, label=f'Mean of observation')
 
-    ax.set_title(f"{day_stat.title[0]}", fontsize=14)
+    ax.set_title(f"{day_stat.title[-1]}", fontsize=14)
     ax.set_xlabel(variable_info.x_title, fontsize=13)
     if variable_info.plot_scale == 'logarithmic':
         ax.ticklabel_format(axis="x", style="sci", scilimits=(0, 0))
@@ -404,6 +408,7 @@ def initialize_figure(n_subplots: int, stat: str = '') -> Tuple:
                                           7 + (n_subplots - (n_subplots/2 + 1)) * 7.3))
         fig.subplots_adjust(top=0.842 + (n_subplots - (n_subplots/2 + 1)) * 0.012,
                             bottom=0.1, left=0.08, right=0.75, hspace=0.16)
+        axes = axes.flatten()
     if n_subplots == 1:
         axes = [axes]
     return fig, axes

@@ -35,7 +35,7 @@ def process_L3_day_product(model: str,
             >>> product = 'cf'
             >>> model = 'ecmwf'
             >>> model_file = 'ecmwf.nc'
-            >>> input_file = 'categorize.nc'
+            >>> input_file = 220190517_mace-head_categorize.nchead_categorize.nc
             >>> output_file = 'cf_ecmwf.nc'
             >>> process_L3_day_product(model, product, [model_file], input_file, output_file)
     """

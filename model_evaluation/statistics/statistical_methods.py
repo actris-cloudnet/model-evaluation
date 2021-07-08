@@ -136,5 +136,5 @@ def vertical_profile(model: ma.array, observation: ma.array) -> Tuple:
 def day_stat_title(method: str, product: list) -> str:
     title = f"{product[1]} vs {product[-1]}"
     if method == 'hist' or method == 'vertical':
-        title = f"{product[-1]}"
+        title = (f"{product[1]}", f"{product[-1]}")
     return title
