@@ -14,8 +14,8 @@ simulation run variables with a both cycle and model dependencies.
 
 ### Model evaluation Installation and Usage 
 ```
-$ git clone https://github.com/actris-cloudnet/model_evaluation
-$ cd model_evaluation/
+$ git clone https://github.com/actris-cloudnet/model-evaluation
+$ cd model-evaluation/
 $ python3 -m venv venv
 $ source venv/bin/activate
 (venv) $ python3 -m pip install .
