@@ -20,7 +20,7 @@ def rebin_edges(arr: np.array):
 
 
 def calculate_advection_time(resolution: int, wind: np.array, sampling: int):
-    """Calculates time which variable take to cross through time window
+    """Calculates time which variable takes to go through the time window
 
         Notes:
             Wind speed is stronger in upper levels, so advection time is more
@@ -32,6 +32,7 @@ def calculate_advection_time(resolution: int, wind: np.array, sampling: int):
         References:
     """
     t_adv = resolution * 1000 / wind / 60 ** 2
+    t_adv[t_adv.mask] = 0
     t_adv[t_adv > 1/sampling] = 1/sampling
     return np.asarray([[timedelta(hours=float(t)) for t in time] for time in t_adv])
 
