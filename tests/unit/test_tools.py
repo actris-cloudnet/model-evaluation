@@ -30,7 +30,7 @@ def test_calculate_advection_time_hour(model_file):
     from model_evaluation.products.tools import calculate_advection_time
     obj = ModelManager(str(model_file), MODEL, OUTPUT_FILE, PRODUCT)
     h = obj.resolution_h
-    v = np.array([[1, 2, 3], [2, 3, 4], [3, 4, 5]])
+    v = ma.array([[1, 2, 3], [2, 3, 4], [3, 4, 5]])
     s = 1
     compare = h*1000 / v / 60**2
     compare[compare > 1/s] = 1/s
@@ -43,7 +43,7 @@ def test_calculate_advection_time_10min(model_file):
     from model_evaluation.products.tools import calculate_advection_time
     obj = ModelManager(str(model_file), MODEL, OUTPUT_FILE, PRODUCT)
     h = obj.resolution_h
-    v = np.array([[1, 2, 3], [2, 3, 4], [3, 4, 5]])
+    v = ma.array([[1, 2, 3], [2, 3, 4], [3, 4, 5]])
     s = 6
     compare = h*1000 / v / 60**2
     compare[compare > 1/s] = 1/s

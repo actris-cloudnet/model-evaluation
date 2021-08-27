@@ -11,20 +11,21 @@ sys.path.append(f'{ROOT_PATH}/model_evaluation/products')
 process_day_evaluation = __import__("product_resampling")
 SCRIPT_PATH = path.dirname(path.realpath(__file__))
 test_file_model = f'{ROOT_PATH}/test_files/20190517_mace-head_ecmwf.nc'
-test_file_product = f'{ROOT_PATH}/test_files/categorize.nc'
+test_file_product = f'{ROOT_PATH}/test_files/20190517_mace-head_categorize.nc'
 
 
 def _process():
     tmp_dir = TemporaryDirectory()
     temp_file = f'{tmp_dir.name}/xx.nc'
-    process_day_evaluation.resample_observation2model('ecmwf', 'cf', [test_file_model],
-                                                      test_file_product, temp_file)
-
+    process_day_evaluation.process_L3_day_product('ecmwf', 'cf',
+                                                  [test_file_model],
+                                                  test_file_product,
+                                                  temp_file)
     try:
-        subprocess.call(['pytest', '-v', f'{SCRIPT_PATH}/tests.py', '--full_path', temp_file])
+        subprocess.call(['pytest', '-v', f'{SCRIPT_PATH}/tests.py', '--full_path',
+                         temp_file])
     except subprocess.CalledProcessError:
         raise
-
     tmp_dir.cleanup()
 
 

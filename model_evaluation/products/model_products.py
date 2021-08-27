@@ -1,20 +1,12 @@
 import os
-import configparser
 import importlib
+from typing import Union
 import numpy as np
 import numpy.ma as ma
 from cloudnetpy.utils import isscalar
 from cloudnetpy.categorize.datasource import DataSource
+from model_evaluation.model_metadata import MODELS, VARIABLES
 
-PATH = os.path.dirname(os.path.abspath(__file__))
-PATH = os.path.split(PATH)[0]
-CONF = configparser.ConfigParser()
-CONF.optionxform = str
-if os.path.isfile(os.path.join(PATH, 'level3.ini')) is True:
-    CONF.read(os.path.join(PATH, 'level3.ini'))
-else:
-    PATH = os.path.abspath(os.curdir)
-    CONF.read(os.path.join(PATH, 'model_evaluation/level3.ini'))
 
 class ModelManager(DataSource):
     """Class to collect and manage model data.
@@ -22,10 +14,13 @@ class ModelManager(DataSource):
     Args:
         model_file (str): Path to source model file.
         model (str): Name of model
-        output_file (str): name of output file to save data
+        output_file (str): name of output file name and path to save data
         product (str): name of product to generate
 
     Notes:
+        For this class to work, needed information of model in use should be found in
+        model_metadata.py
+
         Output_file is given for saving all cycles to same nc-file. Some variables
         are same in control run and cycles so checking existence of output-file
         prevents duplicates as well as unnecessary processing.
@@ -36,6 +31,8 @@ class ModelManager(DataSource):
                  output_file: str, product: str):
         super().__init__(model_file)
         self.model = model
+        self.model_info = MODELS[model]
+        self.model_vars = VARIABLES['variables']
         self._product = product
         self.keys = {}
         self._is_file = os.path.isfile(output_file)
@@ -44,61 +41,56 @@ class ModelManager(DataSource):
         self._generate_products()
         self.date = []
         self.wind = self._calculate_wind_speed()
-        self.resolution_h = self._set_variables('horizontal_resolution')
+        self.resolution_h = self._get_horizontal_resolution()
 
     def _read_cycle_name(self, model_file: str):
-        """Get cycle name from config for saving variable name"""
-        cycles = CONF[self.model]['cycle']
-        cycles = [x.strip() for x in cycles.split(',')]
-        for cycle in cycles:
-            if cycle in model_file:
-                return f"_{cycle}"
-        return ""
+        """Get cycle name from model_metadata.py for saving variable name(s)"""
+        try:
+            cycles = self.model_info.cycle
+            cycles = [x.strip() for x in cycles.split(',')]
+            for cycle in cycles:
+                if cycle in model_file:
+                    return f"_{cycle}"
+        except AttributeError:
+            return ""
 
     def _generate_products(self):
+        """Process needed data of model to a ModelManager object"""
         cls = getattr(importlib.import_module(__name__), 'ModelManager')
         try:
             getattr(cls, f"_get_{self._product}")(self)
-        except RuntimeError as error:
+        except AttributeError as error:
             print(error)
 
     def _get_cf(self):
         """Collect cloud fraction straight from model file."""
-        cf_name = self._read_config('cf')
+        cf_name = self._get_model_var_names('cf')
         cf = self._set_variables(cf_name)
         cf = self._cut_off_extra_levels(cf)
-        cf[cf < 0] = ma.masked
+        cf[cf < 0.05] = ma.masked
         self.append_data(cf, f'{self.model}_cf{self._cycle}')
         self.keys[self._product] = f'{self.model}_cf{self._cycle}'
 
     def _get_iwc(self):
-        p_name, T_name, iwc_name = self._read_config('p', 'T', 'iwc')
-        p, T, qi = self._set_variables(p_name, T_name, iwc_name)
-        iwc = self._calc_water_content(qi, p, T)
-        iwc = self._cut_off_extra_levels(iwc)
-        iwc[iwc < 0] = ma.masked
+        iwc = self._get_water_continent('iwc')
         self.append_data(iwc, f'{self.model}_iwc{self._cycle}')
         self.keys[self._product] = f'{self.model}_iwc{self._cycle}'
 
     def _get_lwc(self):
-        p_name, T_name, lwc_name = self._read_config('p', 'T', 'lwc')
-        p, T, ql = self._set_variables(p_name, T_name, lwc_name)
-        lwc = self._calc_water_content(ql, p, T)
-        lwc = self._cut_off_extra_levels(lwc)
-        lwc[lwc < 0] = ma.masked
+        lwc = self._get_water_continent('lwc')
         self.append_data(lwc, f'{self.model}_lwc{self._cycle}')
         self.keys[self._product] = f'{self.model}_lwc{self._cycle}'
 
     @staticmethod
-    def _read_config(*args: str):
+    def _get_model_var_names(*args: Union[str, list]) -> list:
         var = []
         for arg in args:
-            var.append(CONF['model_quantity'][arg])
+            var.append(VARIABLES[arg].long_name)
         if len(var) == 1:
             return var[0]
         return var
 
-    def _set_variables(self, *args: str):
+    def _set_variables(self, *args: Union[str, list]) -> Union[np.array, list]:
         var = []
         for arg in args:
             var.append(self.getvar(arg))
@@ -106,14 +98,23 @@ class ModelManager(DataSource):
             return var[0]
         return var
 
+    def _get_water_continent(self, var: str) -> np.array:
+        p_name, T_name, lwc_name = self._get_model_var_names('p', 'T', var)
+        p, T, q = self._set_variables(p_name, T_name, lwc_name)
+        wc = self._calc_water_content(q, p, T)
+        wc = self._cut_off_extra_levels(wc)
+        wc[wc < 0.0] = ma.masked
+        return wc
+
     @staticmethod
-    def _calc_water_content(q: float, p: float, T: float):
+    def _calc_water_content(q: np.array, p: np.array, T: np.array) -> np.array:
         return q * p / (287 * T)
 
     def _add_variables(self):
         """Add basic variables off model and cycle"""
         def _add_common_variables():
-            wanted_vars = CONF['model_wanted_vars']['common']
+            """Model variables that are always the same within cycles"""
+            wanted_vars = self.model_vars.common_var
             wanted_vars = [x.strip() for x in wanted_vars.split(',')]
             for var in wanted_vars:
                 if var in self.dataset.variables:
@@ -123,7 +124,8 @@ class ModelManager(DataSource):
                     self.append_data(data, f"{var}")
 
         def _add_cycle_variables():
-            wanted_vars = CONF['model_wanted_vars']['cycle']
+            """Add cycle depending variables"""
+            wanted_vars = self.model_vars.cycle_var
             wanted_vars = [x.strip() for x in wanted_vars.split(',')]
             for var in wanted_vars:
                 if var in self.dataset.variables:
@@ -137,19 +139,27 @@ class ModelManager(DataSource):
             _add_common_variables()
         _add_cycle_variables()
 
-    def _cut_off_extra_levels(self, data: np.ndarray):
-        """ Remove unused levels from model data"""
-        level = int(CONF[self.model]['level'])
+    def _cut_off_extra_levels(self, data: np.ndarray) -> np.array:
+        """ Remove unused levels (over 22km) from model data"""
+        try:
+            level = self.model_info.level
+        except KeyError:
+            return data
+
         if data.ndim > 1:
             data = data[:, :level]
         else:
             data = data[:level]
         return data
 
-    def _calculate_wind_speed(self):
+    def _calculate_wind_speed(self) -> np.array:
         """Real wind from x- and y-components"""
         u = self._set_variables('uwind')
         v = self._set_variables('vwind')
         u = self._cut_off_extra_levels(u)
         v = self._cut_off_extra_levels(v)
-        return np.sqrt(u.data**2 + v.data**2)
+        return np.sqrt(ma.power(u.data, 2) + ma.power(v.data, 2))
+
+    def _get_horizontal_resolution(self) -> float:
+        h_res = self._set_variables('horizontal_resolution')
+        return np.unique(h_res.data)[0]

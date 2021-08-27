@@ -8,7 +8,10 @@ FIELDS = ('name',
           'ylabel',
           'plot_range',
           'plot_scale',
-          'plot_type')
+          'plot_type',
+          'hist_bin',
+          'hist_limits',
+          'x_title')
 
 PlotMeta = namedtuple('PlotMeta', FIELDS)
 PlotMeta.__new__.__defaults__ = (None,) * len(FIELDS)
@@ -65,14 +68,6 @@ ATTRIBUTES = {
         plot_scale=_LIN,
         plot_type='model'
     ),
-    'cf': PlotMeta(
-        name='Cloud fraction',
-        cbar='Blues',
-        clabel='',
-        plot_range=(0, 1),
-        plot_scale=_LIN,
-        plot_type='model'
-    ),
     'specific_humidity': PlotMeta(
         name='Model specific humidity',
         cbar='viridis',
@@ -113,13 +108,38 @@ ATTRIBUTES = {
         plot_scale=_LIN,
         plot_type='bar'
     ),
+    'cf': PlotMeta(
+        name='Cloud fraction',
+        cbar='Blues',
+        clabel='',
+        plot_range=(0, 1),
+        plot_scale=_LIN,
+        plot_type='model',
+        hist_bin=10,
+        hist_limits=(0.0, 1.1, 0.1),
+        x_title=''
+    ),
+    'cf_cirrus': PlotMeta(
+        name='Cloud fraction with filtered Cirrus',
+        cbar='Blues',
+        clabel='',
+        plot_range=(0, 1),
+        plot_scale=_LIN,
+        plot_type='model',
+        hist_bin=10,
+        hist_limits=(0.0, 1.1, 0.1),
+        x_title=''
+    ),
     'iwc': PlotMeta(
         name='Ice water content',
         cbar='viridis',
         clabel=_KGM3,
         plot_range=(1e-7, 1e-3),
         plot_scale=_LOG,
-        plot_type='mesh'
+        plot_type='mesh',
+        hist_bin=11,
+        hist_limits=(0.0, 3.4e-5, 0.3e-5),
+        x_title='g/kg'
     ),
     'lwc': PlotMeta(
         name='Liquid water content',
@@ -127,6 +147,9 @@ ATTRIBUTES = {
         clabel=_KGM3,
         plot_range=(1e-5, 1e-2),
         plot_scale=_LOG,
-        plot_type='mesh'
+        plot_type='mesh',
+        hist_bin=10,
+        hist_limits=(0.0, 3.4e-5, 0.3e-5),
+        x_title='g/kg'
     )
 }

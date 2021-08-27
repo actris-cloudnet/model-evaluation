@@ -1,21 +1,23 @@
 import numpy as np
+from typing import Tuple
 from model_evaluation.products import tools as tl
 from cloudnetpy import utils
+from model_evaluation.products.observation_products import ObservationManager
+from model_evaluation.products.model_products import ModelManager
 
 
 class ProductGrid:
-    """Class which calculates downsampled grid from observations.
+    """Class to generate downsampling of observation product to model grid.
 
         Args:
             model_obj (object): The :class:'ModelManager' object.
             obs_obj (object): The :class:'ObservationManager' object.
-
         Notes:
-            Functions _generate_regrid_product() generates processing of
-            downsampling and adds data to model_obj which is used for writing
-            nc-file
+            Downsampled observation products data is added to a ModelManager
+            object which is used for nc-file creation and writing
     """
-    def __init__(self, model_obj: object, obs_obj: object):
+    def __init__(self, model_obj: ModelManager,
+                 obs_obj: ObservationManager):
         self._obs_obj = obs_obj
         self._date = obs_obj.date
         self._obs_time = tl.time2datetime(obs_obj.time, self._date)
@@ -27,13 +29,11 @@ class ProductGrid:
         self._time_adv = tl.calculate_advection_time(model_obj.resolution_h, model_obj.wind, 1)
         time_steps = utils.binvec(self._model_time)
         self._time_steps = tl.time2datetime(time_steps, self._date)
-        self._generate_regrid_product()
+        self._generate_downsample_product()
 
-    def _generate_regrid_product(self):
-        """Generates average values for product with different methods
-
-            Loops through time and height steps of model grid and generates
-            average observation value for each grid point.
+    def _generate_downsample_product(self):
+        """Downsampling products are generated with different averaging methods
+        for a selected size of model time-height window.
         """
         product_dict, product_adv_dict = self._get_method_storage()
         model_t = tl.time2datetime(self._model_time, self._date)
@@ -74,14 +74,14 @@ class ProductGrid:
             return self._iwc_method_storage()
         return self._product_method_storage()
 
-    def _cf_method_storage(self):
+    def _cf_method_storage(self) -> Tuple[dict, dict]:
         cf_dict = {'cf_V': np.zeros(self._model_height.shape),
                    'cf_A': np.zeros(self._model_height.shape)}
         cf_adv_dict = {'cf_V_adv': np.zeros(self._model_height.shape),
                        'cf_A_adv': np.zeros(self._model_height.shape)}
         return cf_dict, cf_adv_dict
 
-    def _iwc_method_storage(self):
+    def _iwc_method_storage(self) -> Tuple[dict, dict]:
         iwc_dict = {'iwc': np.zeros(self._model_height.shape),
                     'iwc_att': np.zeros(self._model_height.shape),
                     'iwc_rain': np.zeros(self._model_height.shape)}
@@ -90,13 +90,13 @@ class ProductGrid:
                         'iwc_rain_adv': np.zeros(self._model_height.shape)}
         return iwc_dict, iwc_adv_dict
 
-    def _product_method_storage(self):
+    def _product_method_storage(self) -> Tuple[dict, dict]:
         product_dict = {f'{self._obs_obj.obs}': np.zeros(self._model_height.shape)}
         product_adv_dict = {f'{self._obs_obj.obs}_adv': np.zeros(self._model_height.shape)}
         return product_dict, product_adv_dict
 
     @staticmethod
-    def _regrid_cf(storage: dict, i: int, j: int, data: np.ma.MaskedArray):
+    def _regrid_cf(storage: dict, i: int, j: int, data: np.array) -> dict:
         """Calculates average cloud fraction value to grid point"""
         for key, downsample in storage.items():
             if data is not None:
@@ -108,7 +108,7 @@ class ProductGrid:
             storage[key] = downsample
         return storage
 
-    def _reshape_data_to_window(self, ind: np.ndarray, x_ind: np.ndarray, y_ind: np.ndarray):
+    def _reshape_data_to_window(self, ind: np.array, x_ind: np.array, y_ind: np.array) -> np.array:
         """Reshapes True observation values to windows shape"""
         window_size = tl.get_obs_window_size(x_ind, y_ind)
         if window_size is not None:
@@ -116,7 +116,7 @@ class ProductGrid:
         return window_size
 
     def _regrid_iwc(self, storage: dict, i: int, j: int,
-                    ind_rain: np.ma.MaskedArray, ind_no_rain: np.ma.MaskedArray):
+                    ind_rain: np.array, ind_no_rain: np.array) -> dict:
         """Calculates average iwc value for grid point"""
         for key, downsample in storage.items():
             if not self._obs_data[ind_no_rain].mask.all():
@@ -134,7 +134,7 @@ class ProductGrid:
             storage[key] = downsample
         return storage
 
-    def _regrid_product(self, storage: dict, i: int, j: int, ind: np.ndarray):
+    def _regrid_product(self, storage: dict, i: int, j: int, ind: np.array) -> dict:
         """Calculates average of standard product value to grid point"""
         for key, downsample in storage.items():
             if not self._obs_data[ind].mask.all() and ind.any():
