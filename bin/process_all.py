@@ -4,13 +4,14 @@ from pathlib import Path
 from model_evaluation.products.product_resampling import process_L3_day_product
 from model_evaluation.plotting.plotting import generate_L3_day_plots
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-
 
 def main():
     """Example processing of product downsampling system including visualization process"""
-    root = os.path.split(Path(__file__).parent)[0]
-    save_path = f'{root}/plots/' # Create own dir if not existing
+    root = Path(__file__).resolve().parents[1]
+
+    save_path = f'{root}/plots/'
+    if not os.path.isdir(save_path):
+        os.mkdir(save_path)
 
     # Run without cycles
     model_file = f'{root}/test_files/20190517_mace-head_ecmwf.nc'
