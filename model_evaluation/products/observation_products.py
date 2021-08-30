@@ -1,6 +1,7 @@
 import numpy as np
 import numpy.ma as ma
 from datetime import datetime
+import logging
 from typing import Union
 from cloudnetpy import utils
 from cloudnetpy.categorize.datasource import DataSource
@@ -49,13 +50,17 @@ class ObservationManager(DataSource):
 
     def _generate_product(self):
         """Process needed data of observation to a ObservationManager object"""
-        if self.obs == 'cf':
-            self.append_data(self._generate_cf(), 'cf')
-        else:
-            self.append_data(self.getvar(self.obs), self.obs)
-            if self.obs == 'iwc':
-                self._generate_iwc_masks()
-        self.append_data(self.getvar('height'), 'height')
+        try:
+            if self.obs == 'cf':
+                self.append_data(self._generate_cf(), 'cf')
+            else:
+                self.append_data(self.getvar(self.obs), self.obs)
+                if self.obs == 'iwc':
+                    self._generate_iwc_masks()
+            self.append_data(self.getvar('height'), 'height')
+        except KeyError and RuntimeError as e:
+            logging.error(f'Invalid product name: {e}')
+            raise
 
     def _generate_cf(self) -> np.array:
         """Generates cloud fractions using categorize bits and masking conditions"""

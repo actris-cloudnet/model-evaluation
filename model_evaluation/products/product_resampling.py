@@ -1,4 +1,5 @@
 import os
+import logging
 import model_evaluation.products.tools as tl
 from model_evaluation.products.observation_products import ObservationManager
 from model_evaluation.products.model_products import ModelManager
@@ -45,7 +46,7 @@ def process_L3_day_product(model: str,
         try:
             AdvanceProductMethods(model_obj, m_file, product_obj)
         except ValueError as e:
-            print("Warning: {0}".format(e))
+            logging.info("Note: {0}".format(e))
             pass
         ProductGrid(model_obj, product_obj)
         attributes = add_time_attribute(product_obj.date)

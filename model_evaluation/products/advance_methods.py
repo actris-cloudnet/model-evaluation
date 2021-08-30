@@ -2,6 +2,7 @@ import importlib
 import numpy as np
 import numpy.ma as ma
 import cloudnetpy.utils as cl_tools
+import logging
 from typing import Union, Tuple
 from scipy.special import gamma
 from cloudnetpy.categorize.datasource import DataSource
@@ -37,11 +38,11 @@ class AdvanceProductMethods(DataSource):
         try:
             getattr(cls, f"get_advance_{self.product}")(self)
         except AttributeError as error:
-            print(error)
+            logging.warning(f'No advance method for {self.product}: {error}')
 
     def get_advance_cf(self):
         self.cf_cirrus_filter()
-       # Tähän perään lumi adder
+       # Develop snow adder at some point
 
     def cf_cirrus_filter(self):
         cf, h = self.getvar_from_object('cf', 'h')
@@ -58,11 +59,9 @@ class AdvanceProductMethods(DataSource):
             iwc_dist = self.calculate_iwc_distribution(cloud_iwc[i], variance_iwc[i])
             # TODO: parempi nimi tälle funktiolle
             p_iwc = self.gamma_distribution(iwc_dist, variance_iwc[i], cloud_iwc[i])
-
             if np.sum(p_iwc) == 0 or p_iwc[-1] > 0.01*np.sum(p_iwc):
                 cf_filtered[ind] = np.nan
                 continue
-
             obs_index = self.get_observation_index(iwc_dist, tZT, tT, tZ, t, T[ind], z_sen[ind])
             cf_filtered[ind] = self.filter_cirrus(p_iwc, obs_index, cf_filtered[ind])
         cf_filtered[cf_filtered < 0.05] = ma.masked
@@ -101,7 +100,7 @@ class AdvanceProductMethods(DataSource):
     def filter_high_iwc_low_cf(self, cf: np.array, iwc: np.array, lwc: np.array) -> np.array:
         cf_filtered = self.mask_weird_indices(cf, iwc, lwc)
         if np.sum((iwc > 0) & (lwc < iwc/10) & (cf_filtered > 0)) == 0:
-            raise ValueError('No ice cloud input data')
+            raise ValueError('No ice clouds in a input data')
         return cf_filtered
 
     @staticmethod

@@ -3,6 +3,7 @@ import importlib
 from typing import Union
 import numpy as np
 import numpy.ma as ma
+import logging
 from cloudnetpy.utils import isscalar
 from cloudnetpy.categorize.datasource import DataSource
 from model_evaluation.model_metadata import MODELS, VARIABLES
@@ -59,8 +60,9 @@ class ModelManager(DataSource):
         cls = getattr(importlib.import_module(__name__), 'ModelManager')
         try:
             getattr(cls, f"_get_{self._product}")(self)
-        except AttributeError as error:
-            print(error)
+        except AttributeError as e:
+            logging.error(f'Invalid product name: {e}')
+            raise
 
     def _get_cf(self):
         """Collect cloud fraction straight from model file."""

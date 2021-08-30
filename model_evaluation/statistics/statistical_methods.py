@@ -2,6 +2,7 @@ import sys
 import os
 import numpy as np
 import numpy.ma as ma
+import logging
 from typing import Tuple
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -69,7 +70,7 @@ class DayStatistics:
             self.model_stat, self.observation_stat = getattr(cls, f"{full_name}")(*params)
             self.title = getattr(cls, "day_stat_title")(self.method, self.product)
         except RuntimeError as error:
-            print(error)
+            logging.error(f'Method {full_name} not found or missing: {error}')
 
 
 def relative_error(model: ma.array, observation: ma.array) -> Tuple[float, str]:
