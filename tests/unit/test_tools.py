@@ -1,5 +1,6 @@
 import numpy as np
 import numpy.ma as ma
+import pytest
 import numpy.testing as testing
 from datetime import datetime, timedelta
 from model_evaluation.products.model_products import ModelManager
@@ -7,6 +8,22 @@ from model_evaluation.products.model_products import ModelManager
 MODEL = 'ecmwf'
 OUTPUT_FILE = '/'
 PRODUCT = 'iwc'
+
+
+def test_model_file_list():
+    from model_evaluation.products.tools import check_model_file_list
+    name = 'ec'
+    models = ['00_ec_1', '00_ec_2', '00_ec_3']
+    check_model_file_list(name, models)
+    assert True
+
+
+@pytest.mark.xfail(raises=AttributeError)
+def test_model_file_list_fail():
+    from model_evaluation.products.tools import check_model_file_list
+    name = 'ec'
+    models = ['00_ec_1', 'ac_1', '00_ec_2', '00_ec_3']
+    check_model_file_list(name, models)
 
 
 def test_time2datetime():

@@ -41,6 +41,7 @@ def process_L3_day_product(model: str,
             >>> process_L3_day_product(model, product, [model_file], input_file, output_file)
     """
     product_obj = ObservationManager(obs, product_file)
+    tl.check_model_file_list(model, model_files)
     for m_file in model_files:
         model_obj = ModelManager(m_file, model, output_file, obs)
         try:

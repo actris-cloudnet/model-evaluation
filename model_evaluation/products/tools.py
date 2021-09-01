@@ -1,10 +1,19 @@
 import numpy as np
 import numpy.ma as ma
 import datetime
+import logging
 from typing import Union
 from datetime import timedelta
 from model_evaluation.products.model_products import ModelManager
 from model_evaluation.products.observation_products import ObservationManager
+
+
+def check_model_file_list(name: str, models: list):
+    """Check that files in models are from same model and date"""
+    for m in models:
+        if name not in m:
+            logging.error(f'Invalid model file set')
+            raise AttributeError(f'{m} not from {name}')
 
 
 def time2datetime(time: np.array, date: datetime.datetime):

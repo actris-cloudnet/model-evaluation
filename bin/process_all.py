@@ -27,7 +27,7 @@ def main():
     for product, product_file, output_file in zip(['cf', 'iwc', 'lwc'],
                                                   input_files, output_files):
         process_L3_day_product('ecmwf', product, [model_file],
-                                           product_file, output_file)
+                               product_file, output_file)
         generate_L3_day_plots(output_file, 'mace-head', product, 'ecmwf',
                               save_path=save_path, show=False)
         generate_L3_day_plots(output_file, 'mace-head', product, 'ecmwf',
