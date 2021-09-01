@@ -9,14 +9,14 @@ from model_evaluation.metadata import MetaData, MODEL_ATTRIBUTES, CYCLE_ATTRIBUT
 
 
 def update_attributes(model_downsample_variables: dict, attributes: dict):
-    """Overrides existing CloudnetArray-attributes.
-    Overrides existing attributes using hard-coded values.
-    New attributes are added.
+    """Overrides existing Cloudnet-ME Array-attributes.
+        Overrides existing attributes using hard-coded values.
+        New attributes are added.
+
     Args:
         model_downsample_variables (dict): Array instances.
         attributes (dict): Product-specific attributes.
     """
-    # TODO: Change name order: model_cycle_product_method
     for key in model_downsample_variables:
         x = len(key.split('_')) - 1
         key_parts = key.split('_', x)
@@ -28,22 +28,22 @@ def update_attributes(model_downsample_variables: dict, attributes: dict):
             model_downsample_variables[key].set_attributes(REGRID_PRODUCT_ATTRIBUTES['_'.join(key_parts[0:-1])])
         elif '_'.join(key_parts[0:-2]) in REGRID_PRODUCT_ATTRIBUTES:
             model_downsample_variables[key].set_attributes(REGRID_PRODUCT_ATTRIBUTES['_'.join(key_parts[0:-2])])
-        elif key_parts[1] in MODEL_L3_ATTRIBUTES:
+        elif '_'.join(key_parts[1:]) in MODEL_L3_ATTRIBUTES or '_'.join(key_parts[2:]) in MODEL_L3_ATTRIBUTES:
             try:
                 model_downsample_variables[key].set_attributes(MODEL_L3_ATTRIBUTES['_'.join(key_parts[1:])])
             except KeyError:
-                model_downsample_variables[key].set_attributes(MODEL_L3_ATTRIBUTES[key_parts[1]])
+                model_downsample_variables[key].set_attributes(MODEL_L3_ATTRIBUTES['_'.join(key_parts[2:])])
         elif '_'.join(key_parts[1:]) in CYCLE_ATTRIBUTES:
             model_downsample_variables[key].set_attributes(CYCLE_ATTRIBUTES['_'.join(key_parts[1:])])
-        elif '_'.join(key_parts[1:-1]) in CYCLE_ATTRIBUTES:
-            model_downsample_variables[key].set_attributes(CYCLE_ATTRIBUTES['_'.join(key_parts[1:-1])])
+        elif '_'.join(key_parts[2:]) in CYCLE_ATTRIBUTES:
+            model_downsample_variables[key].set_attributes(CYCLE_ATTRIBUTES['_'.join(key_parts[2:])])
 
 
 def save_downsampled_file(id_mark: str,
                           file_name: str,
                           objects: tuple,
                           files: tuple):
-    """Saves a standard downsampled product file.
+    """Saves a standard downsampled day product file.
 
     Args:
         id_mark (str): File identifier, format "(product name)_(model name)"
@@ -77,7 +77,7 @@ def add_var2ncfile(obj: ModelManager, file_name: str):
 
 
 def _write_vars2nc(rootgrp: netCDF4.Dataset, cloudnet_variables: dict):
-    """Iterates over Cloudnet instances and write to given rootgrp."""
+    """Iterates over Cloudnet-ME instances and write to given rootgrp."""
 
     def _get_dimensions(array):
         """Finds correct dimensions for a variable."""
@@ -112,7 +112,7 @@ def _add_standard_global_attributes(root_group: netCDF4.Dataset):
 
 
 def _add_source(root_ground: netCDF4.Dataset, objects: tuple, files: tuple):
-    """generates source info for multiple files"""
+    """Generates source info for multiple files"""
     model, obs = objects
     model_files, obs_file = files
     source = f"Observation file: {os.path.basename(obs_file)}"

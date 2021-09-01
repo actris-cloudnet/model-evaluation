@@ -65,7 +65,7 @@ class AdvanceProductMethods(DataSource):
             obs_index = self.get_observation_index(iwc_dist, tZT, tT, tZ, t, T[ind], z_sen[ind])
             cf_filtered[ind] = self.filter_cirrus(p_iwc, obs_index, cf_filtered[ind])
         cf_filtered[cf_filtered < 0.05] = ma.masked
-        self._model_obj.append_data(cf_filtered, f'{self._model_obj.model}_cf_cirrus{self._model_obj._cycle}')
+        self._model_obj.append_data(cf_filtered, f'{self._model_obj.model}{self._model_obj._cycle}_cf_cirrus')
 
     def getvar_from_object(self, *args: Union[str, list]) -> list:
         var = []
@@ -73,7 +73,7 @@ class AdvanceProductMethods(DataSource):
             v_name = self._model_obj._get_model_var_names(arg)
             if arg == 'cf':
                 v_name = arg
-            var.append(self._model_obj.data[f'{self._model_obj.model}_{v_name}{self._model_obj._cycle}'][:])
+            var.append(self._model_obj.data[f'{self._model_obj.model}{self._model_obj._cycle}_{v_name}'][:])
         if len(var) == 1:
             return var[0]
         return var

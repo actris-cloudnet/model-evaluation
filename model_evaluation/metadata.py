@@ -1,4 +1,4 @@
-# Information of metadata for file reading, and maybe for saving data?
+# Information of metadata for file reading and writing
 from collections import namedtuple
 
 FIELDS = (
@@ -15,17 +15,17 @@ MetaData.__new__.__defaults__ = (None,) * len(MetaData._fields)
 
 MODEL_ATTRIBUTES = {
     'time': MetaData(
+        units='decimal hours since midnight',
         long_name='Time UTC',
-        comment='Starting time of control run + cycle.',
         axis='T',
     ),
     'latitude': MetaData(
         long_name='Latitude of grid point',
-        units='dergee_North'
+        units='dergees_north'
     ),
     'longitude': MetaData(
         long_name='Longitude of grid point',
-        units='degree_East'
+        units='degrees_east'
     ),
     'horizontal_resolution': MetaData(
         long_name='Horizontal resolution of model',
@@ -123,86 +123,79 @@ REGRID_PRODUCT_ATTRIBUTES = {
     'cf_V': MetaData(
         long_name='Observed cloud fraction by volume',
         units='1',
-        comment="Cloud fraction generated from observations and regenerated "
-                "to fit model grid by averaging to grid volume."
+        comment='Cloud fraction generated from observations and by volume, '
+                'averaged onto the models grid with height and time. Volume is '
+                'space withing four grid points'
     ),
     'cf_A': MetaData(
         long_name='Observed cloud fraction by area',
         units='1',
-        comment="Cloud fraction generated from observation and regenerated "
-                "to fit model grid by averaging to grid time column area."
+        comment='Cloud fraction generated from observation  and by area, '
+                'averaged onto the models grid with height and time. Area is '
+                'sum of time columns with any cloud fraction.'
     ),
     'cf_V_adv': MetaData(
         long_name='Observed cloud fraction by advection volume',
         units='1',
-        comment="Cloud fraction generated from observation and regenerated "
-                "to fit model grid by averaging to grid volume. "
-                "Effect of advection is noticed while regenerate observation to model grid."
+        comment='This variable is the same as the observed cloud fraction by volume, cf_V '
+                'except that model winds were used to estimate the time taken to advect '
+                'airflow a distance equivalent to the models horizontal resolution.'
     ),
     'cf_A_adv': MetaData(
         long_name='Observed cloud fraction by advection area',
         units='1',
-        comment="Cloud fraction generated from observation and regenerated "
-                "to fit model grid by averaging to grid time column area. "
-                "Effect of advection is noticed while regenerate observation to model grid."
+        comment='This variable is the same as the observed cloud fraction by area, cf_A '
+                'except that model winds were used to estimate the time taken to advect '
+                'airflow a distance equivalent to the models horizontal resolution.'
     ),
     'iwc': MetaData(
         long_name='Observed ice water content reshaped to model dimensions by averaging',
         units='kg m-3',
-        comment='Read from iwc-file produce with CloudnetPy.'
-    ),
-    'iwc_mask': MetaData(
-        long_name='Observed and masked ice water content reshaped to model grid by averaging',
-        units='kg m-3',
-        comment='Read from iwc-file  produce with CloudnetPy, but bits other than retrieval status of '
-                'Reliable retrieval and Uncorrected liquid attenuation is masked away.'
+        comment='This variable is the observed mean ice water content derived from radar reflectivity factor '
+                'averaged onto the model grid with height and time. The formula has been applied where '
+                'the "categorization" data has diagnosed that the radar echo is due to ice.'
     ),
     'iwc_att': MetaData(
         long_name='Observed ice water content with attenuation reshaped to model grid by averaging',
         units='kg m-3',
-        comment='Read from iwc-file produce with CloudnetPy. By Masking data bit from retrieval status with '
-                'attenuation is remain.'
+        comment='This variable is the same as the observed mean ice water content, iwc, except that profiles with '
+                'uncorrected attenuation of the radar reflectivity were included.'
     ),
     'iwc_rain': MetaData(
         long_name='Observed ice water content with raining reshaped to model grid by averaging',
         units='kg m-3',
-        comment='Read from iwc-file produce with CloudnetPy.'
+        comment='This variable is the same as the observed mean ice water content including attenuation, iwc_att, '
+                'except that profiles with rain at the surface were also included.'
     ),
     'iwc_adv': MetaData(
         long_name='Observed ice water content reshaped to model advection grid by averaging',
         units='kg m-3',
-        comment='Read from iwc-file produce with CloudnetPy. Regriding produce take notice of '
-                'mass advection cross grid area.'
-    ),
-    'iwc_mask_adv': MetaData(
-        long_name='Observed and masked ice water content reshaped to model advection grid by averaging',
-        units='kg m-3',
-        comment='Read from iwc-file  produce with CloudnetPy, but bits other than retrieval status of '
-                'Reliable retrieval and Uncorrected liquid attenuation is masked away. '
-                'Regriding produce take notice of mass advection cross grid area.'
+        comment='This variable is the same as the observed mean ice water content, iwc, '
+                'except that model winds were used to estimate the time taken to advect '
+                'the flow a distance equivalent to the models horizontal resolution.'
     ),
     'iwc_att_adv': MetaData(
         long_name='Observed ice water content with attenuation reshaped to model advection grid by averaging',
         units='kg m-3',
-        comment='Read from iwc-file produce with CloudnetPy. By Masking data bit from retrieval status with '
-                'attenuation is remain. Regriding produce take notice of '
-                'mass advection cross grid area.'
+        comment='This variable is the same as the observed mean ice water content, iwc_adv, except that profiles with '
+                'uncorrected attenuation of the radar reflectivity were included.'
     ),
     'iwc_rain_adv': MetaData(
         long_name='Observed ice water content with raining reshaped to model advection grid by averaging',
         units='kg m-3',
-        comment='Read from iwc-file produce with CloudnetPy. Rain below clouds is not masked away. '
-                'Regriding produce take notice of mass advection cross grid area.'
+        comment='This variable is the same as the observed mean ice water content including attenuation, iwc_att_adv, '
+                'except that profiles with rain at the surface were also included.'
     ),
     'lwc': MetaData(
         long_name='Observed liquid water content reshaped to model grid by averaging',
         units='kg m-3',
-        comment='Read from lwc-file produce with CloudnetPy. Rain below clouds is not masked away.'
+        comment='This variable is the observed mean liquid water content estimated for pixels where the "categorization" '
+                'data has diagnosed that liquid water is present, averaged onto the model grid with height and time.'
     ),
     'lwc_adv': MetaData(
         long_name='Observed liquid water content reshaped to model advection grid by averaging',
         units='kg m-3',
-        comment='Read from lwc-file produce with CloudnetPy.  Regriding produce take notice of '
-                'mass advection cross grid area.'
+        comment='This variable is the same as the observed mean liquid water content, lwc, '
+                'except that model winds were used to estimate the time taken to advect flow over the models grid points.'
     )
 }

@@ -70,18 +70,18 @@ class ModelManager(DataSource):
         cf = self._set_variables(cf_name)
         cf = self._cut_off_extra_levels(cf)
         cf[cf < 0.05] = ma.masked
-        self.append_data(cf, f'{self.model}_cf{self._cycle}')
-        self.keys[self._product] = f'{self.model}_cf{self._cycle}'
+        self.append_data(cf, f'{self.model}{self._cycle}_cf')
+        self.keys[self._product] = f'{self.model}{self._cycle}_cf'
 
     def _get_iwc(self):
         iwc = self._get_water_continent('iwc')
-        self.append_data(iwc, f'{self.model}_iwc{self._cycle}')
-        self.keys[self._product] = f'{self.model}_iwc{self._cycle}'
+        self.append_data(iwc, f'{self.model}{self._cycle}_iwc')
+        self.keys[self._product] = f'{self.model}{self._cycle}_iwc'
 
     def _get_lwc(self):
         lwc = self._get_water_continent('lwc')
-        self.append_data(lwc, f'{self.model}_lwc{self._cycle}')
-        self.keys[self._product] = f'{self.model}_lwc{self._cycle}'
+        self.append_data(lwc, f'{self.model}{self._cycle}_lwc')
+        self.keys[self._product] = f'{self.model}{self._cycle}_lwc'
 
     @staticmethod
     def _get_model_var_names(*args: Union[str, list]) -> list:
@@ -134,9 +134,9 @@ class ModelManager(DataSource):
                     data = self.dataset.variables[var][:]
                     if data.ndim > 1 or len(data) > 25:
                         data = self._cut_off_extra_levels(self.dataset.variables[var][:])
-                    self.append_data(data, f"{self.model}_{var}{self._cycle}")
+                    self.append_data(data, f"{self.model}{self._cycle}_{var}")
                 if var == 'height':
-                    self.keys['height'] = f"{self.model}_{var}{self._cycle}"
+                    self.keys['height'] = f"{self.model}{self._cycle}_{var}"
         if not self._is_file:
             _add_common_variables()
         _add_cycle_variables()
