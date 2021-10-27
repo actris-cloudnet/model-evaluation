@@ -6,6 +6,7 @@ from model_evaluation.products.model_products import ModelManager
 from model_evaluation.products.advance_methods import AdvanceProductMethods
 from model_evaluation.file_handler import update_attributes, save_downsampled_file, add_var2ncfile, add_time_attribute
 from model_evaluation.products.grid_methods import ProductGrid
+from model_evaluation.utils import file_exists
 
 
 def process_L3_day_product(model: str,
@@ -52,7 +53,7 @@ def process_L3_day_product(model: str,
         ProductGrid(model_obj, product_obj)
         attributes = add_time_attribute(product_obj.date)
         update_attributes(model_obj.data, attributes)
-        if os.path.isfile(output_file) is False:
+        if not file_exists(output_file):
             tl.add_date(model_obj, product_obj)
             save_downsampled_file(f"{obs}_{model}", output_file, (model_obj, product_obj),
                                   (model_files, product_file))

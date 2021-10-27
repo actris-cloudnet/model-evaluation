@@ -7,6 +7,7 @@ import logging
 from cloudnetpy.utils import isscalar
 from cloudnetpy.categorize.datasource import DataSource
 from model_evaluation.model_metadata import MODELS, VARIABLES
+from model_evaluation.utils import file_exists
 
 
 class ModelManager(DataSource):
@@ -36,7 +37,7 @@ class ModelManager(DataSource):
         self.model_vars = VARIABLES['variables']
         self._product = product
         self.keys = {}
-        self._is_file = os.path.isfile(output_file)
+        self._is_file = file_exists(output_file)
         self._cycle = self._read_cycle_name(model_file)
         self._add_variables()
         self._generate_products()
