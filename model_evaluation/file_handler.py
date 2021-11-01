@@ -58,7 +58,7 @@ def save_downsampled_file(id_mark: str,
                   'level': len(obj.data['level'][:])}
     root_group = output.init_file(file_name, dimensions, obj.data)
     _add_standard_global_attributes(root_group)
-    output.add_file_type(root_group, id_mark)
+    output.add_file_type(root_group, id_mark.split('_')[0])
     root_group.title = f"Downsampled {id_mark.capitalize().replace('_', ' of ')} from {obj.dataset.location}"
     _add_source(root_group, objects, files)
     output.copy_global(obj.dataset, root_group, ('location', 'day', 'month', 'year'))
