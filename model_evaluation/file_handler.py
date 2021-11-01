@@ -1,5 +1,6 @@
 import os
 import netCDF4
+from typing import Union
 from datetime import datetime
 from cloudnetpy import utils, output
 from model_evaluation import version
@@ -42,7 +43,9 @@ def update_attributes(model_downsample_variables: dict, attributes: dict):
 def save_downsampled_file(id_mark: str,
                           file_name: str,
                           objects: tuple,
-                          files: tuple):
+                          files: tuple,
+                          keep_uuid: bool,
+                          uuid: Union[str, None]):
     """Saves a standard downsampled day product file.
 
     Args:
@@ -52,12 +55,17 @@ def save_downsampled_file(id_mark: str,
                       The :class:'ObservationManager.
         files (tuple): Includes two sourcefile group: List of model file(s) used
                        for processing output file and Cloudnet L2 product file
+        keep_uuid (bool): If True, keeps the UUID of the old file, if that exists.
+                          Default is False when new UUID is generated.
+        uuid (str): Set specific UUID for the file.
     """
     obj = objects[0]
     dimensions = {'time': len(obj.time),
                   'level': len(obj.data['level'][:])}
-    root_group = output.init_file(file_name, dimensions, obj.data)
+    root_group = output.init_file(file_name, dimensions, obj.data, keep_uuid, uuid)
     _add_standard_global_attributes(root_group)
+    uuid = root_group.file_uuid
+    output.add_file_type(root_group, id_mark.split('_')[0])
     output.add_file_type(root_group, id_mark.split('-')[0])
     root_group.title = f"Downsampled {id_mark.capitalize().replace('_', ' of ')} from {obj.dataset.location}"
     _add_source(root_group, objects, files)
@@ -68,6 +76,7 @@ def save_downsampled_file(id_mark: str,
         root_group.year, root_group.month, root_group.day = obj.date
     output.merge_history(root_group, id_mark, obj)
     root_group.close()
+    return uuid
 
 
 def add_var2ncfile(obj: ModelManager, file_name: str):
@@ -123,6 +132,7 @@ def _add_source(root_ground: netCDF4.Dataset, objects: tuple, files: tuple):
         if i < len(model_files) - 1:
             source += f"\n"
     root_ground.source = source
+    root_ground.source_file_uuids = output.get_source_uuids(model, obs)
 
 
 def add_time_attribute(date: datetime) -> dict:

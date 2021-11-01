@@ -1,5 +1,6 @@
 import os
 import logging
+from typing import Optional
 import model_evaluation.products.tools as tl
 from model_evaluation.products.observation_products import ObservationManager
 from model_evaluation.products.model_products import ModelManager
@@ -13,7 +14,9 @@ def process_L3_day_product(model: str,
                            obs: str,
                            model_files: list,
                            product_file: str,
-                           output_file: str):
+                           output_file: str,
+                           keep_uuid: Optional[bool] = False,
+                           uuid: Optional[str] = None):
     """ Main function to generate downsample of observations to match model grid.
 
         This function will generate a L3 product nc-file. It includes the information of
@@ -25,6 +28,9 @@ def process_L3_day_product(model: str,
             model_files (list): List of model + cycles file path(s) to be generated
             product_file (str): Source file path of L2 observation product
             output_file (str): Path and name of L3 day scale product output file
+            keep_uuid (bool): If True, keeps the UUID of the old file, if that exists.
+                              Default is False when new UUID is generated.
+            uuid (str): Set specific UUID for the file.
         Raises:
             RuntimeError: Failed to create the L3 product file.
             ValueError (Warning): No ice clouds in model data
@@ -55,7 +61,10 @@ def process_L3_day_product(model: str,
         update_attributes(model_obj.data, attributes)
         if not file_exists(output_file):
             tl.add_date(model_obj, product_obj)
-            save_downsampled_file(f"{obs}_{model}", output_file, (model_obj, product_obj),
-                                  (model_files, product_file))
+            uuid = save_downsampled_file(f"{obs}_{model}", output_file,
+                                         (model_obj, product_obj),
+                                         (model_files, product_file),
+                                          keep_uuid, uuid)
         else:
             add_var2ncfile(model_obj, output_file)
+        return uuid
