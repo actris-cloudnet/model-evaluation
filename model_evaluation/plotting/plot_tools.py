@@ -22,6 +22,8 @@ def parse_wanted_names(nc_file: str, name: str, model: str,
     model_names = [n for n in names if f'{model}_{name}' in n]
     for i, model_n in enumerate(model_names):
         advection_n.insert(0+i, model_n)
+    if len(advection_n) < len(standard_n):
+        return standard_n, []
     return standard_n, advection_n
 
 
@@ -82,7 +84,7 @@ def read_data_characters(nc_file: str, name: str, model: str) -> Tuple:
         cycles = model_info.cycle
         cycles = [x.strip() for x in cycles.split(',')]
         cycle = [cycle for cycle in cycles if cycle in name]
-        y = nc.variables[f'{model}_height_{cycle[0]}'][:]
+        y = nc.variables[f'{model}_{cycle[0]}_height'][:]
     y = y / 1000
     try:
         mask = y.mask

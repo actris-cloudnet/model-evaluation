@@ -28,10 +28,9 @@ def main():
                                                   input_files, output_files):
         process_L3_day_product('ecmwf', product, [model_file],
                                product_file, output_file)
-        generate_L3_day_plots(output_file, 'mace-head', product, 'ecmwf',
-                              save_path=save_path, show=False)
-        generate_L3_day_plots(output_file, 'mace-head', product, 'ecmwf',
-                              fig_type='statistic', save_path=save_path, show=False)
+        generate_L3_day_plots(output_file, product, 'ecmwf')
+        generate_L3_day_plots(output_file, product, 'ecmwf', fig_type='statistic',
+                              save_path=save_path)
 
     # Run with three model cycles
     model_file_cycle1 = f'{root}/test_files/20210104_ny-alesund_icon-iglo-12-23.nc'
@@ -51,10 +50,10 @@ def main():
         process_L3_day_product('icon', product,
                                [model_file_cycle1, model_file_cycle2,
                                 model_file_cycle3], product_file, output_file)
-        generate_L3_day_plots(output_file, 'ny-alesund', product, 'icon',
-                              save_path=save_path, show=False)
-        generate_L3_day_plots(output_file, 'ny-alesund', product, 'icon',
-                              fig_type='statistic', save_path=save_path, show=False)
+        generate_L3_day_plots(output_file, product, 'icon',
+                              save_path=save_path)
+        generate_L3_day_plots(output_file, product, 'icon',
+                              fig_type='statistic', save_path=save_path)
 
 
 if __name__ == "__main__":
