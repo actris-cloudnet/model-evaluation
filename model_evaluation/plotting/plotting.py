@@ -223,7 +223,7 @@ def plot_colormesh(ax, data: np.array, axes: tuple, variable_info: namedtuple):
         tick_labels = cloud_plt._generate_log_cbar_ticklabel_list(vmin, vmax)
         colorbar.set_ticks(np.arange(vmin, vmax+1))
         colorbar.ax.set_yticklabels(tick_labels)
-    ax.set_facecolor('whitesmoke')
+    ax.set_facecolor('white')
     colorbar.set_label(variable_info.clabel, fontsize=13)
 
 
