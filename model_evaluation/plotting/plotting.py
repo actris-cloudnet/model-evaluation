@@ -22,6 +22,7 @@ def generate_L3_day_plots(nc_file: str,
                           fig_type: Optional[str] = 'group',
                           stats: Optional[list] = ['error', 'area', 'hist', 'vertical'],
                           save_path: Optional[str] = None,
+                          image_name: Optional[str] = None,
                           show: Optional[bool] = False):
     """ Generate visualizations for level 3 dayscale products.
         With figure type visualizations can be subplot in group, pair, single or
@@ -80,11 +81,11 @@ def generate_L3_day_plots(nc_file: str,
                         if not c_names:
                             raise AttributeError
                         params = [product, c_names, nc_file, model, model_name,
-                                  save_path, show, cycles[i]]
+                                  save_path, image_name, show, cycles[i]]
                         getattr(cls, f"get_{fig_type}_plots")(*params)
                 except AttributeError:
                     params = [product, names, nc_file, model, model_name,
-                              save_path, show]
+                              save_path, image_name, show]
                     getattr(cls, f"get_{fig_type}_plots")(*params)
     else:
         names = p_tools.select_vars2stats(nc_file, product, var_list)
@@ -94,22 +95,22 @@ def generate_L3_day_plots(nc_file: str,
                 if not c_names:
                     raise AttributeError
                 params = [product, c_names, nc_file, model, model_name,
-                          save_path, show, cycles[i]]
+                          save_path, image_name, show, cycles[i]]
                 if fig_type == 'statistic':
                     params = [product, c_names, nc_file, model, model_name,
-                              stats, save_path, show, cycles[i]]
+                              stats, save_path, image_name, show, cycles[i]]
                 getattr(cls, f"get_{fig_type}_plots")(*params)
         except AttributeError:
             params = [product, names, nc_file, model, model_name,
-                      save_path, show]
+                      save_path, image_name, show]
             if fig_type == 'statistic':
                 params = [product, names, nc_file, model, model_name,
-                          stats, save_path, show]
+                          stats, save_path, image_name, show]
             getattr(cls, f"get_{fig_type}_plots")(*params)
 
 
 def get_group_plots(product: str, names: list, nc_file: str, model: str,
-                    model_name: str, save_path: str, show: bool, cycle: str = ''):
+                    model_name: str, save_path: str, image_name: str, show: bool, cycle: str = ''):
     """ Group subplot visualization for both standard and advection downsampling.
         Generates group subplot figure for product with model and all different
         downsampling methods. Generates separated figures for standard and advection
@@ -140,12 +141,12 @@ def get_group_plots(product: str, names: list, nc_file: str, model: str,
     if len(cycle) > 1:
         fig.text(0.64, 0.885, f"Cycle: {cycle}", fontsize=13)
         model_run = f"{model}_{cycle}"
-    cloud_plt._handle_saving('', save_path, show, 200, casedate,
+    cloud_plt._handle_saving(image_name, save_path, show, 200, casedate,
                              [product, model_run, 'group'])
 
 
 def get_pair_plots(product: str, names: list, nc_file: str, model: str,
-                   model_name: str, save_path: str, show: bool, cycle: str = ''):
+                   model_name: str, save_path: str, image_name: str, show: bool, cycle: str = ''):
     """ Pair subplots of model and product method.
         In upper subplot is model product and lower subplot one of the
         downsampled method of select product. Function generates all product methods
@@ -177,11 +178,11 @@ def get_pair_plots(product: str, names: list, nc_file: str, model: str,
         casedate = cloud_plt._set_labels(fig, ax[-1], nc_file)
         if len(cycle) > 1:
             fig.text(0.64, 0.889, f"Cycle: {cycle}", fontsize=13)
-        cloud_plt._handle_saving('', save_path, show, 200, casedate, [name, 'pair'])
+        cloud_plt._handle_saving(image_name, save_path, show, 200, casedate, [name, 'pair'])
 
 
 def get_single_plots(product: str, names: list, nc_file: str, model: str,
-                     model_name: str, save_path: str, show: bool, cycle: str = ''):
+                     model_name: str, save_path: str, image_name: str, show: bool, cycle: str = ''):
     """ Generates figures of a each product variable from given file in loop.
         Args:
             product (str): Name of the product
@@ -205,7 +206,7 @@ def get_single_plots(product: str, names: list, nc_file: str, model: str,
             fig.text(0.64, 0.9, f"{model_name} cycle: {cycle}", fontsize=13)
         else:
             fig.text(0.64, 0.9, f"{model_name}", fontsize=13)
-        cloud_plt._handle_saving('', save_path, show, 200, casedate, [name, 'single'])
+        cloud_plt._handle_saving(image_name, save_path, show, 200, casedate, [name, 'single'])
 
 
 def plot_colormesh(ax, data: np.array, axes: tuple, variable_info: namedtuple):
@@ -225,7 +226,7 @@ def plot_colormesh(ax, data: np.array, axes: tuple, variable_info: namedtuple):
 
 
 def get_statistic_plots(product: str, names: list, nc_file: str, model: str,
-                        model_name: str, stats: list, save_path: str,
+                        model_name: str, stats: list, save_path: str, image_name: str,
                         show: bool, cycle: str = ""):
     """ Statistical subplots for day scale products.
     Statistical analysis can be done by day scale with relative error ('error'),
@@ -270,7 +271,7 @@ def get_statistic_plots(product: str, names: list, nc_file: str, model: str,
         if len(cycle) > 1:
             fig.text(0.64, 0.885, f"Cycle: {cycle}", fontsize=13)
             model_run = f"{model}_{cycle}"
-        cloud_plt._handle_saving('', save_path, show, 200, casedate, [product, stat, model_run])
+        cloud_plt._handle_saving(image_name, save_path, show, 200, casedate, [product, stat, model_run])
 
 
 def initialize_statistic_plots(j: int, max_len: int, ax, method: str,

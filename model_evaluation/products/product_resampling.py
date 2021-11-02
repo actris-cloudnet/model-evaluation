@@ -16,7 +16,8 @@ def process_L3_day_product(model: str,
                            product_file: str,
                            output_file: str,
                            keep_uuid: Optional[bool] = False,
-                           uuid: Optional[str] = None):
+                           uuid: Optional[str] = None,
+                           overwrite: bool = False):
     """ Main function to generate downsample of observations to match model grid.
 
         This function will generate a L3 product nc-file. It includes the information of
@@ -50,7 +51,7 @@ def process_L3_day_product(model: str,
     product_obj = ObservationManager(obs, product_file)
     tl.check_model_file_list(model, model_files)
     for m_file in model_files:
-        model_obj = ModelManager(m_file, model, output_file, obs)
+        model_obj = ModelManager(m_file, model, output_file, obs, check_file=not overwrite)
         try:
             AdvanceProductMethods(model_obj, m_file, product_obj)
         except ValueError as e:
@@ -59,7 +60,7 @@ def process_L3_day_product(model: str,
         ProductGrid(model_obj, product_obj)
         attributes = add_time_attribute(product_obj.date)
         update_attributes(model_obj.data, attributes)
-        if not file_exists(output_file):
+        if not file_exists(output_file) or overwrite:
             tl.add_date(model_obj, product_obj)
             uuid = save_downsampled_file(f"{obs}_{model}", output_file,
                                          (model_obj, product_obj),

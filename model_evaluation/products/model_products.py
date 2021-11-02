@@ -30,14 +30,14 @@ class ModelManager(DataSource):
         Class inherits DataSource interface from CloudnetPy.
     """
     def __init__(self, model_file: str, model: str,
-                 output_file: str, product: str):
+                 output_file: str, product: str, check_file: bool = True):
         super().__init__(model_file)
         self.model = model
         self.model_info = MODELS[model]
         self.model_vars = VARIABLES['variables']
         self._product = product
         self.keys = {}
-        self._is_file = file_exists(output_file)
+        self._is_file = file_exists(output_file) if check_file else False
         self._cycle = self._read_cycle_name(model_file)
         self._add_variables()
         self._generate_products()
