@@ -23,6 +23,7 @@ def generate_L3_day_plots(nc_file: str,
                           stats: Optional[list] = ['error', 'area', 'hist', 'vertical'],
                           save_path: Optional[str] = None,
                           image_name: Optional[str] = None,
+                          title: bool = True,
                           show: Optional[bool] = False):
     """ Generate visualizations for level 3 dayscale products.
         With figure type visualizations can be subplot in group, pair, single or
@@ -81,11 +82,11 @@ def generate_L3_day_plots(nc_file: str,
                         if not c_names:
                             raise AttributeError
                         params = [product, c_names, nc_file, model, model_name,
-                                  save_path, image_name, show, cycles[i]]
+                                  save_path, image_name, show, cycles[i], title]
                         getattr(cls, f"get_{fig_type}_plots")(*params)
                 except AttributeError:
                     params = [product, names, nc_file, model, model_name,
-                              save_path, image_name, show]
+                              save_path, image_name, show, '', title]
                     getattr(cls, f"get_{fig_type}_plots")(*params)
     else:
         names = p_tools.select_vars2stats(nc_file, product, var_list)
@@ -95,17 +96,17 @@ def generate_L3_day_plots(nc_file: str,
                 if not c_names:
                     raise AttributeError
                 params = [product, c_names, nc_file, model, model_name,
-                          save_path, image_name, show, cycles[i]]
+                          save_path, image_name, show, cycles[i], title]
                 if fig_type == 'statistic':
                     params = [product, c_names, nc_file, model, model_name,
-                              stats, save_path, image_name, show, cycles[i]]
+                              stats, save_path, image_name, show, cycles[i], title]
                 getattr(cls, f"get_{fig_type}_plots")(*params)
         except AttributeError:
             params = [product, names, nc_file, model, model_name,
-                      save_path, image_name, show]
+                      save_path, image_name, show, '', title]
             if fig_type == 'statistic':
                 params = [product, names, nc_file, model, model_name,
-                          stats, save_path, image_name, show]
+                          stats, save_path, image_name, show, '', title]
             getattr(cls, f"get_{fig_type}_plots")(*params)
 
 
@@ -182,7 +183,7 @@ def get_pair_plots(product: str, names: list, nc_file: str, model: str,
 
 
 def get_single_plots(product: str, names: list, nc_file: str, model: str,
-                     model_name: str, save_path: str, image_name: str, show: bool, cycle: str = ''):
+                     model_name: str, save_path: str, image_name: str, show: bool, cycle: str = '', title: bool = True):
     """ Generates figures of a each product variable from given file in loop.
         Args:
             product (str): Name of the product
@@ -198,7 +199,8 @@ def get_single_plots(product: str, names: list, nc_file: str, model: str,
     for i, name in enumerate(names):
         fig, ax = initialize_figure(1)
         cloud_plt._set_ax(ax[0], 12)
-        _set_title(ax[0], name, product, variable_info)
+        if title:
+            _set_title(ax[0], name, product, variable_info)
         data, x, y = p_tools.read_data_characters(nc_file, name, model)
         plot_colormesh(ax[0], data, (x, y), variable_info)
         casedate = cloud_plt._set_labels(fig, ax[0], nc_file)
