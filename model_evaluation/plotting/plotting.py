@@ -74,40 +74,25 @@ def generate_L3_day_plots(nc_file: str,
     model_name = model_info.model_name
     if fig_type in ['group', 'pair']:
         name_set = p_tools.parse_wanted_names(nc_file, product, model, var_list)
-        for names in name_set:
-            if len(names) > 0:
-                try:
-                    cycle_names, cycles = p_tools.sort_cycles(names, model)
-                    for i, c_names in enumerate(cycle_names):
-                        if not c_names:
-                            raise AttributeError
-                        params = [product, c_names, nc_file, model, model_name,
-                                  save_path, image_name, show, cycles[i], title]
-                        getattr(cls, f"get_{fig_type}_plots")(*params)
-                except AttributeError:
-                    params = [product, names, nc_file, model, model_name,
-                              save_path, image_name, show, '', title]
-                    getattr(cls, f"get_{fig_type}_plots")(*params)
     else:
-        names = p_tools.select_vars2stats(nc_file, product, var_list)
-        try:
-            cycle_names, cycles = p_tools.sort_cycles(names, model)
-            for i, c_names in enumerate(cycle_names):
-                if not c_names:
-                    raise AttributeError
-                params = [product, c_names, nc_file, model, model_name,
-                          save_path, image_name, show, cycles[i], title]
-                if fig_type == 'statistic':
+        name_set = [p_tools.select_vars2stats(nc_file, product, var_list)]
+    for names in name_set:
+        if len(names) > 0:
+            try:
+                cycle_names, cycles = p_tools.sort_cycles(names, model)
+                for i, c_names in enumerate(cycle_names):
+                    if not c_names:
+                        raise AttributeError
                     params = [product, c_names, nc_file, model, model_name,
-                              stats, save_path, image_name, show, cycles[i], title]
-                getattr(cls, f"get_{fig_type}_plots")(*params)
-        except AttributeError:
-            params = [product, names, nc_file, model, model_name,
-                      save_path, image_name, show, '', title]
-            if fig_type == 'statistic':
+                              save_path, image_name, show, cycles[i], title]
+                    getattr(cls, f"get_{fig_type}_plots")(*params)
+            except AttributeError:
                 params = [product, names, nc_file, model, model_name,
-                          stats, save_path, image_name, show, '', title]
-            getattr(cls, f"get_{fig_type}_plots")(*params)
+                          save_path, image_name, show, '', title]
+                if fig_type == 'statistic':
+                    params = [product, names, nc_file, model, model_name,
+                              stats, save_path, image_name, show, '', title]
+                getattr(cls, f"get_{fig_type}_plots")(*params)
 
 
 def get_group_plots(product: str, names: list, nc_file: str, model: str,
