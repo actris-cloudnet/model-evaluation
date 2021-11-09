@@ -9,13 +9,13 @@ with open('README.md') as f:
     readme = f.read()
 
 setup(
-    name='model_evaluation',
+    name='cloudnetme',
     version=version['__version__'],
-    description='Python package for Model evaluation processing',
+    description='Python package for cloudnet model evaluation processing',
     long_description=readme,
     long_description_content_type='text/markdown',
     author='Finnish Meteorological Institute',
-    author_email='anniina.korpinen@fmi.fi',
+    author_email='actris-cloudnet@fmi.fi',
     url='https://github.com/ACTRIS-cloudnet/model_evaluation',
     license='MIT License',
     packages=find_packages(),
@@ -24,7 +24,7 @@ setup(
     install_requires=['numpy>=1.16', 'scipy>=1.2', 'netCDF4>=1.4.2',
                       'matplotlib>=3.0.2', 'requests>=2.21', 'cloudnetpy>=1.0.7'],
     classifiers=[
-        "Development Status :: 1 - Beta",
+        "Development Status :: 4 - Beta",
         "Programming Language :: Python :: 3.6",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
