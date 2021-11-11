@@ -63,9 +63,8 @@ def save_downsampled_file(id_mark: str,
     dimensions = {'time': len(obj.time),
                   'level': len(obj.data['level'][:])}
     root_group = output.init_file(file_name, dimensions, obj.data, keep_uuid, uuid)
-    _add_standard_global_attributes(root_group)
+    _augment_global_attributes(root_group)
     uuid = root_group.file_uuid
-    output.add_file_type(root_group, id_mark.split('_')[0])
     output.add_file_type(root_group, id_mark.split('-')[0])
     root_group.title = f"Downsampled {id_mark.capitalize().replace('_', ' of ')} from {obj.dataset.location}"
     _add_source(root_group, objects, files)
@@ -114,10 +113,9 @@ def _write_vars2nc(rootgrp: netCDF4.Dataset, cloudnet_variables: dict):
             continue
 
 
-def _add_standard_global_attributes(root_group: netCDF4.Dataset):
-    root_group.Conventions = 'CF-1.7'
+def _augment_global_attributes(root_group: netCDF4.Dataset):
+    root_group.Conventions = 'CF-1.8'
     root_group.model_evaluation_version = version.__version__
-    root_group.file_uuid = utils.get_uuid()
 
 
 def _add_source(root_ground: netCDF4.Dataset, objects: tuple, files: tuple):
