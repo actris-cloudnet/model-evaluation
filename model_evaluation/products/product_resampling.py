@@ -32,6 +32,8 @@ def process_L3_day_product(model: str,
             keep_uuid (bool): If True, keeps the UUID of the old file, if that exists.
                               Default is False when new UUID is generated.
             uuid (str): Set specific UUID for the file.
+            overwrite (bool): If file exists, but still want to recreate it then True, 
+                              default False
         Raises:
             RuntimeError: Failed to create the L3 product file.
             ValueError (Warning): No ice clouds in model data

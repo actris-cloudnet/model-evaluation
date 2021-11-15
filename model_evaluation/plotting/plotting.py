@@ -48,6 +48,8 @@ def generate_L3_day_plots(nc_file: str,
                                     variables in file will be plotted
             save_path (str, optional): If not None, visualization is saved
                                        to path location
+
+            image_name (str, optional): Saving name of generated fig
             show (bool, optional): If True, shows visualization
         Notes:
             In case of 'group' and 'statistic' fig_type advection timegrid is
@@ -59,12 +61,10 @@ def generate_L3_day_plots(nc_file: str,
             >>> from model_evaluation.plotting.plotting import generate_L3_day_plots
             >>> l3_day_file = 'cf_ecmwf.nc'
             >>> product = 'cf'
-            >>>  = 'bucharest'
             >>> model = 'ecmwf'
-            >>> generate_L3_day_plots(l3_day_file, , product, model)
+            >>> generate_L3_day_plots(l3_day_file, product, model)
             >>> l3_day_file = 'cf_ecmwf.nc'
             >>> product = 'cf'
-            >>>  = 'bucharest'
             >>> model = 'ecmwf'
             >>> generate_L3_day_plots(l3_day_file, product, model,
             >>>                       fig_type='statistic', stats=['error'])
@@ -108,6 +108,7 @@ def get_group_plots(product: str, names: list, nc_file: str, model: str,
             model (str): Name of used model in a downsampling process
             model_name (str): Correct name of a model
             save_path (str): Path for saving figures
+            image_name (str, optional): Saving name of generated fig
             show (bool): Show figure before saving if True
             cycle (str): Name of cycle if exists
     """
@@ -144,6 +145,7 @@ def get_pair_plots(product: str, names: list, nc_file: str, model: str,
             model (str): Name of used model in a downsampling process
             model_name (str): Correct name of a model
             save_path (str): Path for saving figures
+            image_name (str, optional): Saving name of generated fig
             show (bool): Show figure before saving if True
             cycle (str): Name of cycle if exists
     """
@@ -177,6 +179,7 @@ def get_single_plots(product: str, names: list, nc_file: str, model: str,
             model (str): Name of used model in a downsampling process
             model_name (str): Correct name of a model
             save_path (str): Path for saving figures
+            image_name (str, optional): Saving name of generated fig
             show (bool): Show figure before saving if True
             cycle (str): Name of cycle if exists
     """
@@ -230,6 +233,7 @@ def get_statistic_plots(product: str, names: list, nc_file: str, model: str,
         stats (list): List of statistical method to process analysis with.
                       Options are ['error', 'area', 'hist', 'vertical']
         save_path (str): Path for saving figures
+        image_name (str, optional): Saving name of generated fig
         show (bool): Show figure before saving if True
         cycle (str): Name of cycle if exists
     """
