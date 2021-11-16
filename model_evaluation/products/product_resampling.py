@@ -70,4 +70,4 @@ def process_L3_day_product(model: str,
                                           keep_uuid, uuid)
         else:
             add_var2ncfile(model_obj, output_file)
-        return uuid
+    return uuid
