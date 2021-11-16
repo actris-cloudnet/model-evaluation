@@ -62,7 +62,7 @@ def save_downsampled_file(id_mark: str,
     obj = objects[0]
     dimensions = {'time': len(obj.time),
                   'level': len(obj.data['level'][:])}
-    root_group = output.init_file(file_name, dimensions, obj.data, keep_uuid, uuid)
+    root_group = output.init_file(file_name, dimensions, obj.data, uuid)
     _augment_global_attributes(root_group)
     uuid = root_group.file_uuid
     output.add_file_type(root_group, id_mark.split('-')[0])
