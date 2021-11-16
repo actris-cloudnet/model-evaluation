@@ -295,7 +295,7 @@ def test_vertical_profile_mask():
 
 
 @pytest.mark.parametrize("method, title", [
-    ('error', 'ECMWF vs Cloud fraction'),
+    ('error', 'Cloud fraction vs ECMWF'),
     ('vertical', ('ECMWF', 'Cloud fraction'))])
 def test_day_stat_title(method, title):
     from model_evaluation.statistics.statistical_methods import day_stat_title

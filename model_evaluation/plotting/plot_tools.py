@@ -15,15 +15,11 @@ def parse_wanted_names(nc_file: str, name: str, model: str,
     if vars:
         names = vars
     else:
-        names = parse_dataset_keys(nc_file, advance, model)
+        names = parse_dataset_keys(nc_file, name, advance, model)
     standard_n = [n for n in names if name in n and 'adv' not in n]
     standard_n = sort_model2first_element(standard_n, model)
     advection_n = [n for n in names if name in n and 'adv' in n]
     model_names = [n for n in names if f'{model}_' in n and not f'_{model}_' in n]
-    m_names = np.copy(model_names)
-    for m in m_names:
-        if name not in m:
-            model_names.remove(m)
     for i, model_n in enumerate(model_names):
         advection_n.insert(0+i, model_n)
     if len(advection_n) < len(standard_n):
@@ -33,13 +29,22 @@ def parse_wanted_names(nc_file: str, name: str, model: str,
     return standard_n, advection_n
 
 
-def parse_dataset_keys(nc_file: str, advance: bool, model: str = "") -> list:
+def parse_dataset_keys(nc_file: str, product:str, advance: bool, model: str = "") -> list:
     names = list(netCDF4.Dataset(nc_file).variables.keys())
     a_names = ['cirrus', 'snow']
+    model_vars = []
+    for n in names:
+        if model not in n:
+            model_vars.append(n)
+        elif model in n and product not in n:
+            model_vars.append(n)
+        else:
+            continue
     if not advance:
-        model_vars = [n for n in names for a in a_names if f'{model}_' in n and not f'_{model}_' in n and a in n]
-    else:
-        model_vars = [n for n in names for a in a_names if f'{model}_' in n and not f'_{model}_' in n and a not in n]
+        for a in a_names:
+            for n in names:
+                if a in n:
+                    model_vars.append(n)
     for m in model_vars:
         names.remove(m)
     return names
@@ -62,29 +67,6 @@ def sort_cycles(names: list, model: str) -> Tuple[list, list]:
     cycles_names = [c for c in cycles_names if c]
     cycles = [c for c in cycles for name in cycles_names if c in name[0]]
     return cycles_names, cycles
-
-
-def select_vars2stats(nc_file: str, name: str, model: str, vars: Union[list, None] = None,
-                      advance: bool = False) -> list:
-    if vars:
-        names = vars
-    else:
-        names = parse_dataset_keys(nc_file, advance, model)
-    standard_n = [n for n in names if name in n and 'adv' not in n]
-    standard_n = sort_model2first_element(standard_n, model)
-    advection_n = [n for n in names if name in n and 'adv' in n]
-    model_names = [n for n in names if f'{model}_' in n and not f'_{model}_' in n]
-    m_names = np.copy(model_names)
-    for m in m_names:
-        if name not in m:
-            model_names.remove(m)
-    for i, model_n in enumerate(model_names):
-        advection_n.insert(0 + i, model_n)
-    if len(advection_n) < len(standard_n):
-        return standard_n, []
-    if len(advection_n) > len(standard_n):
-        return advection_n, []
-    return standard_n, advection_n
 
 
 def read_data_characters(nc_file: str, name: str, model: str) -> Tuple:

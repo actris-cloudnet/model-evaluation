@@ -3,6 +3,9 @@ import numpy.testing as testing
 
 
 def test_parse_wanted_names(regrid_file):
+    """ nc_file: str, name: str, model: str,
+                       vars: Union[list, None] = None,
+                       advance: bool = False """
     from model_evaluation.plotting.plot_tools import parse_wanted_names
     compare = ['ecmwf_cf', 'cf_ecmwf']
     x, x_adv = parse_wanted_names(regrid_file, 'cf', 'ecmwf')
@@ -16,17 +19,31 @@ def test_parse_wanted_names_adv(regrid_file):
     assert x_adv == compare
 
 
-def test_parse_wanted_names_advance(regrid_file):
+def test_parse_wanted_names_advance_False(regrid_file):
     from model_evaluation.plotting.plot_tools import parse_wanted_names
-    compare = ['ecmwf_cf_cirrus', 'cf_ecmwf']
-    x, x_adv = parse_wanted_names(regrid_file, 'cf', 'ecmwf', advance='cirrus')
+    compare = ['ecmwf_cf', 'cf_ecmwf']
+    x, x_adv = parse_wanted_names(regrid_file, 'cf', 'ecmwf', advance=False)
     assert x == compare
 
 
-def test_parse_wanted_names_adv_advance(regrid_file):
+def test_parse_wanted_names_advance_True(regrid_file):
     from model_evaluation.plotting.plot_tools import parse_wanted_names
-    compare = ['ecmwf_cf_snow', 'cf_adv_ecmwf']
-    x, x_adv = parse_wanted_names(regrid_file, 'cf', 'ecmwf', advance='snow')
+    compare = ['ecmwf_cf', 'ecmwf_cf_cirrus', 'ecmwf_cf_snow', 'cf_ecmwf']
+    x, x_adv = parse_wanted_names(regrid_file, 'cf', 'ecmwf', advance=True)
+    assert x == compare
+
+
+def test_parse_wanted_names_adv_advance_True(regrid_file):
+    from model_evaluation.plotting.plot_tools import parse_wanted_names
+    compare = ['ecmwf_cf', 'ecmwf_cf_cirrus', 'ecmwf_cf_snow', 'cf_adv_ecmwf']
+    x, x_adv = parse_wanted_names(regrid_file, 'cf', 'ecmwf', advance=True)
+    assert x_adv == compare
+
+
+def test_parse_wanted_names_adv_advance_False(regrid_file):
+    from model_evaluation.plotting.plot_tools import parse_wanted_names
+    compare = ['ecmwf_cf', 'cf_adv_ecmwf']
+    x, x_adv = parse_wanted_names(regrid_file, 'cf', 'ecmwf', advance=False)
     assert x_adv == compare
 
 
@@ -40,7 +57,7 @@ def test_parse_wanted_names_fixed_list(regrid_file):
 def test_parse_wanted_names_adv_fixed_list(regrid_file):
     from model_evaluation.plotting.plot_tools import parse_wanted_names
     compare = ['ecmwf_cf_cirrus', 'cf_adv_ecmwf']
-    x, x_adv = parse_wanted_names(regrid_file, 'cf', 'ecmwf', vars=compare)
+    x_adv, x = parse_wanted_names(regrid_file, 'cf', 'ecmwf', vars=compare)
     assert x_adv == compare
 
 
@@ -87,27 +104,6 @@ def test_sort_cycles_cycles_missing():
     compare = ['12-23', '36-47']
     x, y = sort_cycles(a, e)
     assert y == compare
-
-
-def test_select_vars2stats(regrid_file):
-    from model_evaluation.plotting.plot_tools import select_vars2stats
-    compare = ['ecmwf_cf', 'cf_ecmwf', 'cf_adv_ecmwf']
-    x = select_vars2stats(regrid_file, 'cf')
-    assert x == compare
-
-
-def test_select_vars2stats_advance(regrid_file):
-    from model_evaluation.plotting.plot_tools import select_vars2stats
-    compare = ['ecmwf_cf_cirrus', 'cf_ecmwf', 'cf_adv_ecmwf']
-    x = select_vars2stats(regrid_file, 'cf', advance='cirrus')
-    assert x == compare
-
-
-def test_select_vars2stats_fixed_list(regrid_file):
-    from model_evaluation.plotting.plot_tools import select_vars2stats
-    compare = ['ecmwf_cf', 'ecmwf_cf_cirrus', 'cf_adv_ecmwf']
-    x = select_vars2stats(regrid_file, 'cf', vars=compare)
-    assert x == compare
 
 
 def test_read_data_characters(regrid_file):
