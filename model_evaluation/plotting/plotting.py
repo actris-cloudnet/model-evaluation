@@ -202,11 +202,12 @@ def get_single_plots(product: str, names: list, nc_file: str, model: str,
             _set_title(ax[0], name, product, variable_info)
         data, x, y = p_tools.read_data_characters(nc_file, name, model)
         plot_colormesh(ax[0], data, (x, y), variable_info)
-        casedate = cloud_plt._set_labels(fig, ax[0], nc_file)
-        if len(cycle) > 1:
-            fig.text(0.64, 0.9, f"{model_name} cycle: {cycle}", fontsize=13)
-        else:
-            fig.text(0.64, 0.9, f"{model_name}", fontsize=13)
+        casedate = cloud_plt._set_labels(fig, ax[0], nc_file, sub_title=title)
+        if title:
+            if len(cycle) > 1:
+                fig.text(0.64, 0.9, f"{model_name} cycle: {cycle}", fontsize=13)
+            else:
+                fig.text(0.64, 0.9, f"{model_name}", fontsize=13)
         cloud_plt._handle_saving(image_name, save_path, show, 200, casedate, [name, 'single'])
 
 
@@ -258,18 +259,20 @@ def get_statistic_plots(product: str, names: list, nc_file: str, model: str,
             if product == 'cf' and stat == 'error':
                 stat = 'aerror'
             if j > 0:
+                name = ''
                 name = _get_stat_titles(name, product, variable_info)
                 day_stat = DayStatistics(stat, [product, model_name, name], model_data,
                                          data)
                 initialize_statistic_plots(j, len(names) - 1, ax[j - 1], stat,
                                            day_stat, model_data, data, (x, y),
-                                           variable_info)
+                                           variable_info, title)
         if stat != 'hist' and stat != 'vertical':
-            casedate = cloud_plt._set_labels(fig, ax[j - 1], nc_file)
+            casedate = cloud_plt._set_labels(fig, ax[j - 1], nc_file, sub_title=title)
         else:
             casedate = cloud_plt._read_date(nc_file)
             _name = cloud_plt._read_location(nc_file)
-            cloud_plt._add_subtitle(fig, casedate, _name.capitalize())
+            if title:
+                cloud_plt._add_subtitle(fig, casedate, _name.capitalize())
         if len(cycle) > 1:
             fig.text(0.64, 0.885, f"Cycle: {cycle}", fontsize=13)
             model_run = f"{model}_{cycle}"
@@ -278,13 +281,14 @@ def get_statistic_plots(product: str, names: list, nc_file: str, model: str,
 
 def initialize_statistic_plots(j: int, max_len: int, ax, method: str,
                                day_stat: DayStatistics, model: np.array, obs: np.array,
-                               args: tuple, variable_info: namedtuple):
+                               args: tuple, variable_info: namedtuple, title: bool = True):
     if method == 'error' or method == 'aerror':
         plot_relative_error(ax, day_stat.model_stat.T, args, method)
-        ax.set_title(day_stat.title, fontsize=14)
+        if title:
+            ax.set_title(day_stat.title, fontsize=14)
         cloud_plt._set_ax(ax, 12)
     if method == 'area':
-        plot_data_area(ax, day_stat, model, obs, args)
+        plot_data_area(ax, day_stat, model, obs, args, title=title)
         ax.text(0.9, -0.17, f"Common area: {day_stat.model_stat} %",
                 size=12, ha="center", transform=ax.transAxes)
         cloud_plt._set_ax(ax, 12)
@@ -304,7 +308,7 @@ def initialize_statistic_plots(j: int, max_len: int, ax, method: str,
 
 
 def plot_relative_error(ax, error: np.array, axes: tuple, method: str):
-    pl = ax.pcolormesh(*axes, error[:-1, :-1].T, cmap='RdBu', vmin=-50, vmax=50)
+    pl = ax.pcolormesh(*axes, error[:-1, :-1].T, cmap='RdBu_r', vmin=-50, vmax=50)
     colorbar = init_colorbar(pl, ax)
     colorbar.set_label("%", fontsize=13)
     error[np.isnan(error)] = ma.masked
@@ -320,12 +324,13 @@ def plot_relative_error(ax, error: np.array, axes: tuple, method: str):
 
 
 def plot_data_area(ax, day_stat: DayStatistics, model: np.array, obs: np.array,
-                   axes: tuple):
+                   axes: tuple, title: bool = True):
     data, cmap = p_tools.create_segment_values([model.mask, obs.mask])
     pl = ax.pcolormesh(*axes, data, cmap=cmap)
-    colorbar = init_colorbar(pl, ax)
-    colorbar.set_ticks(np.arange(1, 1, 3))
-    ax.set_title(f"{day_stat.title}", fontsize=14)
+    if title:
+        colorbar = init_colorbar(pl, ax)
+        colorbar.set_ticks(np.arange(1, 1, 3))
+        ax.set_title(f"{day_stat.title}", fontsize=14)
     ax.set_facecolor('black')
     legend_elements = [Patch(facecolor='khaki', edgecolor='k', label='Model'),
                        Patch(facecolor=cmap(0.5), edgecolor='k', label='Common'),
