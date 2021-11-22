@@ -19,6 +19,7 @@ class TestCloudFractionProcessing:
         assert nc.title == f'Downsampled Cf of ecmwf from Mace-Head'
         assert nc.cloudnet_file_type == "cf_ecmwf"
         assert nc.Conventions == 'CF-1.7'
+        assert nc.cloudnetme_version
         assert nc.source == 'Observation file: 20190517_mace-head_categorize.nc\necmwf file(s): 20190517_mace-head_ecmwf.nc'
         nc.close()
 

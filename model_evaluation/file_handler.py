@@ -115,7 +115,7 @@ def _write_vars2nc(rootgrp: netCDF4.Dataset, cloudnet_variables: dict):
 
 def _augment_global_attributes(root_group: netCDF4.Dataset):
     root_group.Conventions = 'CF-1.8'
-    root_group.model_evaluation_version = version.__version__
+    root_group.cloudnetme_version = version.__version__
 
 
 def _add_source(root_ground: netCDF4.Dataset, objects: tuple, files: tuple):
