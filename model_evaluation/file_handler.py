@@ -65,7 +65,7 @@ def save_downsampled_file(id_mark: str,
     root_group = output.init_file(file_name, dimensions, obj.data, uuid)
     _augment_global_attributes(root_group)
     uuid = root_group.file_uuid
-    output.add_file_type(root_group, id_mark.split('-')[0])
+    root_group.cloudnet_file_type = id_mark.split('-')[0]
     root_group.title = f"Downsampled {id_mark.capitalize().replace('_', ' of ')} from {obj.dataset.location}"
     _add_source(root_group, objects, files)
     output.copy_global(obj.dataset, root_group, ('location', 'day', 'month', 'year'))
