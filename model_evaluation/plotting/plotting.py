@@ -1,4 +1,5 @@
 import sys, os
+import logging
 import numpy as np
 import numpy.ma as ma
 import matplotlib.pyplot as plt
@@ -252,30 +253,35 @@ def get_statistic_plots(product: str, names: list, nc_file: str, model: str,
     """
     model_run = model
     for stat in stats:
-        missing = False
-        variable_info = ATTRIBUTES[product]
-        fig, ax = initialize_figure(len(names) - 1, stat)
-        model_data, *axes = p_tools.read_data_characters(nc_file, names[0], model)
-        if np.all(model_data.mask == True):
-            continue
-        for j, name in enumerate(names):
-            data, x, y = p_tools.read_data_characters(nc_file, name, model)
-            if np.all(data.mask == True):
-                continue
-            if product == 'cf' and stat == 'error':
-                stat = 'aerror'
-            if j > 0:
-                name = ''
-                name = _get_stat_titles(name, product, variable_info)
-                day_stat = DayStatistics(stat, [product, model_name, name], model_data,
-                                         data)
-                if 'error' in stat:
-                    if np.all(day_stat.model_stat.mask == True):
-                        missing = True
-                        continue
-                initialize_statistic_plots(j, len(names) - 1, ax[j - 1], stat,
+        try:
+            obs_missing = False
+            model_missing = False
+            variable_info = ATTRIBUTES[product]
+            fig, ax = initialize_figure(len(names) - 1, stat)
+            model_data, *axes = p_tools.read_data_characters(nc_file, names[0], model)
+            if np.all(model_data.mask == True):
+                model_missing = True
+            for j, name in enumerate(names):
+                data, x, y = p_tools.read_data_characters(nc_file, name, model)
+                if np.all(data.mask == True):
+                    obs_missing = True
+                if model_missing and obs_missing:
+                    raise ValueError('No data in either dataset')
+                if product == 'cf' and stat == 'error':
+                    stat = 'aerror'
+                if j > 0:
+                    name = ''
+                    name = _get_stat_titles(name, product, variable_info)
+                    day_stat = DayStatistics(stat, [product, model_name, name], model_data,
+                                             data)
+                    if 'error' in stat:
+                        if np.all(day_stat.model_stat.mask == True):
+                            raise ValueError('No data to calculate relative error')
+                    initialize_statistic_plots(j, len(names) - 1, ax[j - 1], stat,
                                            day_stat, model_data, data, (x, y),
                                            variable_info, title)
+        except ValueError as e:
+            logging.error("Error: {0}".format(e))
         if stat != 'hist' and stat != 'vertical':
             casedate = cloud_plt._set_labels(fig, ax[j - 1], nc_file, sub_title=title)
         else:
@@ -286,8 +292,7 @@ def get_statistic_plots(product: str, names: list, nc_file: str, model: str,
         if len(cycle) > 1:
             fig.text(0.64, 0.885, f"Cycle: {cycle}", fontsize=13)
             model_run = f"{model}_{cycle}"
-        if not missing:
-            cloud_plt._handle_saving(image_name, save_path, show, 200, casedate, [name, stat, model_run])
+        cloud_plt._handle_saving(image_name, save_path, show, 200, casedate, [name, stat, model_run])
 
 
 def initialize_statistic_plots(j: int, max_len: int, ax, method: str,
