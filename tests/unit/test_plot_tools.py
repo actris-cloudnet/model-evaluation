@@ -1,4 +1,5 @@
 import numpy as np
+import numpy.ma as ma
 import numpy.testing as testing
 
 
@@ -116,6 +117,69 @@ def test_read_data_characters(regrid_file):
     test = [x, y, z]
     for i in range(3):
         testing.assert_array_almost_equal(compare[i], test[i])
+
+
+def test_mask_small_values_lwc():
+    from model_evaluation.plotting.plot_tools import mask_small_values
+    name = 'lwc_lol'
+    data = ma.array([[0, 1], [3, 6], [5, 8]])
+    data = mask_small_values(data, name)
+    compare = ma.array([[0, 1], [3, 6], [5, 8]])
+    compare[0, 0] = ma.masked
+    testing.assert_array_almost_equal(data.mask, compare.mask)
+
+
+def test_mask_small_values_lwc_mask():
+    from model_evaluation.plotting.plot_tools import mask_small_values
+    name = 'lwc_lol'
+    data = ma.array([[0, 0.000001], [3, 6], [5, 8]])
+    data = mask_small_values(data, name)
+    compare = ma.array([[0, -0.000001], [3, 6], [5, 8]])
+    compare[0, 0] = ma.masked
+    compare[0, 1] = ma.masked
+    testing.assert_array_almost_equal(data.mask, compare.mask)
+
+
+def test_mask_small_values_iwc():
+    from model_evaluation.plotting.plot_tools import mask_small_values
+    name = 'iwc_lol'
+    data = ma.array([[0, 1], [3, 6], [5, 8]])
+    data = mask_small_values(data, name)
+    compare = ma.array([[0, 1], [3, 6], [5, 8]])
+    compare[0, 0] = ma.masked
+    testing.assert_array_almost_equal(data.mask, compare.mask)
+
+
+def test_mask_small_values_iwc_mask():
+    from model_evaluation.plotting.plot_tools import mask_small_values
+    name = 'iwc_lol'
+    data = ma.array([[0, 0.00000001], [3, 6], [5, 8]])
+    data = mask_small_values(data, name)
+    compare = ma.array([[0, -0.000001], [3, 6], [5, 8]])
+    compare[0, 0] = ma.masked
+    compare[0, 1] = ma.masked
+    testing.assert_array_almost_equal(data.mask, compare.mask)
+
+
+def test_mask_small_values():
+    from model_evaluation.plotting.plot_tools import mask_small_values
+    name = 'cf_lol'
+    data = ma.array([[0, 1], [3, 6], [5, 8]])
+    data = mask_small_values(data, name)
+    compare = ma.array([[0, 1], [3, 6], [5, 8]])
+    compare[0, 0] = ma.masked
+    testing.assert_array_almost_equal(data.mask, compare.mask)
+
+
+def test_mask_small_values_mask():
+    from model_evaluation.plotting.plot_tools import mask_small_values
+    name = 'cf_lol'
+    data = ma.array([[0, -0.000001], [3, 6], [5, 8]])
+    data_mask = mask_small_values(data, name)
+    compare = ma.array([[0, -0.000001], [3, 6], [5, 8]])
+    compare[0, 0] = ma.masked
+    compare[0, 1] = ma.masked
+    testing.assert_array_equal(data_mask.mask, compare.mask)
 
 
 def test_reshape_1d2nd():
