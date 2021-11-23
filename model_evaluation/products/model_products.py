@@ -76,11 +76,13 @@ class ModelManager(DataSource):
 
     def _get_iwc(self):
         iwc = self._get_water_continent('iwc')
+        iwc[iwc < 1e-7] = ma.masked
         self.append_data(iwc, f'{self.model}{self._cycle}_iwc')
         self.keys[self._product] = f'{self.model}{self._cycle}_iwc'
 
     def _get_lwc(self):
         lwc = self._get_water_continent('lwc')
+        lwc[lwc < 1e-5] = ma.masked
         self.append_data(lwc, f'{self.model}{self._cycle}_lwc')
         self.keys[self._product] = f'{self.model}{self._cycle}_lwc'
 
