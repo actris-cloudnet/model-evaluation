@@ -39,7 +39,8 @@ def generate_L3_day_plots(nc_file: str,
             product (str): Name of product wanted to plot
             model (str): Name of model which downsampling was done with
 
-            title (bool): True or False if wanted add title to subfig
+            title (bool): Show title and additional labels. Operational processing sets this to False.
+                          Default is True.
             fig_type (str, optional): Type of figure wanted to produce. Options
                                       are 'group', 'pair', 'single' and 'statistic'.
                                       Default value is 'group'
