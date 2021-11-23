@@ -73,7 +73,7 @@ def read_data_characters(nc_file: str, name: str, model: str) -> Tuple:
     """Gets dimensions and data for plotting"""
     nc = netCDF4.Dataset(nc_file)
     data = nc.variables[name][:]
-    data[data <= 0] = ma.masked
+    data = mask_small_values(data, name)
     x = nc.variables['time'][:]
     x = reshape_1d2nd(x, data)
     try:
@@ -92,6 +92,15 @@ def read_data_characters(nc_file: str, name: str, model: str) -> Tuple:
     except AttributeError:
         return data, x, y
     return data, x, y
+
+
+def mask_small_values(data: ma.array, name: str):
+    data[data <= 0] = ma.masked
+    if 'lwc' in name:
+        data[data < 1e-5] = ma.masked
+    if 'iwc' in name:
+        data[data < 1e-7] = ma.masked
+    return data
 
 
 def reshape_1d2nd(one_d:  np.array, two_d:  np.array) -> np.array:
@@ -114,9 +123,6 @@ def create_segment_values(arrays: list) -> Tuple:
     newcolors = colors(np.linspace(0, 1, 256))
     # No data, model, both, observation
     cmap = ListedColormap(['white', 'khaki', newcolors[90], newcolors[140]])
-    if len(np.unique(new_array)) < 4:
-        # model, both, model comparison
-        cmap = ListedColormap(['white', 'khaki', newcolors[90]])
     return new_array, cmap
 
 

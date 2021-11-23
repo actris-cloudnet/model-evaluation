@@ -252,11 +252,16 @@ def get_statistic_plots(product: str, names: list, nc_file: str, model: str,
     """
     model_run = model
     for stat in stats:
+        missing = False
         variable_info = ATTRIBUTES[product]
         fig, ax = initialize_figure(len(names) - 1, stat)
         model_data, *axes = p_tools.read_data_characters(nc_file, names[0], model)
+        if np.all(model_data.mask == True):
+            continue
         for j, name in enumerate(names):
             data, x, y = p_tools.read_data_characters(nc_file, name, model)
+            if np.all(data.mask == True):
+                continue
             if product == 'cf' and stat == 'error':
                 stat = 'aerror'
             if j > 0:
@@ -264,6 +269,10 @@ def get_statistic_plots(product: str, names: list, nc_file: str, model: str,
                 name = _get_stat_titles(name, product, variable_info)
                 day_stat = DayStatistics(stat, [product, model_name, name], model_data,
                                          data)
+                if 'error' in stat:
+                    if np.all(day_stat.model_stat.mask == True):
+                        missing = True
+                        continue
                 initialize_statistic_plots(j, len(names) - 1, ax[j - 1], stat,
                                            day_stat, model_data, data, (x, y),
                                            variable_info, title)
@@ -277,7 +286,8 @@ def get_statistic_plots(product: str, names: list, nc_file: str, model: str,
         if len(cycle) > 1:
             fig.text(0.64, 0.885, f"Cycle: {cycle}", fontsize=13)
             model_run = f"{model}_{cycle}"
-        cloud_plt._handle_saving(image_name, save_path, show, 200, casedate, [name, stat, model_run])
+        if not missing:
+            cloud_plt._handle_saving(image_name, save_path, show, 200, casedate, [name, stat, model_run])
 
 
 def initialize_statistic_plots(j: int, max_len: int, ax, method: str,
@@ -336,9 +346,6 @@ def plot_data_area(ax, day_stat: DayStatistics, model: np.array, obs: np.array,
     legend_elements = [Patch(facecolor='khaki', edgecolor='k', label='Model'),
                        Patch(facecolor=cmap(0.5), edgecolor='k', label='Common'),
                        Patch(facecolor=cmap(1.), edgecolor='k', label='Observation')]
-    if len(np.unique(data)) < 4:
-        legend_elements = [Patch(facecolor='khaki', edgecolor='k', label='Original model'),
-                           Patch(facecolor=cmap(1.), edgecolor='k', label='Filtered model')]
     ax.legend(handles=legend_elements, loc='lower left', ncol=3, fontsize=12, bbox_to_anchor=(-0.005, -0.25))
 
 
@@ -390,6 +397,8 @@ def plot_vertical_profile(ax, day_stat: DayStatistics, axes: tuple,
 
 def initialize_figure(n_subplots: int, stat: str = '') -> Tuple:
     """ Set up fig and ax object, if subplot"""
+    if n_subplots <= 0:
+        n_subplots = 1
     fig, axes = plt.subplots(n_subplots, 1, figsize=(16, 4 + (n_subplots - 1) * 4.8))
     fig.subplots_adjust(left=0.06, right=0.73, hspace=0.31)
     if stat == 'area':
