@@ -73,7 +73,7 @@ def save_downsampled_file(id_mark: str,
         obj.dataset.day
     except AttributeError:
         root_group.year, root_group.month, root_group.day = obj.date
-    output.merge_history(root_group, id_mark, obj)
+    output.merge_history(root_group, id_mark, {'l3': obj})
     root_group.close()
     return uuid
 
