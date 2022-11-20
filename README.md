@@ -1,4 +1,9 @@
-# Model evaluation
+> **Note**
+>
+> `model-evaluation` has been integrated into [CloudnetPy](https://github.com/actris-cloudnet/cloudnetpy). This repository is no longer maintained.
+>
+
+## Model evaluation
 
 ACTRIS Cloudnet Model evaluation software is an application to process CloudnetPy level 2 (L2) products to statistical analysis called level 3 (L3) products. 
 Model evaluation software compares observations of clouds and properties to simulated ones from various NWP models and creates statistical analysis and visualization.
